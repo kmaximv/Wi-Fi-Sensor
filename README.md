@@ -1,4 +1,9 @@
 # Wi-Fi-Sensor
 
-![PCB Top](/screenshots/PCB_top.png)
-![PCB Bottom](/screenshots/PCB_bottom.png "PCB Board")
+
+
+### PCB Board
+
+[![Top](/screenshots/PCB_top_th.png)](/screenshots/PCB_top.png)
+[![Bottom](/screenshots/PCB_bottom_th.png)](/screenshots/PCB_bottom.png)
+
