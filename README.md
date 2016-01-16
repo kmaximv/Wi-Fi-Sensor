@@ -45,10 +45,10 @@
 
 
 ### Схема
-	
-	[![Schema_LED](/screenshots/Schema_LED.png)](/screenshots/Schema_LED.png)
 
-	[![Schema_SSR](/screenshots/Schema_SSR.png)](/screenshots/Schema_SSR.png)
+   [![Schema_LED](/screenshots/Schema_LED.png)](/screenshots/Schema_LED.png)
+
+   [![Schema_SSR](/screenshots/Schema_SSR.png)](/screenshots/Schema_SSR.png)
 
 
 ### Печатная плата
@@ -59,12 +59,12 @@
 
 ### Web-интерфес
 
-	[![Status](/screenshots/Status.png)](/screenshots/Status.png)
+   [![Status](/screenshots/Status.png)](/screenshots/Status.png)
 
-	[![Control](/screenshots/Control.png)](/screenshots/Control.png)
+   [![Control](/screenshots/Control.png)](/screenshots/Control.png)
 
-	[![ConfigESP](/screenshots/ConfigESP.png)](/screenshots/ConfigESP.png)
+   [![ConfigESP](/screenshots/ConfigESP.png)](/screenshots/ConfigESP.png)
 
-	[![ConfigMQTT](/screenshots/ConfigMQTT.png)](/screenshots/ConfigMQTT.png)
+   [![ConfigMQTT](/screenshots/ConfigMQTT.png)](/screenshots/ConfigMQTT.png)
 
-	[![Update](/screenshots/Update.png)](/screenshots/Update.png)
+   [![Update](/screenshots/Update.png)](/screenshots/Update.png)
