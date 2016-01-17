@@ -38,6 +38,15 @@
 - Eagle 7.5.0
 
 
+### Библиотеки Arduino:
+
+- ArduinoJson   [Ссылка](https://github.com/bblanchon/ArduinoJson)
+- Pubsubclient  [Ссылка](https://github.com/knolleary/pubsubclient)
+- BH1750        [Ссылка](https://github.com/claws/BH1750)
+- BME280        [Ссылка](https://github.com/sparkfun/SparkFun_BME280_Arduino_Library)
+- HTU21D        [Ссылка](https://github.com/enjoyneering/HTU21D)
+
+
 ### Датчик движения HC-SR501
 В доработке нуждается только датчик движения HC-SR501, который рассчитан на работу от 5V. Нужно отпаять регулятор напряжения и поставить перемычку.
 
