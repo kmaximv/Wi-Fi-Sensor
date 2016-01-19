@@ -1381,13 +1381,13 @@ void web_espConf(void) {
     data += inputBodyName + String("STA SSID") + inputBodyPOST + String("sta_ssid")  + inputPlaceHolder + ConfDevice.sta_ssid + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("sta_pwd");
-    if (payload.length() > 0 ) {
+    if (payload.length() > 7 ) {
       payload.toCharArray(ConfDevice.sta_pwd, sizeof(ConfDevice.sta_pwd));
     }
     data += inputBodyName + String("Password") + String("</span><input type='password' name='") + String("sta_pwd") + inputPlaceHolder + String("********") + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("staticIP");
-    if (payload.length() > 0 ) {
+    if (payload.length() > 6 ) {
       payload.toCharArray(staticIpStr, sizeof(staticIpStr));
       staticIpMode = 1;
     } else {
@@ -1396,7 +1396,7 @@ void web_espConf(void) {
     data += inputBodyName + String("Static IP") + inputBodyPOST + String("staticIP") + inputPlaceHolder + staticIpStr + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("staticGateway");
-    if (payload.length() > 0 ) {
+    if (payload.length() > 6 ) {
       payload.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
       staticIpMode = 1;
     } else {
@@ -1405,7 +1405,7 @@ void web_espConf(void) {
     data += inputBodyName + String("Static Gateway") + inputBodyPOST + String("staticGateway") + inputPlaceHolder + staticGatewayStr + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("staticSubnet");
-    if (payload.length() > 0 ) {
+    if (payload.length() > 6 ) {
       payload.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
       staticIpMode = 1;
     } else {
@@ -1707,13 +1707,14 @@ void setup() {
 
   // start WiFi
   WiFi.mode(WIFI_AP_STA);
-  WiFi.begin(ConfDevice.sta_ssid, ConfDevice.sta_pwd);
   if (staticIpMode == 1){
     IPAddress staticIP = stringToIp(staticIpStr);
     IPAddress staticGateway = stringToIp(staticGatewayStr);
     IPAddress staticSubnet = stringToIp(staticSubnetStr);
     WiFi.config(staticIP, staticGateway, staticSubnet);
   }
+  WiFi.begin(ConfDevice.sta_ssid, ConfDevice.sta_pwd);
+
   waitConnected();
   if (WiFi.status() == WL_CONNECTED) {
     WiFi.softAP(ConfDevice.module_id);
