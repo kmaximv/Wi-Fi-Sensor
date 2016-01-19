@@ -717,10 +717,9 @@ void MqttPubData()
     client.publish(topic_buff, ver);
   }
   
-  if (ConfDevice.ip_send == false){  
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  ip, ConfDevice.mqtt_name);
     client.publish(topic_buff, StringData.ipString.c_str());
-  }
+
   
   if (ConfDevice.mac_send == false){  
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  mac, ConfDevice.mqtt_name);
@@ -1398,7 +1397,7 @@ void web_espConf(void) {
     payload=server.arg("staticGateway");
     if (payload.length() > 6 ) {
       payload.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
-      staticIpMode = 1;
+      staticIpMode =+ 1;
     } else {
       staticIpMode = 0;
     }
@@ -1407,7 +1406,7 @@ void web_espConf(void) {
     payload=server.arg("staticSubnet");
     if (payload.length() > 6 ) {
       payload.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
-      staticIpMode = 1;
+      staticIpMode =+ 1;
     } else {
       staticIpMode = 0;
     }
@@ -1707,7 +1706,7 @@ void setup() {
 
   // start WiFi
   WiFi.mode(WIFI_AP_STA);
-  if (staticIpMode == 1){
+  if (staticIpMode == 3){
     IPAddress staticIP = stringToIp(staticIpStr);
     IPAddress staticGateway = stringToIp(staticGatewayStr);
     IPAddress staticSubnet = stringToIp(staticSubnetStr);
@@ -1780,9 +1779,9 @@ void loop() {
     GetFreeMemory();
 
     IPAddress espIP = WiFi.localIP();
-    if (GetIpString(espIP, StringData.ipString) == false){
-      ConfDevice.ip_send = false;
-    }
+
+    GetIpString(espIP, StringData.ipString);
+
 
     GetMacString();
 
