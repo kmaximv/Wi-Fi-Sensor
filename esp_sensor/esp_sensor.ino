@@ -830,13 +830,9 @@ void GetFreeMemory () {
 
 
 
-bool GetIpString (IPAddress ip, String strIp) {
-  String data = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
-  if (strIp != data){
-    strIp = data;
-    return false;
-  }
-  return true;
+String GetIpString (IPAddress ip) {
+  String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
+  return ipStr;
 }
 
 
@@ -1380,7 +1376,7 @@ void web_espConf(void) {
     data += inputBodyName + String("STA SSID") + inputBodyPOST + String("sta_ssid")  + inputPlaceHolder + ConfDevice.sta_ssid + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("sta_pwd");
-    if (payload.length() > 7 ) {
+    if (payload.length() > 7 &&  payload != "********") {
       payload.toCharArray(ConfDevice.sta_pwd, sizeof(ConfDevice.sta_pwd));
     }
     data += inputBodyName + String("Password") + String("</span><input type='password' name='") + String("sta_pwd") + inputPlaceHolder + String("********") + inputBodyClose + inputBodyCloseDiv;
@@ -1397,7 +1393,7 @@ void web_espConf(void) {
     payload=server.arg("staticGateway");
     if (payload.length() > 6 ) {
       payload.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
-      staticIpMode =+ 1;
+      staticIpMode += 1;
     } else {
       staticIpMode = 0;
     }
@@ -1406,7 +1402,7 @@ void web_espConf(void) {
     payload=server.arg("staticSubnet");
     if (payload.length() > 6 ) {
       payload.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
-      staticIpMode =+ 1;
+      staticIpMode += 1;
     } else {
       staticIpMode = 0;
     }
@@ -1779,9 +1775,7 @@ void loop() {
     GetFreeMemory();
 
     IPAddress espIP = WiFi.localIP();
-
-    GetIpString(espIP, StringData.ipString);
-
+    StringData.ipString = GetIpString(espIP);
 
     GetMacString();
 
