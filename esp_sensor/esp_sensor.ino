@@ -60,6 +60,8 @@ const char *mac = "MAC";
 const char *errorsDHT = "ErrorsDHT";
 const char *uptime = "Uptime";
 
+const char sec[] PROGMEM = "sec";
+
 struct ConfDeviceStruct {
   char sta_ssid[32];
   char sta_pwd[64];
@@ -259,6 +261,9 @@ const char javaScriptEndP[] PROGMEM = "\
    message = xmldoc[0].firstChild.nodeValue;\
    document.getElementById('humidityId').innerHTML=message;\
    xmldoc = xmlResponse.getElementsByTagName('illuminance');\
+   message = xmldoc[0].firstChild.nodeValue;\
+   document.getElementById('pressureId').innerHTML=message;\
+   xmldoc = xmlResponse.getElementsByTagName('pressure');\
    message = xmldoc[0].firstChild.nodeValue;\
    document.getElementById('illuminanceId').innerHTML=message;\
    xmldoc = xmlResponse.getElementsByTagName('uptime');\
@@ -1213,7 +1218,7 @@ void rootWebPage(void) {
     String Temperature  = panelBodySymbol + String(F("fire"))          + panelBodyName + String(F("Temperature")) + panelBodyValue + String(F(" id='temperatureId'")) + closingAngleBracket   + panelBodyEnd;
     String Pressure;
     #ifdef BME280_ON
-      Pressure          = panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + closingAngleBracket + StringData.pressureString + String(F(" mm"))    + panelBodyEnd;
+      Pressure          = panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + String(F(" id='pressureId'")) + closingAngleBracket      + panelBodyEnd;
     #endif
     String Lux          = panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket           + panelBodyEnd;
     
@@ -1432,21 +1437,21 @@ void web_espConf(void) {
 
     payload=server.arg("get_data_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.get_data_delay = atoi(payload.c_str());
+      ConfDevice.get_data_delay = atoi(payload.c_str())*1000;
     }
-    data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + String(ConfDevice.get_data_delay) + inputBodyClose + inputBodyUnitStart + String(F("ms")) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + String(ConfDevice.get_data_delay/1000) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("motion_read_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.motion_read_delay = atoi(payload.c_str());
+      ConfDevice.motion_read_delay = atoi(payload.c_str())*1000;
     }
-    data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + String(ConfDevice.motion_read_delay) + inputBodyClose + inputBodyUnitStart + String(F("ms")) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + String(ConfDevice.motion_read_delay/1000) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("reboot_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.reboot_delay = atoi(payload.c_str());
+      ConfDevice.reboot_delay = atoi(payload.c_str())*1000;
     }
-    data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + String(ConfDevice.reboot_delay) + inputBodyClose + inputBodyUnitStart + String(F("ms")) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + String(ConfDevice.reboot_delay/1000) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
 
     data += inputBodyEnd;
@@ -1523,15 +1528,15 @@ void web_mqttConf(void) {
 
     payload=server.arg("publish_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.publish_delay = atoi(payload.c_str());
+      ConfDevice.publish_delay = atoi(payload.c_str())*1000;
     }
-    data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + String(ConfDevice.publish_delay) + inputBodyClose + inputBodyUnitStart + String(F("ms")) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + String(ConfDevice.publish_delay/1000) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("subscribe_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.subscribe_delay = atoi(payload.c_str());
+      ConfDevice.subscribe_delay = atoi(payload.c_str())*1000;
     }
-    data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + String(ConfDevice.subscribe_delay) + inputBodyClose + inputBodyUnitStart + String(F("ms")) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + String(ConfDevice.subscribe_delay/1000) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
 
     data += inputBodyEnd;
@@ -1616,6 +1621,10 @@ void buildXML(){
     XML+=StringData.humidityString;
     XML+=String(F(" %"));
     XML+="</humidity>";
+    XML+="<pressure>";
+    XML+=StringData.pressureString;
+    XML+=String(F(" mm"));
+    XML+="</pressure>";
     XML+="<illuminance>";
     XML+=StringData.luxString;
     XML+=String(F(" lux"));
