@@ -626,19 +626,19 @@ void callback(char* topic, byte* payload, unsigned int length) {
       #ifdef DEBUG
         Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.println(F(" contains ON"));
       #endif
-      StringData.lightState = "ON";
+      StringData.lightState = F("ON");
       //digitalWrite(ConfDevice.light_pin, HIGH);
     } else if (strncmp (value_buff,"0",1) == 0){
       #ifdef DEBUG
         Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.println(F(" contains OFF"));
       #endif
-      StringData.lightState = "OFF";
+      StringData.lightState = F("OFF");
       //digitalWrite(ConfDevice.light_pin, LOW);
     } else if (strncmp (value_buff,"2",1) == 0){
       #ifdef DEBUG
         Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.println(F(" contains Auto"));
       #endif
-      StringData.lightState = "AUTO";
+      StringData.lightState = F("AUTO");
     }
     LightControl();
   }
@@ -680,11 +680,11 @@ void MqttPubLightState(){
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lightType, ConfDevice.mqtt_name);
   String lightStateNum;
   if (StringData.lightState == "ON"){
-    lightStateNum = "1";
+    lightStateNum = F("1");
   } else if (StringData.lightState == "OFF"){
-    lightStateNum = "0";
+    lightStateNum = F("0");
   } else {
-    lightStateNum = "2";
+    lightStateNum = F("2");
   }
   client.publish(topic_buff, lightStateNum.c_str());
 }
@@ -1208,23 +1208,23 @@ void rootWebPage(void) {
     String closingAngleBracket; closingAngleBracket += FPSTR(closingAngleBracketP);
     String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
 
-    String title1       = panelHeaderName + String("Sensor Data")   + panelHeaderEnd;
-    String Humidity     = panelBodySymbol + String("tint")          + panelBodyName + String("Humidity")    + panelBodyValue + String(" id='humidityId'") + closingAngleBracket      + panelBodyEnd;
-    String Temperature  = panelBodySymbol + String("fire")          + panelBodyName + String("Temperature") + panelBodyValue + String(" id='temperatureId'") + closingAngleBracket   + panelBodyEnd;
+    String title1       = panelHeaderName + String(F("Sensor Data"))   + panelHeaderEnd;
+    String Humidity     = panelBodySymbol + String(F("tint"))          + panelBodyName + String(F("Humidity"))    + panelBodyValue + String(F(" id='humidityId'")) + closingAngleBracket      + panelBodyEnd;
+    String Temperature  = panelBodySymbol + String(F("fire"))          + panelBodyName + String(F("Temperature")) + panelBodyValue + String(F(" id='temperatureId'")) + closingAngleBracket   + panelBodyEnd;
     String Pressure;
     #ifdef BME280_ON
-      Pressure     = panelBodySymbol + String("cloud")         + panelBodyName + String("Pressure")    + panelBodyValue + closingAngleBracket + StringData.pressureString + String(" mm")    + panelBodyEnd;
+      Pressure          = panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + closingAngleBracket + StringData.pressureString + String(F(" mm"))    + panelBodyEnd;
     #endif
-    String Lux          = panelBodySymbol + String("asterisk")      + panelBodyName + String("illuminance") + panelBodyValue + String(" id='illuminanceId'") + closingAngleBracket           + panelBodyEnd;
+    String Lux          = panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket           + panelBodyEnd;
     
-    String title2       = panelHeaderName + String("ESP Settings")  + panelHeaderEnd;
-    String ssid         = panelBodySymbol + String("signal")        + panelBodyName + String("Wi-Fi SSID")  + panelBodyValue + closingAngleBracket + ConfDevice.sta_ssid          + panelBodyEnd;
-    String IPAddClient  = panelBodySymbol + String("globe")         + panelBodyName + String("IP Address")  + panelBodyValue + closingAngleBracket + StringData.ipString          + panelBodyEnd;
-    String MacAddr      = panelBodySymbol + String("scale")         + panelBodyName + String("MAC Address") + panelBodyValue + closingAngleBracket + StringData.macString         + panelBodyEnd;
-    String MqttPrefix   = panelBodySymbol + String("tag")           + panelBodyName + String("MQTT Prefix") + panelBodyValue + closingAngleBracket + ConfDevice.mqtt_name         + panelBodyEnd;
-    String Uptime       = panelBodySymbol + String("time")          + panelBodyName + String("Uptime")      + panelBodyValue + String(" id='uptimeId'") + closingAngleBracket     + panelBodyEnd;
-    String FreeMem      = panelBodySymbol + String("flash")         + panelBodyName + String("Free Memory") + panelBodyValue + String(" id='freeMemoryId'") + closingAngleBracket + panelBodyEnd;
-    String Ver          = panelBodySymbol + String("flag")          + panelBodyName + String("Version")     + panelBodyValue + closingAngleBracket + ver                          + panelBodyEnd;
+    String title2       = panelHeaderName + String(F("ESP Settings"))  + panelHeaderEnd;
+    String ssid         = panelBodySymbol + String(F("signal"))        + panelBodyName + String(F("Wi-Fi SSID"))  + panelBodyValue + closingAngleBracket + ConfDevice.sta_ssid              + panelBodyEnd;
+    String IPAddClient  = panelBodySymbol + String(F("globe"))         + panelBodyName + String(F("IP Address"))  + panelBodyValue + closingAngleBracket + StringData.ipString              + panelBodyEnd;
+    String MacAddr      = panelBodySymbol + String(F("scale"))         + panelBodyName + String(F("MAC Address")) + panelBodyValue + closingAngleBracket + macAddrStr                       + panelBodyEnd;
+    String MqttPrefix   = panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + ConfDevice.mqtt_name             + panelBodyEnd;
+    String Uptime       = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("Uptime"))      + panelBodyValue + String(F(" id='uptimeId'"))     + closingAngleBracket  + panelBodyEnd;
+    String FreeMem      = panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
+    String Ver          = panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + ver                              + panelBodyEnd;
     
     server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + Temperature + Humidity + Pressure + Lux + panelEnd + title2 + ssid + IPAddClient + MacAddr + MqttPrefix + Uptime + FreeMem + Ver + panelEnd + panelEnd + containerEnd + siteEnd);
   });
@@ -1322,7 +1322,7 @@ void setupWebUpdate(void) {
     String containerEnd;          containerEnd += FPSTR(containerEndP);
     String siteEnd;               siteEnd += FPSTR(siteEndP);
 
-    String varDataString = String("<div class='col-md-4'><div class='page-header'><h1>Update Frimware</h1></div><div class='alert alert-success'>") + ((Update.hasError()) ? "FAIL" : "Update Frimware: OK") + String("</div></div>");
+    String varDataString = String(F("<div class='col-md-4'><div class='page-header'><h1>Update Frimware</h1></div><div class='alert alert-success'>")) + ((Update.hasError()) ? F("FAIL") : F("Update Frimware: OK")) + String(F("</div></div>"));
 
 
     server.send(200, "text/html", headerStart + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + varDataString + containerEnd + siteEnd);
@@ -1365,7 +1365,7 @@ void web_espConf(void) {
     String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
     String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
 
-    String title1 = panelHeaderName + String("ESP Configuration") + panelHeaderEnd;
+    String title1 = panelHeaderName + String(F("ESP Configuration")) + panelHeaderEnd;
     String data = title1 + network_html + inputBodyStart;
     String d = "";
 
@@ -1374,13 +1374,13 @@ void web_espConf(void) {
     if (payload.length() > 0 ) {
       payload.toCharArray(ConfDevice.sta_ssid, sizeof(ConfDevice.sta_ssid));
     }
-    data += inputBodyName + String("STA SSID") + inputBodyPOST + String("sta_ssid")  + inputPlaceHolder + ConfDevice.sta_ssid + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + ConfDevice.sta_ssid + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("sta_pwd");
     if (payload.length() > 7 &&  payload != "********") {
       payload.toCharArray(ConfDevice.sta_pwd, sizeof(ConfDevice.sta_pwd));
     }
-    data += inputBodyName + String("Password") + String("</span><input type='password' name='") + String("sta_pwd") + inputPlaceHolder + String("********") + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("staticIP");
     if (payload.length() > 6 ) {
@@ -1416,37 +1416,37 @@ void web_espConf(void) {
     if (payload.length() > 0 ) {
       ConfDevice.light_pin = atoi(payload.c_str());
     }
-    data += inputBodyName + String("Light Pin") + inputBodyPOST + String("light_pin") + inputPlaceHolder + String(ConfDevice.light_pin) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + String(ConfDevice.light_pin) + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("motion_pin");
     if (payload.length() > 0 ) {
       ConfDevice.motion_pin = atoi(payload.c_str());
     }
-    data += inputBodyName + String("Motion Pin") + inputBodyPOST + String("motion_pin") + inputPlaceHolder + String(ConfDevice.motion_pin) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + String(ConfDevice.motion_pin) + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("dht_pin");
     if (payload.length() > 0 ) {
       ConfDevice.dht_pin = atoi(payload.c_str());
     }
-    data += inputBodyName + String("DHT Pin") + inputBodyPOST + String("dht_pin") + inputPlaceHolder + String(ConfDevice.dht_pin) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + String(ConfDevice.dht_pin) + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("get_data_delay");
     if (payload.length() > 0 ) {
       ConfDevice.get_data_delay = atoi(payload.c_str());
     }
-    data += inputBodyName + String("Update Data Delay") + inputBodyPOST + String("get_data_delay") + inputPlaceHolder + String(ConfDevice.get_data_delay) + inputBodyClose + inputBodyUnitStart + String("ms") + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + String(ConfDevice.get_data_delay) + inputBodyClose + inputBodyUnitStart + String(F("ms")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("motion_read_delay");
     if (payload.length() > 0 ) {
       ConfDevice.motion_read_delay = atoi(payload.c_str());
     }
-    data += inputBodyName + String("Motion Read Delay") + inputBodyPOST + String("motion_read_delay") + inputPlaceHolder + String(ConfDevice.motion_read_delay) + inputBodyClose + inputBodyUnitStart + String("ms") + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + String(ConfDevice.motion_read_delay) + inputBodyClose + inputBodyUnitStart + String(F("ms")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("reboot_delay");
     if (payload.length() > 0 ) {
       ConfDevice.reboot_delay = atoi(payload.c_str());
     }
-    data += inputBodyName + String("Reboot Delay") + inputBodyPOST + String("reboot_delay") + inputPlaceHolder + String(ConfDevice.reboot_delay) + inputBodyClose + inputBodyUnitStart + String("ms") + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + String(ConfDevice.reboot_delay) + inputBodyClose + inputBodyUnitStart + String(F("ms")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
 
     data += inputBodyEnd;
@@ -1492,46 +1492,46 @@ void web_mqttConf(void) {
     String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
     String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
 
-    String title1 = panelHeaderName + String("MQTT Configuration") + panelHeaderEnd;
+    String title1 = panelHeaderName + String(F("MQTT Configuration")) + panelHeaderEnd;
     String data = title1 + inputBodyStart;
 
     String payload=server.arg("mqtt_ip");
     if (payload.length() > 0 ) {
       payload.toCharArray(mqttServerIpStr, sizeof(mqttServerIpStr));
     }
-    data += inputBodyName + String("Server MQTT") + inputBodyPOST + String("mqtt_ip") + inputPlaceHolder + mqttServerIpStr + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_ip")) + inputPlaceHolder + mqttServerIpStr + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqtt_name");
     if (payload.length() > 0 ) {
       payload.toCharArray(ConfDevice.mqtt_name, sizeof(ConfDevice.mqtt_name));
     }
-    data += inputBodyName + String("MQTT Prefix") + inputBodyPOST + String("mqtt_name") + inputPlaceHolder + ConfDevice.mqtt_name + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + ConfDevice.mqtt_name + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("publish_topic");
     if (payload.length() > 0 ) {
-      payload.replace("%2F", String("/"));
+      payload.replace("%2F", String(F("/")));
       payload.toCharArray(ConfDevice.publish_topic, sizeof(ConfDevice.publish_topic));
     }
-    data += inputBodyName + String("Publish Topic") + inputBodyPOST + String("publish_topic") + inputPlaceHolder + ConfDevice.publish_topic + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + ConfDevice.publish_topic + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("subscribe_topic");
     if (payload.length() > 0 ) {
-      payload.replace("%2F", String("/"));
+      payload.replace("%2F", String(F("/")));
       payload.toCharArray(ConfDevice.subscribe_topic, sizeof(ConfDevice.subscribe_topic));
     }
-    data += inputBodyName + String("Subscribe Topic") + inputBodyPOST + String("subscribe_topic") + inputPlaceHolder + ConfDevice.subscribe_topic + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + ConfDevice.subscribe_topic + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("publish_delay");
     if (payload.length() > 0 ) {
       ConfDevice.publish_delay = atoi(payload.c_str());
     }
-    data += inputBodyName + String("Publish Delay") + inputBodyPOST + String("publish_delay") + inputPlaceHolder + String(ConfDevice.publish_delay) + inputBodyClose + inputBodyUnitStart + String("ms") + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + String(ConfDevice.publish_delay) + inputBodyClose + inputBodyUnitStart + String(F("ms")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("subscribe_delay");
     if (payload.length() > 0 ) {
       ConfDevice.subscribe_delay = atoi(payload.c_str());
     }
-    data += inputBodyName + String("Subscribe Delay") + inputBodyPOST + String("subscribe_delay") + inputPlaceHolder + String(ConfDevice.subscribe_delay) + inputBodyClose + inputBodyUnitStart + String("ms") + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + String(ConfDevice.subscribe_delay) + inputBodyClose + inputBodyUnitStart + String(F("ms")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
 
     data += inputBodyEnd;
@@ -1610,15 +1610,15 @@ void buildXML(){
   XML+="<Donnees>"; 
     XML+="<temperature>";
     XML+=StringData.temperatureString;
-    XML+=String(" °C");
+    XML+=String(F(" °C"));
     XML+="</temperature>";
     XML+="<humidity>";
     XML+=StringData.humidityString;
-    XML+=String(" %");
+    XML+=String(F(" %"));
     XML+="</humidity>";
     XML+="<illuminance>";
     XML+=StringData.luxString;
-    XML+=String(" lux");
+    XML+=String(F(" lux"));
     XML+="</illuminance>";
     XML+="<uptime>";
     XML+=StringData.uptimeString;
