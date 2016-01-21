@@ -1,0 +1,72 @@
+sitemap room label="Моя комната"
+{
+	Frame {
+		Text item=Temp_BedM valuecolor=[Temp_BedM_LastUpdate=="Uninitialized"="lightgray", Temp_BedM_LastUpdate>600="lightgray", >27="red",>20="green",<=19="blue"] {
+			Frame {
+				Switch item=Temp_BedM_Chart_Period mappings=[0="Hour", 1="Day", 2="Week"]
+				Chart item=Temp_BedM period=h refresh=6000 visibility=[Temp_BedM_Chart_Period==0, Temp_BedM_Chart_Period=="Uninitialized"]
+				Chart item=Temp_BedM period=D refresh=30000 visibility=[Temp_BedM_Chart_Period==1]
+				Chart item=Temp_BedM period=W refresh=30000 visibility=[Temp_BedM_Chart_Period==2]
+			}
+		}	
+	}
+
+	Frame {
+		Text item=Humidity_BedM valuecolor=[Humidity_BedM_LastUpdate=="Uninitialized"="lightgray", Humidity_BedM_LastUpdate>600="lightgray",>30="orange",>15="green",>5="orange",<=5="blue"] {
+			Frame {
+				Switch item=Humidity_BedM_Chart_Period mappings=[0="Hour", 1="Day", 2="Week"]
+				Chart item=Humidity_BedM period=h refresh=6000 visibility=[Humidity_BedM_Chart_Period==0, Humidity_BedM_Chart_Period=="Uninitialized"]
+				Chart item=Humidity_BedM period=D refresh=30000 visibility=[Humidity_BedM_Chart_Period==1]
+				Chart item=Humidity_BedM period=W refresh=30000 visibility=[Humidity_BedM_Chart_Period==2]
+			}
+		}	
+	}
+
+	Frame {
+		Text item=Lux_BedM	valuecolor=[Lux_BedM_LastUpdate=="Uninitialized"="lightgray", Lux_BedM_LastUpdate>600="lightgray", >300="green", >12="orange", <12="red"] {
+			Frame {
+				Switch item=Lux_BedM_Chart_Period mappings=[0="Hour", 1="Day", 2="Week"]
+				Chart item=Lux_BedM period=h refresh=6000 visibility=[Lux_BedM_Chart_Period==0, Lux_BedM_Chart_Period=="Uninitialized"]
+				Chart item=Lux_BedM period=D refresh=30000 visibility=[Lux_BedM_Chart_Period==1]
+				Chart item=Lux_BedM period=W refresh=30000 visibility=[Lux_BedM_Chart_Period==2]
+			}
+		}	
+	}
+
+	Frame {
+		Text item=Pressure_BedM	valuecolor=[Pressure_BedM_LastUpdate=="Uninitialized"="lightgray", Pressure_BedM_LastUpdate>600="lightgray", >760="red", >740="orange", >710="green", <=710="blue"] {
+			Frame {
+				Switch item=Pressure_BedM_Chart_Period mappings=[0="Hour", 1="Day", 2="Week"]
+				Chart item=Pressure_BedM period=h refresh=6000 visibility=[Pressure_BedM_Chart_Period==0, Pressure_BedM_Chart_Period=="Uninitialized"]
+				Chart item=Pressure_BedM period=D refresh=30000 visibility=[Pressure_BedM_Chart_Period==1]
+				Chart item=Pressure_BedM period=W refresh=30000 visibility=[Pressure_BedM_Chart_Period==2]
+			}
+		}	
+	}
+
+
+
+	Frame label="Управление освещением"{
+		Switch item=LightType_BedM label="Свет" mappings=[2=Auto, 1=On, 0=Off]
+		Switch item=Light_BedM mappings=[1=On, 0=Off]
+		Switch item=MotionSensor_BedM	visibility=[LightType_BedM==2]
+		Switch item=MotionState_BedM		visibility=[LightType_BedM==2] mappings=[1=On, 0=Off]
+		Setpoint item=MotionSensorTimer_BedM minValue=1 maxValue=20 step=1	visibility=[LightType_BedM==2]
+	}
+
+
+	Frame label="Дополнительно"{
+	Switch item=BedM_Settings
+	Text item=Version_BedM	visibility=[BedM_Settings==ON]
+	Text item=IP_BedM	visibility=[BedM_Settings==ON]
+	Text item=MAC_BedM	visibility=[BedM_Settings==ON]
+	Text item=Uptime_BedM	visibility=[BedM_Settings==ON]
+	Text item=FreeMemory_BedM	visibility=[BedM_Settings==ON]
+	Text item=Temp_BedM_LastUpdate visibility=[BedM_Settings==ON] valuecolor=[Temp_BedM_LastUpdate>300="red", Temp_BedM_LastUpdate>120="orange", Temp_BedM_LastUpdate<60="green"]
+	Text item=Humidity_BedM_LastUpdate visibility=[BedM_Settings==ON] valuecolor=[Humidity_BedM_LastUpdate>300="red", Humidity_BedM_LastUpdate>120="orange", Humidity_BedM_LastUpdate<60="green"]
+	Text item=Lux_BedM_LastUpdate visibility=[BedM_Settings==ON] valuecolor=[Lux_BedM_LastUpdate>300="red", Lux_BedM_LastUpdate>120="orange", Lux_BedM_LastUpdate<60="green"]
+	Text item=Pressure_BedM_LastUpdate visibility=[BedM_Settings==ON] valuecolor=[Pressure_BedM_LastUpdate>300="red", Pressure_BedM_LastUpdate>120="orange", Pressure_BedM_LastUpdate<60="green"]
+
+	}
+
+}

@@ -77,3 +77,16 @@
    [![ConfigMQTT](/screenshots/ConfigMQTT.png)](/screenshots/ConfigMQTT.png)
 
    [![Update](/screenshots/Update.png)](/screenshots/Update.png)
+
+
+### OpenHab
+
+   [![Status](/screenshots/OpenHab.png)](/screenshots/OpenHab.png)
+
+Управление освещением имеет 3 режима: Включен, Выключен, Авто.
+В Авто режиме свет включается по датчику движения. Также есть настройка задержки отключения.
+
+
+   [![Status](/screenshots/OpenHab_graph.png)](/screenshots/OpenHab_graph.png)
+
+   [![Extand](/screenshots/OpenHab_ext.png)](/screenshots/OpenHab_ext.png)
