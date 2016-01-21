@@ -1395,7 +1395,7 @@ void web_espConf(void) {
       d.toCharArray(staticIpStr, sizeof(staticIpStr));
       staticIpMode = 0;
     }
-    data += inputBodyName + String("Static IP") + inputBodyPOST + String("staticIP") + inputPlaceHolder + staticIpStr + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Static IP")) + inputBodyPOST + String(F("staticIP")) + inputPlaceHolder + staticIpStr + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("staticGateway");
     if (payload.length() > 6 ) {
@@ -1405,7 +1405,7 @@ void web_espConf(void) {
       d.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
       staticIpMode = 0;
     }
-    data += inputBodyName + String("Static Gateway") + inputBodyPOST + String("staticGateway") + inputPlaceHolder + staticGatewayStr + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("staticGateway")) + inputPlaceHolder + staticGatewayStr + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("staticSubnet");
     if (payload.length() > 6 ) {
@@ -1415,7 +1415,7 @@ void web_espConf(void) {
       d.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
       staticIpMode = 0;
     }
-    data += inputBodyName + String("Static Subnet") + inputBodyPOST + String("staticSubnet") + inputPlaceHolder + staticSubnetStr + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Static Subnet")) + inputBodyPOST + String(F("staticSubnet")) + inputPlaceHolder + staticSubnetStr + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("light_pin");
     if (payload.length() > 0 ) {
@@ -1611,31 +1611,31 @@ void web_pinControl(void) {
 String XML;
 
 void buildXML(){
-  XML="<?xml version='1.0'?>";
-  XML+="<Donnees>"; 
-    XML+="<temperature>";
-    XML+=StringData.temperatureString;
-    XML+=String(F(" °C"));
-    XML+="</temperature>";
-    XML+="<humidity>";
-    XML+=StringData.humidityString;
-    XML+=String(F(" %"));
-    XML+="</humidity>";
-    XML+="<pressure>";
-    XML+=StringData.pressureString;
-    XML+=String(F(" mm"));
-    XML+="</pressure>";
-    XML+="<illuminance>";
-    XML+=StringData.luxString;
-    XML+=String(F(" lux"));
-    XML+="</illuminance>";
-    XML+="<uptime>";
-    XML+=StringData.uptimeString;
-    XML+="</uptime>";
-    XML+="<freeMemory>";
-    XML+=StringData.freeMemoryString;
-    XML+="</freeMemory>";
-  XML+="</Donnees>"; 
+XML=String(F("<?xml version='1.0'?>"));
+XML+=String(F("<Donnees>")); 
+XML+=String(F("<temperature>"));
+XML+=StringData.temperatureString;
+XML+=String(F(" °C"));
+XML+=String(F("</temperature>"));
+XML+=String(F("<humidity>"));
+XML+=StringData.humidityString;
+XML+=String(F(" %"));
+XML+=String(F("</humidity>"));
+XML+=String(F("<pressure>"));
+XML+=StringData.pressureString;
+XML+=String(F(" mm"));
+XML+=String(F("</pressure>"));
+XML+=String(F("<illuminance>"));
+XML+=StringData.luxString;
+XML+=String(F(" lux"));
+XML+=String(F("</illuminance>"));
+XML+=String(F("<uptime>"));
+XML+=StringData.uptimeString;
+XML+=String(F("</uptime>"));
+XML+=String(F("<freeMemory>"));
+XML+=StringData.freeMemoryString;
+XML+=String(F("</freeMemory>"));
+XML+=String(F("</Donnees>")); 
 }
 
 
