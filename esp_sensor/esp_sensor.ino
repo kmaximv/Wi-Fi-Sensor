@@ -228,9 +228,15 @@ String pinControlEnd;         pinControlEnd += FPSTR(pinControlEndP);
 
 const char headerStartP[] PROGMEM = "<html lang='en'><head><title>ESP8266</title><meta charset='utf-8'>";
 const char headerRefreshStatusP[] PROGMEM = "<META HTTP-EQUIV='Refresh' CONTENT='20; URL=/'>";
-const char headerEndP[] PROGMEM = "<meta name='viewport' content='width=device-width, initial-scale=1'><link rel='stylesheet' href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css'><script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script><script src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js'></script></head>";
 
-const char javaScriptP[] PROGMEM = "<SCRIPT>\
+const char headerEndP[] PROGMEM = 
+"<meta name='viewport' content='width=device-width, initial-scale=1'>\
+<link rel='stylesheet' href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css'>\
+<script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>\
+<script src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js'></script></head>";
+
+const char javaScriptP[] PROGMEM = 
+"<SCRIPT>\
 var xmlHttp=createXmlHttpObject();\
 function createXmlHttpObject(){\
   if(window.XMLHttpRequest){\
@@ -252,26 +258,26 @@ function handleServerResponse(){\
  if(xmlHttp.readyState==4 && xmlHttp.status==200){\
    xmlResponse=xmlHttp.responseXML;";
 
-
-const char javaScriptEndP[] PROGMEM = "\
-   xmldoc = xmlResponse.getElementsByTagName('temperature');\
-   message = xmldoc[0].firstChild.nodeValue;\
-   document.getElementById('temperatureId').innerHTML=message;\
-   xmldoc = xmlResponse.getElementsByTagName('humidity');\
-   message = xmldoc[0].firstChild.nodeValue;\
-   document.getElementById('humidityId').innerHTML=message;\
-   xmldoc = xmlResponse.getElementsByTagName('illuminance');\
-   message = xmldoc[0].firstChild.nodeValue;\
-   document.getElementById('pressureId').innerHTML=message;\
-   xmldoc = xmlResponse.getElementsByTagName('pressure');\
-   message = xmldoc[0].firstChild.nodeValue;\
-   document.getElementById('illuminanceId').innerHTML=message;\
-   xmldoc = xmlResponse.getElementsByTagName('uptime');\
-   message = xmldoc[0].firstChild.nodeValue;\
-   document.getElementById('uptimeId').innerHTML=message;\
-   xmldoc = xmlResponse.getElementsByTagName('freeMemory');\
-   message = xmldoc[0].firstChild.nodeValue;\
-   document.getElementById('freeMemoryId').innerHTML=message;\
+// Длина строки не должна быть больше 1024 символов
+const char javaScriptEndP[] PROGMEM = 
+"xmldoc = xmlResponse.getElementsByTagName('temperature');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('temperatureId').innerHTML=message;\
+xmldoc = xmlResponse.getElementsByTagName('humidity');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('humidityId').innerHTML=message;\
+xmldoc = xmlResponse.getElementsByTagName('illuminance');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('pressureId').innerHTML=message;\
+xmldoc = xmlResponse.getElementsByTagName('pressure');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('illuminanceId').innerHTML=message;\
+xmldoc = xmlResponse.getElementsByTagName('uptime');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('uptimeId').innerHTML=message;\
+xmldoc = xmlResponse.getElementsByTagName('freeMemory');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('freeMemoryId').innerHTML=message;\
  }\
 }\
 </SCRIPT>";
@@ -280,15 +286,23 @@ const char javaScriptEndP[] PROGMEM = "\
 const char bodyAjaxP[] PROGMEM = "<body onload='process()'>";
 const char bodyNonAjaxP[] PROGMEM = "<body>";
 
-const char navbarStartP[] PROGMEM = "<nav class='navbar navbar-inverse'><div class='container-fluid'><div class='navbar-header'><a class='navbar-brand' href='/'>ESP8266</a></div><div><ul class='nav navbar-nav'>";
+const char navbarStartP[] PROGMEM = 
+"<nav class='navbar navbar-inverse'><div class='container-fluid'><div class='navbar-header'>\
+<a class='navbar-brand' href='/'>ESP8266</a></div><div><ul class='nav navbar-nav'>";
+
 const char navbarNonActiveP[] PROGMEM = "<li>";
 const char navbarActiveP[] PROGMEM = "<li class='active'>";
-const char navbarEndP[] PROGMEM  = "<a href='/'><span class='glyphicon glyphicon-dashboard'></span> Status</a></li><li><a href='/pincontrol'><span class='glyphicon glyphicon-tasks'></span> Control Pins</a></li><li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'><span class='glyphicon glyphicon-cog'></span> Configure<span class='caret'></span></a><ul class='dropdown-menu'>\
-                   <li><a href='/espconf'>Configure ESP</a></li>\
-                   <li><a href='/mqttconf'>Configure MQTT</a></li>\
-                   <li><a href='/update'>Update frimware</a></li>\
-                   <li><a href='/reboot'>Reboot ESP</a></li>\
-                   </ul></li></ul></div></div></nav>"; 
+
+const char navbarEndP[] PROGMEM  = 
+"<a href='/'><span class='glyphicon glyphicon-dashboard'></span> Status</a></li>\
+<li><a href='/pincontrol'><span class='glyphicon glyphicon-tasks'></span> Control Pins</a></li>\
+<li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'>\
+<span class='glyphicon glyphicon-cog'></span> Configure<span class='caret'></span></a><ul class='dropdown-menu'>\
+<li><a href='/espconf'>Configure ESP</a></li>\
+<li><a href='/mqttconf'>Configure MQTT</a></li>\
+<li><a href='/update'>Update frimware</a></li>\
+<li><a href='/reboot'>Reboot ESP</a></li>\
+</ul></li></ul></div></div></nav>"; 
 
 const char containerStartP[] PROGMEM    =  "<div class='container'><div class='row'>";
 const char containerEndP[] PROGMEM      =  "<div class='clearfix visible-lg'></div></div></div>";
@@ -298,15 +312,20 @@ const char panelHeaderNameP[] PROGMEM     =  "<div class='col-md-4'><div class='
 const char panelHeaderEndP[] PROGMEM    =  "</h1></div>";
 const char panelEndP[] PROGMEM        =  "</div>";
   
-const char panelBodySymbolP[] PROGMEM     =  "<div class='panel panel-default'><div class='panel-body'><span class='glyphicon glyphicon-";
+const char panelBodySymbolP[] PROGMEM     =  
+"<div class='panel panel-default'><div class='panel-body'><span class='glyphicon glyphicon-";
+
 const char panelBodyNameP[] PROGMEM     =  "'></span> ";
 const char panelBodyValueP[] PROGMEM    =  "<span class='pull-right'";
 const char closingAngleBracketP[] PROGMEM    =  ">";
 
 const char panelBodyEndP[] PROGMEM      =  "</span></div></div>";
 
-const char inputBodyStartP[] PROGMEM    =  "<form action='' method='POST'><div class='panel panel-default'><div class='panel-body'>";
-const char inputBodyNameP[] PROGMEM     =  "<div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>";
+const char inputBodyStartP[] PROGMEM    =  
+"<form action='' method='POST'><div class='panel panel-default'><div class='panel-body'>";
+
+const char inputBodyNameP[] PROGMEM     =  
+"<div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>";
 
 const char inputBodyPOSTP[] PROGMEM     =  "</span><input type='text' name='";
 const char inputPlaceHolderP[] PROGMEM  =  "' class='form-control' value='";
@@ -318,21 +337,26 @@ const char inputBodyUnitEndP[] PROGMEM    =  "</span>";
 
 const char inputBodyCloseDivP[] PROGMEM    =  "</div></div>";
 
-
-const char inputBodyEndP[] PROGMEM      =  "</div><div class='panel-footer clearfix'><div class='pull-right'><button type='submit' class='btn btn-default'>Save</button></div></div></div></form>";
+const char inputBodyEndP[] PROGMEM      = 
+"</div><div class='panel-footer clearfix'><div class='pull-right'>\
+<button type='submit' class='btn btn-default'>Save</button></div></div></div></form>";
 
 const char sketchUploadFormP[] PROGMEM  = 
-    "<div class='col-md-4'><div class='page-header'><h1>Update Frimware</h1></div><form method='POST' action='/upload_sketch' enctype='multipart/form-data'>\
-    <p><input type='file' class='btn btn-primary' name='sketch'></p>\
-    <h3><small>Выберите файл формата *.bin</small></h3>\
-    <p><input type='submit' value='Upload' class='btn btn-danger'></p></form></div>";
+"<div class='col-md-4'><div class='page-header'><h1>Update Frimware</h1></div>\
+<form method='POST' action='/upload_sketch' enctype='multipart/form-data'>\
+<p><input type='file' class='btn btn-primary' name='sketch'></p>\
+<h3><small>Выберите файл формата *.bin</small></h3>\
+<p><input type='submit' value='Upload' class='btn btn-danger'></p></form></div>";
 
 
 
 
-const char pinControlStartP[] PROGMEM  = "<div class='row'><div class='col-md-5'><h1>Control Pins</h1><table class='table table-hover'><tbody>\
-    <tr><td class='active'><h4>Pins</h4></td><td class='active'></td><td class='active'></td><td class='active'><h4>Status</h4></td><td class='active'><h4>Mode</h4></td></tr>\
-    <tr><td class='active'><h4>Led Strip</h4></td><td class='active'><a href='/pincontrol/";
+const char pinControlStartP[] PROGMEM  = 
+"<div class='row'><div class='col-md-5'><h1>Control Pins</h1><table class='table table-hover'><tbody>\
+<tr><td class='active'><h4>Pins</h4></td><td class='active'></td><td class='active'></td>\
+<td class='active'><h4>Status</h4></td><td class='active'><h4>Mode</h4></td></tr>\
+<tr><td class='active'><h4>Led Strip</h4></td><td class='active'><a href='/pincontrol/";
+
 const char pinControlOnP[] PROGMEM  = "button1on";
 const char pinControlOffP[] PROGMEM  = "button1off";
 const char pinControlBody1P[] PROGMEM  = "' class='btn btn-";
@@ -348,7 +372,8 @@ const char pinControlBody2P[] PROGMEM  = "' role='button'>";
 const char pinControlTxtOnP[] PROGMEM  = "Turn On";
 const char pinControlTxtOffP[] PROGMEM  = "Turn Off";
 
-const char pinControlBody3P[] PROGMEM  = "</a></td>   <td class='active'><a href='/pincontrol/button1auto' class='btn btn-";
+const char pinControlBody3P[] PROGMEM  = 
+"</a></td>   <td class='active'><a href='/pincontrol/button1auto' class='btn btn-";
 // put class
 const char pinControlBody4P[] PROGMEM  = "' role='button'>Auto</a></td> <td class='";
 // put class
