@@ -1367,6 +1367,7 @@ void web_espConf(void) {
 
     String title1 = panelHeaderName + String("ESP Configuration") + panelHeaderEnd;
     String data = title1 + network_html + inputBodyStart;
+    String d = "";
 
 
     String payload=server.arg("sta_ssid");
@@ -1386,6 +1387,7 @@ void web_espConf(void) {
       payload.toCharArray(staticIpStr, sizeof(staticIpStr));
       staticIpMode = 1;
     } else {
+      d.toCharArray(staticIpStr, sizeof(staticIpStr));
       staticIpMode = 0;
     }
     data += inputBodyName + String("Static IP") + inputBodyPOST + String("staticIP") + inputPlaceHolder + staticIpStr + inputBodyClose + inputBodyCloseDiv;
@@ -1395,6 +1397,7 @@ void web_espConf(void) {
       payload.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
       staticIpMode += 1;
     } else {
+      d.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
       staticIpMode = 0;
     }
     data += inputBodyName + String("Static Gateway") + inputBodyPOST + String("staticGateway") + inputPlaceHolder + staticGatewayStr + inputBodyClose + inputBodyCloseDiv;
@@ -1404,6 +1407,7 @@ void web_espConf(void) {
       payload.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
       staticIpMode += 1;
     } else {
+      d.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
       staticIpMode = 0;
     }
     data += inputBodyName + String("Static Subnet") + inputBodyPOST + String("staticSubnet") + inputPlaceHolder + staticSubnetStr + inputBodyClose + inputBodyCloseDiv;
