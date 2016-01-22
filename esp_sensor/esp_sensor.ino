@@ -626,19 +626,19 @@ void callback(char* topic, byte* payload, unsigned int length) {
       #ifdef DEBUG
         Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.println(F(" contains ON"));
       #endif
-      StringData.lightState = F("ON");
+      StringData.lightState = String(F("ON"));
       //digitalWrite(ConfDevice.light_pin, HIGH);
     } else if (strncmp (value_buff,"0",1) == 0){
       #ifdef DEBUG
         Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.println(F(" contains OFF"));
       #endif
-      StringData.lightState = F("OFF");
+      StringData.lightState = String(F("OFF"));
       //digitalWrite(ConfDevice.light_pin, LOW);
     } else if (strncmp (value_buff,"2",1) == 0){
       #ifdef DEBUG
         Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.println(F(" contains Auto"));
       #endif
-      StringData.lightState = F("AUTO");
+      StringData.lightState = String(F("AUTO"));
     }
     LightControl();
   }
@@ -680,11 +680,11 @@ void MqttPubLightState(){
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lightType, ConfDevice.mqtt_name);
   String lightStateNum;
   if (StringData.lightState == "ON"){
-    lightStateNum = F("1");
+    lightStateNum = String(F("1"));
   } else if (StringData.lightState == "OFF"){
-    lightStateNum = F("0");
+    lightStateNum = String(F("0"));
   } else {
-    lightStateNum = F("2");
+    lightStateNum = String(F("2"));
   }
   client.publish(topic_buff, lightStateNum.c_str());
 }
@@ -1220,7 +1220,7 @@ void rootWebPage(void) {
     String title2       = panelHeaderName + String(F("ESP Settings"))  + panelHeaderEnd;
     String ssid         = panelBodySymbol + String(F("signal"))        + panelBodyName + String(F("Wi-Fi SSID"))  + panelBodyValue + closingAngleBracket + ConfDevice.sta_ssid              + panelBodyEnd;
     String IPAddClient  = panelBodySymbol + String(F("globe"))         + panelBodyName + String(F("IP Address"))  + panelBodyValue + closingAngleBracket + StringData.ipString              + panelBodyEnd;
-    String MacAddr      = panelBodySymbol + String(F("scale"))         + panelBodyName + String(F("MAC Address")) + panelBodyValue + closingAngleBracket + macAddrStr                       + panelBodyEnd;
+    String MacAddr      = panelBodySymbol + String(F("scale"))         + panelBodyName + String(F("MAC Address")) + panelBodyValue + closingAngleBracket + StringData.macString             + panelBodyEnd;
     String MqttPrefix   = panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + ConfDevice.mqtt_name             + panelBodyEnd;
     String Uptime       = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("Uptime"))      + panelBodyValue + String(F(" id='uptimeId'"))     + closingAngleBracket  + panelBodyEnd;
     String FreeMem      = panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
@@ -1322,7 +1322,7 @@ void setupWebUpdate(void) {
     String containerEnd;          containerEnd += FPSTR(containerEndP);
     String siteEnd;               siteEnd += FPSTR(siteEndP);
 
-    String varDataString = String(F("<div class='col-md-4'><div class='page-header'><h1>Update Frimware</h1></div><div class='alert alert-success'>")) + ((Update.hasError()) ? F("FAIL") : F("Update Frimware: OK")) + String(F("</div></div>"));
+    String varDataString = String(F("<div class='col-md-4'><div class='page-header'><h1>Update Frimware</h1></div><div class='alert alert-success'>")) + ((Update.hasError()) ? String(F("FAIL")) : String(F("Update Frimware: OK"))) + String(F("</div></div>"));
 
 
     server.send(200, "text/html", headerStart + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + varDataString + containerEnd + siteEnd);
