@@ -193,7 +193,6 @@ String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
 String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
 String closingAngleBracket;   closingAngleBracket += FPSTR(closingAngleBracketP);
 
-
 String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
 
 String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
@@ -208,30 +207,11 @@ String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
 
 String sketchUploadForm;      sketchUploadForm += FPSTR(sketchUploadFormP);
 
-String pinControlStart;       pinControlStart += FPSTR(pinControlStartP);
-String pinControlOn;          pinControlOn += FPSTR(pinControlOnP);
-String pinControlOff;         pinControlOff += FPSTR(pinControlOffP);
-String pinControlBody1;       pinControlBody1 += FPSTR(pinControlBody1P);
+String ClassInfo;       ClassInfo += FPSTR(ClassInfoP);
+String ClassDanger;     ClassDanger += FPSTR(ClassDangerP);
+String ClassDefault;    ClassDefault += FPSTR(ClassDefaultP);
+String ClassSuccess;    ClassSuccess += FPSTR(ClassSuccessP);
 
-String pinControlClassInfo;       pinControlClassInfo += FPSTR(pinControlClassInfoP);
-String pinControlClassDanger;     pinControlClassDanger += FPSTR(pinControlClassDangerP);
-String pinControlClassDefault;    pinControlClassDefault += FPSTR(pinControlClassDefaultP);
-String pinControlClassSuccess;    pinControlClassSuccess += FPSTR(pinControlClassSuccessP);
-
-String pinControlBody2;       pinControlBody2 += FPSTR(pinControlBody2P);
-
-String pinControlTxtOn;       pinControlTxtOn += FPSTR(pinControlTxtOnP);
-String pinControlTxtOff;      pinControlTxtOff += FPSTR(pinControlTxtOffP);
-
-String pinControlBody3;       pinControlBody3 += FPSTR(pinControlBody3P);
-String pinControlBody4;       pinControlBody4 += FPSTR(pinControlBody4P);
-String pinControlBody5;       pinControlBody5 += FPSTR(pinControlBody5P);
-
-String pinControlStatusOff;   pinControlStatusOff += FPSTR(pinControlStatusOffP);
-String pinControlStatusOn;    pinControlStatusOn += FPSTR(pinControlStatusOnP);
-String pinControlStatusAuto;  pinControlStatusAuto += FPSTR(pinControlStatusAutoP);
-
-String pinControlEnd;         pinControlEnd += FPSTR(pinControlEndP);
 
 */
 
@@ -351,11 +331,6 @@ const char div1P[] PROGMEM =
 
 
 
-
-
-
-
-
 // Длина строки не должна быть больше 1024 символов
 const char javaScriptEndP[] PROGMEM = 
 "xmldoc = xmlResponse.getElementsByTagName('temperature');\
@@ -447,44 +422,11 @@ const char sketchUploadFormP[] PROGMEM  =
 <p><input type='submit' value='Upload' class='btn btn-danger'></p></form></div>";
 
 
+const char ClassInfoP[] PROGMEM  = "info";
+const char ClassDangerP[] PROGMEM  = "danger";
+const char ClassDefaultP[] PROGMEM  = "default";
+const char ClassSuccessP[] PROGMEM  = "success";
 
-
-const char pinControlStartP[] PROGMEM  = 
-"<div class='row'><div class='col-md-6'><h1>Control Pins</h1><table class='table table-hover'><tbody>\
-<tr><td class='active'><h4>Pins</h4></td><td class='active'></td><td class='active'></td>\
-<td class='active'><h4>Status</h4></td><td class='active'><h4>Mode</h4></td></tr>\
-<tr>\
-<td class='active'><h4>Led Strip 1</h4></td>\
-<td class='active'><a href='/pincontrol/";
-
-const char pinControlOnP[] PROGMEM  = "button1on";
-const char pinControlOffP[] PROGMEM  = "button1off";
-const char pinControlBody1P[] PROGMEM  = "' class='btn btn-";
-
-const char pinControlClassInfoP[] PROGMEM  = "info";
-const char pinControlClassDangerP[] PROGMEM  = "danger";
-const char pinControlClassDefaultP[] PROGMEM  = "default";
-const char pinControlClassSuccessP[] PROGMEM  = "success";
-
-
-const char pinControlBody2P[] PROGMEM  = "' role='button'>";
-
-const char pinControlTxtOnP[] PROGMEM  = "Turn On";
-const char pinControlTxtOffP[] PROGMEM  = "Turn Off";
-
-const char pinControlBody3P[] PROGMEM  = 
-"</a></td>   <td class='active'><a href='/pincontrol/button1auto' class='btn btn-";
-// put class
-const char pinControlBody4P[] PROGMEM  = "' role='button'>Auto</a></td> <td class='";
-// put class
-const char pinControlStatusOffP[] PROGMEM  = "'><h4>Off";
-const char pinControlStatusOnP[] PROGMEM  = "'><h4>On";
-const char pinControlStatusAutoP[] PROGMEM  = "'><h4>Auto";
-
-const char pinControlBody5P[] PROGMEM  = "</h4></td><td class='";
-// put class
-// put pinControlStatus
-const char pinControlEndP[] PROGMEM  = "</h4></td></tr></tbody></table></div></div>";
  
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         ROOT 
 
@@ -1368,84 +1310,6 @@ bool loadConfig() {
 
 
 
-String PinControlView() {
-  #ifdef DEBUG
-    Serial.print(F("PinControlView()"));  Serial.println();
-  #endif
-
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
-
-  String pinControlStart;       pinControlStart += FPSTR(pinControlStartP);
-  String pinControlOn;          pinControlOn += FPSTR(pinControlOnP);
-  String pinControlOff;         pinControlOff += FPSTR(pinControlOffP);
-  String pinControlBody1;       pinControlBody1 += FPSTR(pinControlBody1P);
-
-  String pinControlClassInfo;       pinControlClassInfo += FPSTR(pinControlClassInfoP);
-  String pinControlClassDanger;     pinControlClassDanger += FPSTR(pinControlClassDangerP);
-  String pinControlClassDefault;    pinControlClassDefault += FPSTR(pinControlClassDefaultP);
-  String pinControlClassSuccess;    pinControlClassSuccess += FPSTR(pinControlClassSuccessP);
-
-  String pinControlBody2;       pinControlBody2 += FPSTR(pinControlBody2P);
-
-  String pinControlTxtOn;       pinControlTxtOn += FPSTR(pinControlTxtOnP);
-  String pinControlTxtOff;      pinControlTxtOff += FPSTR(pinControlTxtOffP);
-
-  String pinControlBody3;       pinControlBody3 += FPSTR(pinControlBody3P);
-  String pinControlBody4;       pinControlBody4 += FPSTR(pinControlBody4P);
-  String pinControlBody5;       pinControlBody5 += FPSTR(pinControlBody5P);
-
-  String pinControlStatusOff;   pinControlStatusOff += FPSTR(pinControlStatusOffP);
-  String pinControlStatusOn;    pinControlStatusOn += FPSTR(pinControlStatusOnP);
-  String pinControlStatusAuto;  pinControlStatusAuto += FPSTR(pinControlStatusAutoP);
-
-  String pinControlEnd;         pinControlEnd += FPSTR(pinControlEndP);
-
-  unsigned long timeOff = 0;
-  if (millis() - lightOffTimer < atoi(StringData.lightOffTimerStting.c_str())*60*1000){
-    timeOff = atoi(StringData.lightOffTimerStting.c_str())*60*1000 - (millis() - lightOffTimer);
-  } 
-
-
-
-  String mode;
-  if (StringData.lightState == "AUTO"){
-    mode = pinControlClassSuccess + pinControlStatusAuto;
-  } else if (StringData.lightState == "ON") {
-    mode = pinControlClassInfo + pinControlStatusOn;
-  } else {
-    mode = pinControlClassDanger + pinControlStatusOff;
-  }
-  
-  String pinControl = headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + pinControlStart;
-
-  if (digitalRead(ConfDevice.light_pin) == HIGH){
-    if (StringData.lightState == "AUTO"){
-      pinControl += pinControlOff + pinControlBody1 + pinControlClassDefault + pinControlBody2 + pinControlTxtOff + pinControlBody3 + pinControlClassDanger + pinControlBody4 + pinControlClassInfo + pinControlStatusOn + pinControlBody5;
-    } else {
-      pinControl += pinControlOff + pinControlBody1 + pinControlClassDanger + pinControlBody2 + pinControlTxtOff + pinControlBody3 + pinControlClassDefault + pinControlBody4 + pinControlClassInfo + pinControlStatusOn + pinControlBody5;
-    }
-  } else {
-    if (StringData.lightState == "AUTO"){
-      pinControl += pinControlOn + pinControlBody1 + pinControlClassDefault + pinControlBody2 + pinControlTxtOn + pinControlBody3 + pinControlClassDanger + pinControlBody4 + pinControlClassDanger + pinControlStatusOff + pinControlBody5;
-    } else {
-      pinControl += pinControlOn + pinControlBody1 + pinControlClassInfo + pinControlBody2 + pinControlTxtOn + pinControlBody3 + pinControlClassDefault + pinControlBody4 + pinControlClassDanger + pinControlStatusOff + pinControlBody5;
-    }
-  }
-
-  pinControl += mode + pinControlEnd + containerEnd + String(timeOff) + siteEnd;
-
-  return pinControl;
-}
-
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////   WEB PAGES  Start  //////////////////////////////////////////////
@@ -1925,6 +1789,11 @@ void web_Control(void) {
     bool pinState;
     bool pinState2;
 
+    String ClassInfo;       ClassInfo += FPSTR(ClassInfoP);
+    String ClassDanger;     ClassDanger += FPSTR(ClassDangerP);
+    String ClassDefault;    ClassDefault += FPSTR(ClassDefaultP);
+    String ClassSuccess;    ClassSuccess += FPSTR(ClassSuccessP);
+
     if (digitalRead(ConfDevice.light_pin) == HIGH){
       pinState = true;
     } else {
@@ -1940,20 +1809,20 @@ void web_Control(void) {
 
     String mode;
     if (StringData.lightState == "AUTO"){
-      mode = String(F("success"));
+      mode = ClassSuccess;
     } else if (StringData.lightState == "ON") {
-      mode = String(F("info"));
+      mode = ClassInfo;
     } else {
-      mode = String(F("danger"));
+      mode = ClassDanger;
     }
 
     String mode2;
     if (StringData.lightState2 == "AUTO"){
-      mode2 = String(F("success"));
+      mode2 = ClassSuccess;
     } else if (StringData.lightState2 == "ON") {
-      mode2 = String(F("info"));
+      mode2 = ClassInfo;
     } else {
-      mode2 = String(F("danger"));
+      mode2 = ClassDanger;
     }
 
 
@@ -1969,14 +1838,10 @@ void web_Control(void) {
         timeOff2 = timeOff2/1000;
       } 
 
+    String data;    data += FPSTR(div1P);
+    
 
-    String data;
-
-    String div1;           div1 += FPSTR(div1P);
-    data = div1;
-
-
-    if (StringData.lightState == "AUTO") { data+=String(F("default")); } else if (pinState == true) { data+=String(F("danger")); } else { data+=String(F("info")); }
+    if (StringData.lightState == "AUTO") { data+=ClassDefault; } else if (pinState == true) { data+=ClassDanger; } else { data+=ClassInfo; }
 
     data+=String(F("' value='"));
 
@@ -1984,11 +1849,11 @@ void web_Control(void) {
 
     data+=String(F("'></div></td><td class='active'><div onclick='Auto1();'><input id='Auto' type='submit' class='btn btn-"));
 
-    if (StringData.lightState == "AUTO") { data+=String(F("danger")); } else { data+=String(F("default")); }
+    if (StringData.lightState == "AUTO") { data+=ClassDanger; } else { data+=ClassDefault; }
 
     data+=String(F("' value='Auto'></div></td><td class='"));
 
-    if (pinState == true) { data+=String(F("info")); } else { data+=String(F("danger")); }
+    if (pinState == true) { data+=ClassInfo; } else { data+=ClassDanger; }
 
     data+=String(F("'><h4>"));
         
@@ -2015,7 +1880,7 @@ void web_Control(void) {
 
     data+=String(F("<tr><td class='active'><h4>Led Strip 2</h4></td><td class='active'><div onclick='Pin2();'><input id='OnOff2' type='submit' class='btn btn-"));
 
-    if (StringData.lightState2 == "AUTO") { data+=String(F("default")); } else if (pinState2 == true) { data+=String(F("danger")); } else { data+=String(F("info")); }
+    if (StringData.lightState2 == "AUTO") { data+=ClassDefault; } else if (pinState2 == true) { data+=ClassDanger; } else { data+=ClassInfo; }
 
     data+=String(F("' value='"));
 
@@ -2023,11 +1888,11 @@ void web_Control(void) {
 
     data+=String(F("'></div></td><td class='active'><div onclick='Auto2();'><input id='Auto2' type='submit' class='btn btn-"));
 
-    if (StringData.lightState2 == "AUTO") { data+=String(F("danger")); } else { data+=String(F("default")); }
+    if (StringData.lightState2 == "AUTO") { data+=ClassDanger; } else { data+=ClassDefault; }
 
     data+=String(F("' value='Auto'></div></td><td class='"));
 
-    if (pinState2 == true) { data+=String(F("info")); } else { data+=String(F("danger")); }
+    if (pinState2 == true) { data+=ClassInfo; } else { data+=ClassDanger; }
 
     data+=String(F("'><h4>"));
         
@@ -2067,12 +1932,11 @@ void web_Control(void) {
 
 
 
-String XML;
-
-void buildXML(){
+void handleXML(){
   #ifdef DEBUG
-    Serial.print(F("buildXML()"));  Serial.println();
+    Serial.print(F("handleXML()"));  Serial.println();
   #endif
+  String XML;
   XML=String(F("<?xml version='1.0'?>"));
   XML+=String(F("<Donnees>")); 
   XML+=String(F("<temperature>"));
@@ -2098,15 +1962,7 @@ void buildXML(){
   XML+=StringData.freeMemoryString;
   XML+=String(F("</freeMemory>"));
   XML+=String(F("</Donnees>")); 
-}
 
-
-void handleXML(){
-  #ifdef DEBUG
-    Serial.print(F("handleXML()"));  Serial.println();
-  #endif
-
-  buildXML();
   server.send(200,"text/xml",XML);
 }
 
