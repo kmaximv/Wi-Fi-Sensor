@@ -9,7 +9,7 @@
 #include "FS.h"
 
 
-//#define DEBUG
+#define DEBUG
 //#define DHT_ON
 #define BME280_ON
 //#define SHT21_ON
@@ -1250,118 +1250,115 @@ bool loadConfig() {
     return false;
   }
 
-  if (json["sta_ssid"]){
-    const char* sta_ssid_char = json["sta_ssid"];
-    sprintf_P(ConfDevice.sta_ssid, ("%s"), sta_ssid_char);
-  }
+  const char* sta_ssid_char = json["sta_ssid"];
+  sprintf_P(ConfDevice.sta_ssid, ("%s"), sta_ssid_char);
 
-  if (json["sta_pwd"]){
-    const char* sta_pwd_char = json["sta_pwd"];
-    sprintf_P(ConfDevice.sta_pwd, ("%s"), sta_pwd_char);
-  }
+  const char* sta_pwd_char = json["sta_pwd"];
+  sprintf_P(ConfDevice.sta_pwd, ("%s"), sta_pwd_char);
 
-  if (json["staticIpMode"]){
-    const char* staticIpMode_char = json["staticIpMode"];
-    sprintf_P(staticIpStr, ("%s"), staticIpMode_char);
-  }
+  const char* staticIpMode_char = json["staticIpMode"];
+  sprintf_P(staticIpStr, ("%s"), staticIpMode_char);
 
-  if (json["staticIP"]){
-    const char* staticIP_char = json["staticIP"];
-    sprintf_P(staticIpStr, ("%s"), staticIP_char);
-  }
+  const char* staticIP_char = json["staticIP"];
+  sprintf_P(staticIpStr, ("%s"), staticIP_char);
 
-  if (json["staticGateway"]){
-    const char* staticGateway_char = json["staticGateway"];
-    sprintf_P(staticGatewayStr, ("%s"), staticGateway_char);
-  }
+  const char* staticGateway_char = json["staticGateway"];
+  sprintf_P(staticGatewayStr, ("%s"), staticGateway_char);
 
-  if (json["staticSubnet"]){
-    const char* staticSubnet_char = json["staticSubnet"];
-    sprintf_P(staticSubnetStr, ("%s"), staticSubnet_char);
-  }
+  const char* staticSubnet_char = json["staticSubnet"];
+  sprintf_P(staticSubnetStr, ("%s"), staticSubnet_char);
 
-  if (json["mqtt_server_ip_srting"]){
-    const char* mqtt_server_ip_srting_char = json["mqtt_server_ip_srting"];
-    sprintf_P(mqttServerIpStr, ("%s"), mqtt_server_ip_srting_char);
-  }
+  const char* mqtt_server_ip_srting_char = json["mqtt_server_ip_srting"];
+  sprintf_P(mqttServerIpStr, ("%s"), mqtt_server_ip_srting_char);
 
-  if (json["mqtt_name"]){
-    const char* mqtt_name_char = json["mqtt_name"];
-    sprintf_P(ConfDevice.mqtt_name, ("%s"), mqtt_name_char);
-  }
+  const char* mqtt_name_char = json["mqtt_name"];
+  sprintf_P(ConfDevice.mqtt_name, ("%s"), mqtt_name_char);
 
-  if (json["publish_topic"]){
-    const char* publish_topic_char = json["publish_topic"];
-    sprintf_P(ConfDevice.publish_topic, ("%s"), publish_topic_char);
-  }
+  const char* publish_topic_char = json["publish_topic"];
+  sprintf_P(ConfDevice.publish_topic, ("%s"), publish_topic_char);
 
-  if (json["sta_ssid"]){
-    const char* subscribe_topic_char = json["subscribe_topic"];
-    sprintf_P(ConfDevice.subscribe_topic, ("%s"), subscribe_topic_char);
-  }
+  const char* subscribe_topic_char = json["subscribe_topic"];
+  sprintf_P(ConfDevice.subscribe_topic, ("%s"), subscribe_topic_char);
 
   if (json["staticIpMode"]){
     const char* staticIpMode_char = json["staticIpMode"];
     conv = String(staticIpMode_char);
     staticIpMode = atoi(conv.c_str());
+  } else {
+    saveConfig();
   }
 
   if (json["light_pin"]){
     const char* light_pin_char = json["light_pin"];
     conv = String(light_pin_char);
     ConfDevice.light_pin = atoi(conv.c_str());
+  } else {
+    saveConfig();
   }
 
   if (json["light_pin2"]){
     const char* light_pin_char2 = json["light_pin2"];
     conv = String(light_pin_char2);
     ConfDevice.light_pin2 = atoi(conv.c_str());
+  } else {
+    saveConfig();
   }
 
   if (json["motion_pin"]){
     const char* motion_pin_char = json["motion_pin"];
     conv = String(motion_pin_char);
     ConfDevice.motion_pin = atoi(conv.c_str());
+  } else {
+    saveConfig();
   }
 
   if (json["dht_pin"]){
     const char* dht_pin_char = json["dht_pin"];
     conv = String(dht_pin_char);
     ConfDevice.dht_pin = atoi(conv.c_str());
+  } else {
+    saveConfig();
   }
 
   if (json["get_data_delay"]){
     const char* get_data_delay_char = json["get_data_delay"];
     conv = String(get_data_delay_char);
     ConfDevice.get_data_delay = atoi(conv.c_str());
+  } else {
+    saveConfig();
   }
 
   if (json["publish_delay"]){
     const char* publish_delay_char = json["publish_delay"];
     conv = String(publish_delay_char);
     ConfDevice.publish_delay = atoi(conv.c_str());
+  } else {
+    saveConfig();
   }
 
   if (json["subscribe_delay"]){
     const char* subscribe_delay_char = json["subscribe_delay"];
     conv = String(subscribe_delay_char);
     ConfDevice.subscribe_delay = atoi(conv.c_str());
+  } else {
+    saveConfig();
   }
 
   if (json["motion_read_delay"]){
     const char* motion_read_delay_char = json["motion_read_delay"];
     conv = String(motion_read_delay_char);
     ConfDevice.motion_read_delay = atoi(conv.c_str());
+  } else {
+    saveConfig();
   }
 
   if (json["reboot_delay"]){
     const char* reboot_delay_char = json["reboot_delay"];
     conv = String(reboot_delay_char);
     ConfDevice.reboot_delay = atoi(conv.c_str());
+  } else {
+    saveConfig();
   }
-
-
-  if(saveConfig()){ Serial.print(F("Config Saved"));  Serial.println(); } else { Serial.print(F("Config Save Error"));  Serial.println(); }
 
   // Real world application would store these values in some variables for
   // later use.
@@ -1746,7 +1743,7 @@ void web_espConf(void) {
     data += inputBodyEnd;
 
 
-    if(saveConfig()){ Serial.print(F("Config Saved"));  Serial.println(); } else { Serial.print(F("Config Save Error"));  Serial.println(); }
+    saveConfig();
 
     server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
   });
@@ -1834,7 +1831,7 @@ void web_mqttConf(void) {
 
 
     data += inputBodyEnd;
-    if(saveConfig()){ Serial.print(F("Config Saved"));  Serial.println(); } else { Serial.print(F("Config Save Error"));  Serial.println(); }
+    saveConfig();
 
     server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
   });
