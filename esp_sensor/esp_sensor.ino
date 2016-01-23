@@ -47,6 +47,7 @@ const char *ver = "1.06";
 
 const char *lux = "Lux";
 const char *lightType = "LightType";
+const char *lightType2 = "LightType2";
 const char *temperature = "Temp";
 const char *humidity = "Humidity";
 const char *pressure = "Pressure";
@@ -71,6 +72,7 @@ struct ConfDeviceStruct {
   char subscribe_topic[32];
   char commandPub_topic[32];
   uint8_t light_pin;
+  uint8_t light_pin2;
   uint8_t motion_pin;
   uint8_t dht_pin;
   unsigned long publish_delay;
@@ -91,9 +93,10 @@ struct ConfDeviceStruct {
   "/stateSub/",
   "/statePub/",
   "/commandPub/",
-  12,
-  14,
   13,
+  12,
+  2,
+  14,
   10000,
   60000,
   10000,
@@ -115,6 +118,9 @@ struct StringDataStruct {
   String freeMemoryString;
   String lightState;
   String lightOffTimerStting;
+  String lightState2;
+  String lightOffTimerStting2;
+
 
 } StringData = {
   "None",
@@ -125,6 +131,8 @@ struct StringDataStruct {
   "None",
   "None",
   "None",
+  "AUTO",
+  "5",
   "AUTO",
   "5"
 };
@@ -145,6 +153,8 @@ unsigned long motionTimer = 4000;
 unsigned long rebootTimer = 6000;
 unsigned long subscribeTimer = ConfDevice.subscribe_delay - 5000;
 unsigned long lightOffTimer = 0;
+unsigned long lightOffTimer2 = 0;
+
 
 boolean run = false;
 
@@ -258,6 +268,94 @@ function handleServerResponse(){\
  if(xmlHttp.readyState==4 && xmlHttp.status==200){\
    xmlResponse=xmlHttp.responseXML;";
 
+
+const char javaScriptPinControlP[] PROGMEM = 
+"<div id='content'></div>\
+<div id='pin1'></div>\
+<script>\
+function show()\
+{\
+$.ajax({\
+url: 'controlstatus',\
+cache: false,\
+success: function(html){\
+$('#content').html(html);\
+}\
+});\
+}\
+function Pin1()\
+{\
+$.ajax({\
+type: 'POST',\
+url: 'control',\
+data: '1=1',\
+success: function(data){\
+show();\
+}\
+});\
+}\
+function Auto1()\
+{\
+$.ajax({\
+type: 'POST',\
+url: 'control',\
+data: '1=2',\
+success: function(data){\
+show();\
+}\
+});\
+}\
+function Pin2()\
+{\
+$.ajax({\
+type: 'POST',\
+url: 'control',\
+data: '2=1',\
+success: function(data){\
+show();\
+}\
+});\
+}\
+function Auto2()\
+{\
+$.ajax({\
+type: 'POST',\
+url: 'control',\
+data: '2=2',\
+success: function(data){\
+show();\
+}\
+});\
+}\
+$(document).ready(function(){\
+show();\
+setInterval('show()',5000);\
+});\
+</script>";
+
+
+const char div1P[] PROGMEM =
+"<div class='col-md-6'><h1>Control Pins</h1>\
+<table class='table table-hover'>\
+<tbody>\
+  <tr>\
+    <td class='active'><h4>Pins</h4></td>\
+    <td class='active'></td><td class='active'></td>\
+    <td class='active'><h4>Status</h4></td>\
+    <td class='active'><h4>Mode</h4></td>\
+    <td class='active'><h4>Timer</h4></td>\
+  </tr>\
+  <tr>\
+    <td class='active'><h4>Led Strip 1</h4></td>\
+    <td class='active'><div onclick='Pin1();'><input id='OnOff' type='submit' class='btn btn-";
+
+
+
+
+
+
+
+
 // Длина строки не должна быть больше 1024 символов
 const char javaScriptEndP[] PROGMEM = 
 "xmldoc = xmlResponse.getElementsByTagName('temperature');\
@@ -352,10 +450,12 @@ const char sketchUploadFormP[] PROGMEM  =
 
 
 const char pinControlStartP[] PROGMEM  = 
-"<div class='row'><div class='col-md-5'><h1>Control Pins</h1><table class='table table-hover'><tbody>\
+"<div class='row'><div class='col-md-6'><h1>Control Pins</h1><table class='table table-hover'><tbody>\
 <tr><td class='active'><h4>Pins</h4></td><td class='active'></td><td class='active'></td>\
 <td class='active'><h4>Status</h4></td><td class='active'><h4>Mode</h4></td></tr>\
-<tr><td class='active'><h4>Led Strip</h4></td><td class='active'><a href='/pincontrol/";
+<tr>\
+<td class='active'><h4>Led Strip 1</h4></td>\
+<td class='active'><a href='/pincontrol/";
 
 const char pinControlOnP[] PROGMEM  = "button1on";
 const char pinControlOffP[] PROGMEM  = "button1off";
@@ -404,6 +504,20 @@ void LightControl(bool motion = false)
       digitalWrite(ConfDevice.light_pin, LOW);
     }
   }
+
+  if (StringData.lightState2 == "ON"){
+    digitalWrite(ConfDevice.light_pin2, HIGH);
+  } else if (StringData.lightState2 == "OFF"){
+    digitalWrite(ConfDevice.light_pin2, LOW);
+  } else if (StringData.lightState2 == "AUTO" && motion == true ){
+      digitalWrite(ConfDevice.light_pin2, HIGH);
+      lightOffTimer2 = millis();
+  } else if (StringData.lightState2 == "AUTO" && motion == false && digitalRead(ConfDevice.light_pin2) == HIGH){
+    if (millis() - lightOffTimer2 >= atoi(StringData.lightOffTimerStting2.c_str())*60*1000){
+      digitalWrite(ConfDevice.light_pin2, LOW);
+    }
+  }
+
 }
 
 
@@ -717,6 +831,18 @@ void MqttPubLightState(){
     lightStateNum = String(F("2"));
   }
   client.publish(topic_buff, lightStateNum.c_str());
+
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lightType2, ConfDevice.mqtt_name);
+  if (StringData.lightState2 == "ON"){
+    lightStateNum = String(F("1"));
+  } else if (StringData.lightState2 == "OFF"){
+    lightStateNum = String(F("0"));
+  } else {
+    lightStateNum = String(F("2"));
+  }
+  client.publish(topic_buff, lightStateNum.c_str());
+
+
 }
 
 
@@ -795,6 +921,9 @@ void MqttSubscribe()
     MqttSubscribePrint(topic_buff);
 
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType, ConfDevice.mqtt_name);
+    MqttSubscribePrint(topic_buff);
+
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType2, ConfDevice.mqtt_name);
     MqttSubscribePrint(topic_buff);
 
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.subscribe_topic, uptime, ConfDevice.mqtt_name);
@@ -961,6 +1090,7 @@ bool saveConfig() {
   json["publish_topic"] = ConfDevice.publish_topic;
   json["subscribe_topic"] = ConfDevice.subscribe_topic;
   json["light_pin"] = ConfDevice.light_pin;
+  json["light_pin2"] = ConfDevice.light_pin2;
   json["motion_pin"] = ConfDevice.motion_pin;
   json["dht_pin"] = ConfDevice.dht_pin;
   json["get_data_delay"] = ConfDevice.get_data_delay;
@@ -1063,6 +1193,14 @@ bool loadConfig() {
     const char* light_pin_char = json["light_pin"];
     conv = String(light_pin_char);
     ConfDevice.light_pin = atoi(conv.c_str());
+  } else {
+    saveConfig();
+  }
+
+  if (json["light_pin2"]){
+    const char* light_pin_char2 = json["light_pin2"];
+    conv = String(light_pin_char2);
+    ConfDevice.light_pin2 = atoi(conv.c_str());
   } else {
     saveConfig();
   }
@@ -1412,41 +1550,47 @@ void web_espConf(void) {
     }
     data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
+
     payload=server.arg("staticIP");
     if (payload.length() > 6 ) {
       payload.toCharArray(staticIpStr, sizeof(staticIpStr));
       staticIpMode = 1;
-    } else {
-      d.toCharArray(staticIpStr, sizeof(staticIpStr));
-      staticIpMode = 0;
     }
-    data += inputBodyName + String(F("Static IP")) + inputBodyPOST + String(F("staticIP")) + inputPlaceHolder + staticIpStr + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("staticGateway");
     if (payload.length() > 6 ) {
       payload.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
       staticIpMode += 1;
-    } else {
-      d.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
-      staticIpMode = 0;
     }
-    data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("staticGateway")) + inputPlaceHolder + staticGatewayStr + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("staticSubnet");
     if (payload.length() > 6 ) {
       payload.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
       staticIpMode += 1;
-    } else {
-      d.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
-      staticIpMode = 0;
     }
+
+    if (staticIpMode != 3) {
+      d.toCharArray(staticIpStr, sizeof(staticIpStr));
+      d.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
+      d.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
+    }
+
+    data += inputBodyName + String(F("Static IP")) + inputBodyPOST + String(F("staticIP")) + inputPlaceHolder + staticIpStr + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("staticGateway")) + inputPlaceHolder + staticGatewayStr + inputBodyClose + inputBodyCloseDiv;
     data += inputBodyName + String(F("Static Subnet")) + inputBodyPOST + String(F("staticSubnet")) + inputPlaceHolder + staticSubnetStr + inputBodyClose + inputBodyCloseDiv;
+
 
     payload=server.arg("light_pin");
     if (payload.length() > 0 ) {
       ConfDevice.light_pin = atoi(payload.c_str());
     }
     data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + String(ConfDevice.light_pin) + inputBodyClose + inputBodyCloseDiv;
+
+    payload=server.arg("light_pin2");
+    if (payload.length() > 0 ) {
+      ConfDevice.light_pin2 = atoi(payload.c_str());
+    }
+    data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light_pin2")) + inputPlaceHolder + String(ConfDevice.light_pin2) + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("motion_pin");
     if (payload.length() > 0 ) {
@@ -1480,6 +1624,8 @@ void web_espConf(void) {
 
 
     data += inputBodyEnd;
+
+
     saveConfig();
 
     server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
@@ -1573,59 +1719,221 @@ void web_mqttConf(void) {
 
 
 
-void web_pinControl(void) {
+void handleControl(){
+
+  server.sendHeader("Connection", "close");
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+
+  if (server.args() > 0 ) {
+    for ( uint8_t i = 0; i < server.args(); i++ ) {
+      if (server.argName(i) == "1" && server.arg(i) == "1") {
+        digitalWrite(ConfDevice.light_pin, !digitalRead(ConfDevice.light_pin));
+        if (digitalRead(ConfDevice.light_pin) == HIGH){
+          StringData.lightState = "ON";
+        } else {
+          StringData.lightState = "OFF";
+        }
+      }
+      if (server.argName(i) == "1" && server.arg(i) == "2") {
+        StringData.lightState = "AUTO";
+      }
+
+      if (server.argName(i) == "2" && server.arg(i) == "1") {
+        digitalWrite(ConfDevice.light_pin2, !digitalRead(ConfDevice.light_pin2));
+        if (digitalRead(ConfDevice.light_pin2) == HIGH){
+          StringData.lightState2 = "ON";
+        } else {
+          StringData.lightState2 = "OFF";
+        }
+      }
+      if (server.argName(i) == "2" && server.arg(i) == "2") {
+        StringData.lightState2 = "AUTO";
+      }
+      #ifdef DEBUG
+      Serial.println(server.argName(i));
+      Serial.println(server.arg(i));
+      #endif
+      LightControl();
+      MqttPubLightState();
+    }
+  }
+
+  server.send ( 200, "text/html", "OK");
+}
+
+
+
+void web_Control(void) {
 
   server.on("/pincontrol", []() {
 
     server.sendHeader("Connection", "close");
     server.sendHeader("Access-Control-Allow-Origin", "*");
 
-    String data = PinControlView();
+    String headerStart;           headerStart += FPSTR(headerStartP);
+    String headerEnd;             headerEnd += FPSTR(headerEndP);
+    String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
+    String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+    String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
+    String containerStart;        containerStart += FPSTR(containerStartP);
+    String containerEnd;          containerEnd += FPSTR(containerEndP);
+    String siteEnd;               siteEnd += FPSTR(siteEndP);
 
-    server.send ( 200, "text/html", data);
+    String javaScriptPinControl;               javaScriptPinControl += FPSTR(javaScriptPinControlP);
+
+    String pinControl = headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + javaScriptPinControl + containerEnd + siteEnd;
+
+    server.send ( 200, "text/html", pinControl);
   });
 
 
-  server.on("/pincontrol/button1on", []() {
+  server.on("/controlstatus", []() {
 
     server.sendHeader("Connection", "close");
     server.sendHeader("Access-Control-Allow-Origin", "*");
 
-    StringData.lightState = "ON";
     LightControl();
     MqttPubLightState();
-    String data = PinControlView();
+
+    bool pinState;
+    bool pinState2;
+
+    if (digitalRead(ConfDevice.light_pin) == HIGH){
+      pinState = true;
+    } else {
+      pinState = false;
+    }
+
+    if (digitalRead(ConfDevice.light_pin2) == HIGH){
+      pinState2 = true;
+    } else {
+      pinState2 = false;
+    }
+
+
+    String mode;
+    if (StringData.lightState == "AUTO"){
+      mode = String(F("success"));
+    } else if (StringData.lightState == "ON") {
+      mode = String(F("info"));
+    } else {
+      mode = String(F("danger"));
+    }
+
+    String mode2;
+    if (StringData.lightState2 == "AUTO"){
+      mode2 = String(F("success"));
+    } else if (StringData.lightState2 == "ON") {
+      mode2 = String(F("info"));
+    } else {
+      mode2 = String(F("danger"));
+    }
+
+
+    unsigned long timeOff = 0;
+      if (millis() - lightOffTimer < atoi(StringData.lightOffTimerStting.c_str())*60*1000){
+        timeOff = atoi(StringData.lightOffTimerStting.c_str())*60*1000 - (millis() - lightOffTimer);
+        timeOff = timeOff/1000;
+      } 
+
+    unsigned long timeOff2 = 0;
+      if (millis() - lightOffTimer2 < atoi(StringData.lightOffTimerStting2.c_str())*60*1000){
+        timeOff2 = atoi(StringData.lightOffTimerStting2.c_str())*60*1000 - (millis() - lightOffTimer2);
+        timeOff2 = timeOff2/1000;
+      } 
+
+
+    String data;
+
+    String div1;           div1 += FPSTR(div1P);
+    data = div1;
+
+
+    if (StringData.lightState == "AUTO") { data+=String(F("default")); } else if (pinState == true) { data+=String(F("danger")); } else { data+=String(F("info")); }
+
+    data+=String(F("' value='"));
+
+    if (pinState == true) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
+
+    data+=String(F("'></div></td><td class='active'><div onclick='Auto1();'><input id='Auto' type='submit' class='btn btn-"));
+
+    if (StringData.lightState == "AUTO") { data+=String(F("danger")); } else { data+=String(F("default")); }
+
+    data+=String(F("' value='Auto'></div></td><td class='"));
+
+    if (pinState == true) { data+=String(F("info")); } else { data+=String(F("danger")); }
+
+    data+=String(F("'><h4>"));
+        
+    if (pinState == true) { data+=String(F("ON")); } else { data+=String(F("OFF")); }
+
+    data+=String(F("</h4></td><td class='"));
+
+    data+=mode;    
+
+    data+=String(F("'><h4>"));
+
+    data+=StringData.lightState;
+
+    data+=String(F("</h4></td><td class='"));
+
+    data+=String(F("active"));
+
+    data+=String(F("'><h4>"));
+
+    data+=String(timeOff);
+
+    data+=String(F("</h4></td></tr>"));
+
+
+    data+=String(F("<tr><td class='active'><h4>Led Strip 2</h4></td><td class='active'><div onclick='Pin2();'><input id='OnOff2' type='submit' class='btn btn-"));
+
+    if (StringData.lightState2 == "AUTO") { data+=String(F("default")); } else if (pinState2 == true) { data+=String(F("danger")); } else { data+=String(F("info")); }
+
+    data+=String(F("' value='"));
+
+    if (pinState2 == true) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
+
+    data+=String(F("'></div></td><td class='active'><div onclick='Auto2();'><input id='Auto2' type='submit' class='btn btn-"));
+
+    if (StringData.lightState2 == "AUTO") { data+=String(F("danger")); } else { data+=String(F("default")); }
+
+    data+=String(F("' value='Auto'></div></td><td class='"));
+
+    if (pinState2 == true) { data+=String(F("info")); } else { data+=String(F("danger")); }
+
+    data+=String(F("'><h4>"));
+        
+    if (pinState2 == true) { data+=String(F("ON")); } else { data+=String(F("OFF")); }
+
+    data+=String(F("</h4></td><td class='"));
+
+    data+=mode2;    
+
+    data+=String(F("'><h4>"));
+
+    data+=StringData.lightState2;
+
+    data+=String(F("</h4></td><td class='"));
+
+    data+=String(F("active"));
+
+    data+=String(F("'><h4>"));
+
+    data+=String(timeOff2);
+
+    data+=String(F("</h4></td></tr>"));
+
+    data+=String(F("</tbody></table></div>"));
+
 
     server.send ( 200, "text/html", data);
   });
 
-  server.on("/pincontrol/button1off", []() {
 
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
-
-    StringData.lightState = "OFF";
-    LightControl();
-    MqttPubLightState();
-    String data = PinControlView();
-
-    server.send ( 200, "text/html", data);
-  });
-
-  server.on("/pincontrol/button1auto", []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
-
-    StringData.lightState = "AUTO";
-    LightControl();
-    MqttPubLightState();
-    String data = PinControlView();
-
-    server.send ( 200, "text/html", data);
-  });
+  server.on("/control", handleControl);
 }
-
 
 
 
@@ -1712,6 +2020,7 @@ void setup() {
   }
 
   pinMode(ConfDevice.light_pin, OUTPUT);
+  pinMode(ConfDevice.light_pin2, OUTPUT);
   pinMode(ConfDevice.motion_pin, INPUT);           // set pin to input
 
 
@@ -1762,7 +2071,7 @@ void setup() {
   rootWebPage();
   web_espConf();
   web_mqttConf();
-  web_pinControl();
+  web_Control();
   server.on("/xml",handleXML);
 
   // start Web Server
