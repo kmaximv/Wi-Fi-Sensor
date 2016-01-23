@@ -9,7 +9,7 @@
 #include "FS.h"
 
 
-//#define DEBUG
+#define DEBUG
 //#define DHT_ON
 #define BME280_ON
 //#define SHT21_ON
