@@ -43,7 +43,7 @@ uint8_t staticIpMode = 0;
 char mqttServerIpStr[16] = "192.168.1.200";
 
 
-const char *ver = "1.06";
+const char *ver = "1.07";
 
 const char *lux = "Lux";
 const char *lightType = "LightType";
@@ -492,6 +492,10 @@ const char pinControlEndP[] PROGMEM  = "</h4></td></tr></tbody></table></div></d
 
 void LightControl(bool motion = false)
 {
+  #ifdef DEBUG
+    Serial.print(F("LightControl()"));  Serial.println();
+  #endif
+
   if (StringData.lightState == "ON"){
     digitalWrite(ConfDevice.light_pin, HIGH);
   } else if (StringData.lightState == "OFF"){
@@ -523,6 +527,11 @@ void LightControl(bool motion = false)
 
 
 void scanWiFi(void) {
+
+  #ifdef DEBUG
+    Serial.print(F("scanWiFi()"));  Serial.println();
+  #endif
+
   int founds = WiFi.scanNetworks();
   #ifdef DEBUG
   Serial.println();  Serial.println(F("scan done"));
@@ -560,6 +569,11 @@ void scanWiFi(void) {
 
 
 int waitConnected(void) {
+
+  #ifdef DEBUG
+    Serial.print(F("waitConnected()"));  Serial.println();
+  #endif
+
   int wait = 0;
   #ifdef DEBUG
   Serial.println();  Serial.println(F("Waiting for WiFi to connect"));
@@ -588,6 +602,10 @@ int waitConnected(void) {
 
 void GetLightSensorData()
 {
+  #ifdef DEBUG
+    Serial.print(F("GetLightSensorData()"));  Serial.println();
+  #endif
+
   StringData.luxString = String(lightSensor.readLightLevel());
     
   #ifdef DEBUG
@@ -600,6 +618,10 @@ void GetLightSensorData()
 #ifdef BME280_ON
 void GetBmeSensorData()
 { 
+  #ifdef DEBUG
+    Serial.print(F("GetBmeSensorData()"));  Serial.println();
+  #endif
+
   StringData.temperatureString = String(bmeSensor.readTempC());
   #ifdef DEBUG 
     Serial.print(F("Temperature: "));  Serial.print(StringData.temperatureString);  Serial.println(F(" C"));
@@ -631,6 +653,10 @@ void GetBmeSensorData()
 
 #ifdef SHT21_ON
 void GetSHT21SensorData(){
+
+  #ifdef DEBUG
+    Serial.print(F("GetSHT21SensorData()"));  Serial.println();
+  #endif
 
   myHTU21D.setResolution(HTU21D_RES_RH8_TEMP12);
   StringData.temperatureString = String(myHTU21D.readTemperature());
@@ -664,6 +690,10 @@ void GetSHT21SensorData(){
 #ifdef DHT_ON
 void DHT22Sensor()
 {
+  #ifdef DEBUG
+    Serial.print(F("DHT22Sensor()"));  Serial.println();
+  #endif
+
   float temperatureData = dht.readTemperature();
   float humidityData = dht.readHumidity();
   #ifdef DEBUG
@@ -689,6 +719,10 @@ void DHT22Sensor()
 
 void MotionDetect()
 {
+  #ifdef DEBUG
+    Serial.print(F("MotionDetect()"));  Serial.println();
+  #endif
+
   if (digitalRead(ConfDevice.motion_pin) == HIGH) {
     #ifdef DEBUG
       Serial.println(F("MotionSensor moove detected"));
@@ -706,6 +740,11 @@ void MotionDetect()
 
 
 String GetUptimeData(){
+
+  #ifdef DEBUG
+    Serial.print(F("GetUptimeData()"));  Serial.println();
+  #endif
+
 //** Making Note of an expected rollover *****//   
 if(millis()>=3000000000){ 
   HighMillis=1;
@@ -735,6 +774,10 @@ return value_buff;
 
 void RebootESP()
 {
+  #ifdef DEBUG
+    Serial.print(F("RebootESP()"));  Serial.println();
+  #endif
+
   if (millis() - rebootTimer >= ConfDevice.reboot_delay){
   ESP.restart();
   }
@@ -744,6 +787,10 @@ void RebootESP()
 
 // handles message arrived on subscribed topic(s)
 void callback(char* topic, byte* payload, unsigned int length) {
+
+  #ifdef DEBUG
+    Serial.print(F("callback()"));  Serial.println();
+  #endif
 
   subscribeTimer = millis();
   rebootTimer = millis();
@@ -821,6 +868,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 
 void MqttPubLightState(){
+
+  #ifdef DEBUG
+    Serial.print(F("MqttPubLightState()"));  Serial.println();
+  #endif
+
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lightType, ConfDevice.mqtt_name);
   String lightStateNum;
   if (StringData.lightState == "ON"){
@@ -849,6 +901,10 @@ void MqttPubLightState(){
 
 void MqttPubData()
 {
+  #ifdef DEBUG
+    Serial.print(F("MqttPubData()"));  Serial.println();
+  #endif
+
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lux, ConfDevice.mqtt_name);
   client.publish(topic_buff, StringData.luxString.c_str());
 
@@ -894,9 +950,13 @@ void MqttPubData()
 
 void MqttSubscribePrint(char *sub_buff)
 {
-    #ifdef DEBUG
-      Serial.print(F("Try subscribe: "));  Serial.println(sub_buff);
-    #endif
+  #ifdef DEBUG
+    Serial.print(F("MqttSubscribePrint()"));  Serial.println();
+  #endif
+
+  #ifdef DEBUG
+    Serial.print(F("Try subscribe: "));  Serial.println(sub_buff);
+  #endif
 
   if (client.subscribe(sub_buff)) {
     #ifdef DEBUG
@@ -914,6 +974,10 @@ void MqttSubscribePrint(char *sub_buff)
 
 void MqttSubscribe()
 {
+  #ifdef DEBUG
+    Serial.print(F("MqttSubscribe()"));  Serial.println();
+  #endif
+
   if (millis() - subscribeTimer >= ConfDevice.subscribe_delay) {
     subscribeTimer = millis();
     
@@ -938,6 +1002,10 @@ void MqttSubscribe()
 
 void TestMQTTPrint()
 {
+  #ifdef DEBUG
+    Serial.print(F("TestMQTTPrint()"));  Serial.println();
+  #endif
+
   int state = client.state();
 
   switch (state) {
@@ -977,6 +1045,10 @@ void TestMQTTPrint()
 
 static char* floatToChar(float charester)
 {
+  #ifdef DEBUG
+    Serial.print(F("floatToChar()"));  Serial.println();
+  #endif
+
  dtostrf(charester, 1, 0, value_buff);
  return value_buff;
 }
@@ -984,12 +1056,20 @@ static char* floatToChar(float charester)
 
 
 void GetFreeMemory () {
+  #ifdef DEBUG
+    Serial.print(F("GetFreeMemory()"));  Serial.println();
+  #endif
+
   StringData.freeMemoryString = String(ESP.getFreeHeap());
 }
 
 
 
 String GetIpString (IPAddress ip) {
+  #ifdef DEBUG
+    Serial.print(F("GetIpString()"));  Serial.println();
+  #endif
+
   String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
   return ipStr;
 }
@@ -997,6 +1077,10 @@ String GetIpString (IPAddress ip) {
 
 
 void GetMacString () {
+  #ifdef DEBUG
+    Serial.print(F("GetMacString()"));  Serial.println();
+  #endif
+
   uint8_t macData[6];
   WiFi.macAddress(macData);
   sprintf_P(value_buff, (const char *)F("%x:%x:%x:%x:%x:%x"), macData[0],  macData[1], macData[2], macData[3], macData[4], macData[5]);
@@ -1009,6 +1093,9 @@ void GetMacString () {
 
 
 IPAddress stringToIp (String strIp) {
+  #ifdef DEBUG
+    Serial.print(F("stringToIp()"));  Serial.println();
+  #endif
 
   String temp;
   IPAddress ip;
@@ -1041,6 +1128,10 @@ IPAddress stringToIp (String strIp) {
 
 void TestSystemPrint()
 {
+  #ifdef DEBUG
+    Serial.print(F("TestSystemPrint()"));  Serial.println();
+  #endif
+
   Serial.println(F("----------------"));
 
   TestMQTTPrint();
@@ -1077,6 +1168,10 @@ void TestSystemPrint()
 
 bool saveConfig() {
   StaticJsonBuffer<1000> jsonBuffer;
+  #ifdef DEBUG
+    Serial.print(F("saveConfig()"));  Serial.println();
+  #endif
+
   JsonObject& json = jsonBuffer.createObject();
 
   json["sta_ssid"] = ConfDevice.sta_ssid;
@@ -1115,6 +1210,10 @@ bool saveConfig() {
 
 
 bool loadConfig() {
+  #ifdef DEBUG
+    Serial.print(F("loadConfig()"));  Serial.println();
+  #endif
+
   File configFile = SPIFFS.open("/config.json", "r");
   if (!configFile) {
     #ifdef DEBUG
@@ -1151,115 +1250,118 @@ bool loadConfig() {
     return false;
   }
 
-  const char* sta_ssid_char = json["sta_ssid"];
-  sprintf_P(ConfDevice.sta_ssid, ("%s"), sta_ssid_char);
+  if (json["sta_ssid"]){
+    const char* sta_ssid_char = json["sta_ssid"];
+    sprintf_P(ConfDevice.sta_ssid, ("%s"), sta_ssid_char);
+  }
 
-  const char* sta_pwd_char = json["sta_pwd"];
-  sprintf_P(ConfDevice.sta_pwd, ("%s"), sta_pwd_char);
+  if (json["sta_pwd"]){
+    const char* sta_pwd_char = json["sta_pwd"];
+    sprintf_P(ConfDevice.sta_pwd, ("%s"), sta_pwd_char);
+  }
 
-  const char* staticIpMode_char = json["staticIpMode"];
-  sprintf_P(staticIpStr, ("%s"), staticIpMode_char);
+  if (json["staticIpMode"]){
+    const char* staticIpMode_char = json["staticIpMode"];
+    sprintf_P(staticIpStr, ("%s"), staticIpMode_char);
+  }
 
-  const char* staticIP_char = json["staticIP"];
-  sprintf_P(staticIpStr, ("%s"), staticIP_char);
+  if (json["staticIP"]){
+    const char* staticIP_char = json["staticIP"];
+    sprintf_P(staticIpStr, ("%s"), staticIP_char);
+  }
 
-  const char* staticGateway_char = json["staticGateway"];
-  sprintf_P(staticGatewayStr, ("%s"), staticGateway_char);
+  if (json["staticGateway"]){
+    const char* staticGateway_char = json["staticGateway"];
+    sprintf_P(staticGatewayStr, ("%s"), staticGateway_char);
+  }
 
-  const char* staticSubnet_char = json["staticSubnet"];
-  sprintf_P(staticSubnetStr, ("%s"), staticSubnet_char);
+  if (json["staticSubnet"]){
+    const char* staticSubnet_char = json["staticSubnet"];
+    sprintf_P(staticSubnetStr, ("%s"), staticSubnet_char);
+  }
 
-  const char* mqtt_server_ip_srting_char = json["mqtt_server_ip_srting"];
-  sprintf_P(mqttServerIpStr, ("%s"), mqtt_server_ip_srting_char);
+  if (json["mqtt_server_ip_srting"]){
+    const char* mqtt_server_ip_srting_char = json["mqtt_server_ip_srting"];
+    sprintf_P(mqttServerIpStr, ("%s"), mqtt_server_ip_srting_char);
+  }
 
-  const char* mqtt_name_char = json["mqtt_name"];
-  sprintf_P(ConfDevice.mqtt_name, ("%s"), mqtt_name_char);
+  if (json["mqtt_name"]){
+    const char* mqtt_name_char = json["mqtt_name"];
+    sprintf_P(ConfDevice.mqtt_name, ("%s"), mqtt_name_char);
+  }
 
-  const char* publish_topic_char = json["publish_topic"];
-  sprintf_P(ConfDevice.publish_topic, ("%s"), publish_topic_char);
+  if (json["publish_topic"]){
+    const char* publish_topic_char = json["publish_topic"];
+    sprintf_P(ConfDevice.publish_topic, ("%s"), publish_topic_char);
+  }
 
-  const char* subscribe_topic_char = json["subscribe_topic"];
-  sprintf_P(ConfDevice.subscribe_topic, ("%s"), subscribe_topic_char);
+  if (json["sta_ssid"]){
+    const char* subscribe_topic_char = json["subscribe_topic"];
+    sprintf_P(ConfDevice.subscribe_topic, ("%s"), subscribe_topic_char);
+  }
 
   if (json["staticIpMode"]){
     const char* staticIpMode_char = json["staticIpMode"];
     conv = String(staticIpMode_char);
     staticIpMode = atoi(conv.c_str());
-  } else {
-    saveConfig();
   }
 
   if (json["light_pin"]){
     const char* light_pin_char = json["light_pin"];
     conv = String(light_pin_char);
     ConfDevice.light_pin = atoi(conv.c_str());
-  } else {
-    saveConfig();
   }
 
   if (json["light_pin2"]){
     const char* light_pin_char2 = json["light_pin2"];
     conv = String(light_pin_char2);
     ConfDevice.light_pin2 = atoi(conv.c_str());
-  } else {
-    saveConfig();
   }
 
   if (json["motion_pin"]){
     const char* motion_pin_char = json["motion_pin"];
     conv = String(motion_pin_char);
     ConfDevice.motion_pin = atoi(conv.c_str());
-  } else {
-    saveConfig();
   }
 
   if (json["dht_pin"]){
     const char* dht_pin_char = json["dht_pin"];
     conv = String(dht_pin_char);
     ConfDevice.dht_pin = atoi(conv.c_str());
-  } else {
-    saveConfig();
   }
 
   if (json["get_data_delay"]){
     const char* get_data_delay_char = json["get_data_delay"];
     conv = String(get_data_delay_char);
     ConfDevice.get_data_delay = atoi(conv.c_str());
-  } else {
-    saveConfig();
   }
 
   if (json["publish_delay"]){
     const char* publish_delay_char = json["publish_delay"];
     conv = String(publish_delay_char);
     ConfDevice.publish_delay = atoi(conv.c_str());
-  } else {
-    saveConfig();
   }
 
   if (json["subscribe_delay"]){
     const char* subscribe_delay_char = json["subscribe_delay"];
     conv = String(subscribe_delay_char);
     ConfDevice.subscribe_delay = atoi(conv.c_str());
-  } else {
-    saveConfig();
   }
 
   if (json["motion_read_delay"]){
     const char* motion_read_delay_char = json["motion_read_delay"];
     conv = String(motion_read_delay_char);
     ConfDevice.motion_read_delay = atoi(conv.c_str());
-  } else {
-    saveConfig();
   }
 
   if (json["reboot_delay"]){
     const char* reboot_delay_char = json["reboot_delay"];
     conv = String(reboot_delay_char);
     ConfDevice.reboot_delay = atoi(conv.c_str());
-  } else {
-    saveConfig();
   }
+
+
+  if(saveConfig()){ Serial.print(F("Config Saved"));  Serial.println(); } else { Serial.print(F("Config Save Error"));  Serial.println(); }
 
   // Real world application would store these values in some variables for
   // later use.
@@ -1270,6 +1372,9 @@ bool loadConfig() {
 
 
 String PinControlView() {
+  #ifdef DEBUG
+    Serial.print(F("PinControlView()"));  Serial.println();
+  #endif
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerEnd;             headerEnd += FPSTR(headerEndP);
@@ -1350,6 +1455,10 @@ String PinControlView() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void rootWebPage(void) {
+  #ifdef DEBUG
+    Serial.print(F("rootWebPage()"));  Serial.println();
+  #endif
+
   server.on("/", []() {
 
     server.sendHeader("Connection", "close");
@@ -1401,6 +1510,10 @@ void rootWebPage(void) {
 
 
 void rebootWebPage(void) {
+  #ifdef DEBUG
+    Serial.print(F("rebootWebPage()"));  Serial.println();
+  #endif
+
   server.on("/reboot", []() {
 
     server.sendHeader("Connection", "close");
@@ -1427,6 +1540,10 @@ void rebootWebPage(void) {
 
 
 void setupWebUpdate(void) {
+  #ifdef DEBUG
+    Serial.print(F("setupWebUpdate()"));  Serial.println();
+  #endif
+
   server.on("/update", HTTP_GET, []() {
 
     server.sendHeader("Connection", "close");
@@ -1501,6 +1618,9 @@ void setupWebUpdate(void) {
 
 
 void web_espConf(void) {
+  #ifdef DEBUG
+    Serial.print(F("web_espConf()"));  Serial.println();
+  #endif
 
   server.on("/espconf", []() {
 
@@ -1626,7 +1746,7 @@ void web_espConf(void) {
     data += inputBodyEnd;
 
 
-    saveConfig();
+    if(saveConfig()){ Serial.print(F("Config Saved"));  Serial.println(); } else { Serial.print(F("Config Save Error"));  Serial.println(); }
 
     server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
   });
@@ -1635,6 +1755,9 @@ void web_espConf(void) {
 
 
 void web_mqttConf(void) {
+  #ifdef DEBUG
+    Serial.print(F("web_mqttConf()"));  Serial.println();
+  #endif
 
   server.on("/mqttconf", []() {
 
@@ -1711,7 +1834,7 @@ void web_mqttConf(void) {
 
 
     data += inputBodyEnd;
-    saveConfig();
+    if(saveConfig()){ Serial.print(F("Config Saved"));  Serial.println(); } else { Serial.print(F("Config Save Error"));  Serial.println(); }
 
     server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
   });
@@ -1720,6 +1843,9 @@ void web_mqttConf(void) {
 
 
 void handleControl(){
+  #ifdef DEBUG
+    Serial.print(F("handleControl()"));  Serial.println();
+  #endif
 
   server.sendHeader("Connection", "close");
   server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -1764,6 +1890,9 @@ void handleControl(){
 
 
 void web_Control(void) {
+  #ifdef DEBUG
+    Serial.print(F("web_Control()"));  Serial.println();
+  #endif
 
   server.on("/pincontrol", []() {
 
@@ -1944,35 +2073,42 @@ void web_Control(void) {
 String XML;
 
 void buildXML(){
-XML=String(F("<?xml version='1.0'?>"));
-XML+=String(F("<Donnees>")); 
-XML+=String(F("<temperature>"));
-XML+=StringData.temperatureString;
-XML+=String(F(" °C"));
-XML+=String(F("</temperature>"));
-XML+=String(F("<humidity>"));
-XML+=StringData.humidityString;
-XML+=String(F(" %"));
-XML+=String(F("</humidity>"));
-XML+=String(F("<pressure>"));
-XML+=StringData.pressureString;
-XML+=String(F(" mm"));
-XML+=String(F("</pressure>"));
-XML+=String(F("<illuminance>"));
-XML+=StringData.luxString;
-XML+=String(F(" lux"));
-XML+=String(F("</illuminance>"));
-XML+=String(F("<uptime>"));
-XML+=StringData.uptimeString;
-XML+=String(F("</uptime>"));
-XML+=String(F("<freeMemory>"));
-XML+=StringData.freeMemoryString;
-XML+=String(F("</freeMemory>"));
-XML+=String(F("</Donnees>")); 
+  #ifdef DEBUG
+    Serial.print(F("buildXML()"));  Serial.println();
+  #endif
+  XML=String(F("<?xml version='1.0'?>"));
+  XML+=String(F("<Donnees>")); 
+  XML+=String(F("<temperature>"));
+  XML+=StringData.temperatureString;
+  XML+=String(F(" °C"));
+  XML+=String(F("</temperature>"));
+  XML+=String(F("<humidity>"));
+  XML+=StringData.humidityString;
+  XML+=String(F(" %"));
+  XML+=String(F("</humidity>"));
+  XML+=String(F("<pressure>"));
+  XML+=StringData.pressureString;
+  XML+=String(F(" mm"));
+  XML+=String(F("</pressure>"));
+  XML+=String(F("<illuminance>"));
+  XML+=StringData.luxString;
+  XML+=String(F(" lux"));
+  XML+=String(F("</illuminance>"));
+  XML+=String(F("<uptime>"));
+  XML+=StringData.uptimeString;
+  XML+=String(F("</uptime>"));
+  XML+=String(F("<freeMemory>"));
+  XML+=StringData.freeMemoryString;
+  XML+=String(F("</freeMemory>"));
+  XML+=String(F("</Donnees>")); 
 }
 
 
 void handleXML(){
+  #ifdef DEBUG
+    Serial.print(F("handleXML()"));  Serial.println();
+  #endif
+
   buildXML();
   server.send(200,"text/xml",XML);
 }
@@ -2159,7 +2295,7 @@ void loop() {
     #endif
     WiFi.mode(WIFI_AP_STA);
     WiFi.begin(ConfDevice.sta_ssid, ConfDevice.sta_pwd);
-    delay(10);
+    delay(100);
 
     if (WiFi.waitForConnectResult() != WL_CONNECTED)
       return;
