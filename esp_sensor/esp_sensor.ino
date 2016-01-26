@@ -163,7 +163,7 @@ WiFiClient espClient;
 char topic_buff[120];
 char value_buff[120];
 
-String network_html;
+String network_html;          // Список доступных Wi-Fi точек
 
 ESP8266WebServer server(80);
 
@@ -211,6 +211,10 @@ String ClassInfo;       ClassInfo += FPSTR(ClassInfoP);
 String ClassDanger;     ClassDanger += FPSTR(ClassDangerP);
 String ClassDefault;    ClassDefault += FPSTR(ClassDefaultP);
 String ClassSuccess;    ClassSuccess += FPSTR(ClassSuccessP);
+
+String AUTO;       AUTO += FPSTR(AUTOP);
+String ON;         ON += FPSTR(ONP);
+String OFF;        OFF += FPSTR(OFFP);
 
 
 */
@@ -427,6 +431,10 @@ const char ClassDangerP[] PROGMEM  = "danger";
 const char ClassDefaultP[] PROGMEM  = "default";
 const char ClassSuccessP[] PROGMEM  = "success";
 
+
+const char AUTOP[] PROGMEM  = "AUTO";
+const char ONP[] PROGMEM  = "ON";
+const char OFFP[] PROGMEM  = "OFF";
  
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         ROOT 
 
@@ -434,31 +442,36 @@ const char ClassSuccessP[] PROGMEM  = "success";
 
 void LightControl(bool motion = false)
 {
+
   #ifdef DEBUG
     Serial.print(F("LightControl()"));  Serial.println();
   #endif
 
-  if (StringData.lightState == "ON"){
+  String AUTO;       AUTO += FPSTR(AUTOP);
+  String ON;         ON += FPSTR(ONP);
+  String OFF;        OFF += FPSTR(OFFP);
+
+  if (StringData.lightState == ON){
     digitalWrite(ConfDevice.light_pin, HIGH);
-  } else if (StringData.lightState == "OFF"){
+  } else if (StringData.lightState == OFF){
     digitalWrite(ConfDevice.light_pin, LOW);
-  } else if (StringData.lightState == "AUTO" && motion == true ){
+  } else if (StringData.lightState == AUTO && motion == true ){
       digitalWrite(ConfDevice.light_pin, HIGH);
       lightOffTimer = millis();
-  } else if (StringData.lightState == "AUTO" && motion == false && digitalRead(ConfDevice.light_pin) == HIGH){
+  } else if (StringData.lightState == AUTO && motion == false && digitalRead(ConfDevice.light_pin) == HIGH){
     if (millis() - lightOffTimer >= atoi(StringData.lightOffTimerStting.c_str())*60*1000){
       digitalWrite(ConfDevice.light_pin, LOW);
     }
   }
 
-  if (StringData.lightState2 == "ON"){
+  if (StringData.lightState2 == ON){
     digitalWrite(ConfDevice.light_pin2, HIGH);
-  } else if (StringData.lightState2 == "OFF"){
+  } else if (StringData.lightState2 == OFF){
     digitalWrite(ConfDevice.light_pin2, LOW);
-  } else if (StringData.lightState2 == "AUTO" && motion == true ){
+  } else if (StringData.lightState2 == AUTO && motion == true ){
       digitalWrite(ConfDevice.light_pin2, HIGH);
       lightOffTimer2 = millis();
-  } else if (StringData.lightState2 == "AUTO" && motion == false && digitalRead(ConfDevice.light_pin2) == HIGH){
+  } else if (StringData.lightState2 == AUTO && motion == false && digitalRead(ConfDevice.light_pin2) == HIGH){
     if (millis() - lightOffTimer2 >= atoi(StringData.lightOffTimerStting2.c_str())*60*1000){
       digitalWrite(ConfDevice.light_pin2, LOW);
     }
@@ -485,29 +498,28 @@ void scanWiFi(void) {
   } else {
     #ifdef DEBUG
     Serial.print(founds);  Serial.println(F(" networks found"));
-    for (int i = 0; i < founds; ++i) {
+    for (size_t i = 0; i < founds; ++i) {
       // Print SSID and RSSI for each network found
       Serial.print(i + 1);  Serial.print(F(": "));  Serial.print(WiFi.SSID(i));  Serial.print(F(" ("));  Serial.print(WiFi.RSSI(i));  Serial.print(F(")"));
-      Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
+      Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? F(" ") : F("*"));
       delay(10);
     }
     #endif
   }
-  network_html = "<blockquote>";
-  for (int i = 0; i < founds; ++i)
+  network_html = String(F("<blockquote>"));
+  for (size_t i = 0; i < founds; ++i)
   {
     // Print SSID and RSSI for each network found
-    network_html += "<p><kbd>";
+    network_html += String(F("<p><kbd>"));
     network_html += WiFi.SSID(i);
-    network_html += " (";
+    network_html += String(F(" ("));
     network_html += WiFi.RSSI(i);
-    network_html += ")";
-    network_html += (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*";
-    network_html += "</kbd></p>";
+    network_html += String(F(")"));
+    network_html += (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? F(" ") : F("*");
+    network_html += String(F("</kbd></p>"));
   }
-  network_html += "</blockquote>";
+  network_html += String(F("</blockquote>"));
 }
-
 
 
 int waitConnected(void) {
@@ -674,7 +686,7 @@ void MotionDetect()
     run = true;
     if (client.connect(ConfDevice.mqtt_name)) {
       sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  motionSensor, ConfDevice.mqtt_name);
-      client.publish(topic_buff, "ON");
+      client.publish(topic_buff, ONP);
     }
   }
 }
@@ -687,30 +699,30 @@ String GetUptimeData(){
     Serial.print(F("GetUptimeData()"));  Serial.println();
   #endif
 
-//** Making Note of an expected rollover *****//   
-if(millis()>=3000000000){ 
-  HighMillis=1;
+  //** Making Note of an expected rollover *****//   
+  if(millis()>=3000000000){ 
+    HighMillis=1;
+  }
+  //** Making note of actual rollover **//
+  if(millis()<=100000&&HighMillis==1){
+    Rollover++;
+    HighMillis=0;
+  }
+
+  long secsUp = millis()/1000;
+
+  Second = secsUp%60;
+  Minute = (secsUp/60)%60;
+  Hour = (secsUp/(60*60))%24;
+  Day = (Rollover*50)+(secsUp/(60*60*24));  //First portion takes care of a rollover [around 50 days]
+
+  sprintf_P(value_buff, (const char *)F("%dd %02d:%02d"), Day, Hour, Minute);
+  StringData.uptimeString = String(value_buff);
+  #ifdef DEBUG
+    Serial.print(F("Uptime: "));  Serial.print(value_buff);  Serial.print(F(":"));  Serial.print(Second/10);  Serial.println(Second%10);
+  #endif
+  return value_buff;
 }
-//** Making note of actual rollover **//
-if(millis()<=100000&&HighMillis==1){
-  Rollover++;
-  HighMillis=0;
-}
-
-long secsUp = millis()/1000;
-
-Second = secsUp%60;
-Minute = (secsUp/60)%60;
-Hour = (secsUp/(60*60))%24;
-Day = (Rollover*50)+(secsUp/(60*60*24));  //First portion takes care of a rollover [around 50 days]
-
-sprintf_P(value_buff, (const char *)F("%dd %02d:%02d"), Day, Hour, Minute);
-StringData.uptimeString = String(value_buff);
-#ifdef DEBUG
-  Serial.print(F("Uptime: "));  Serial.print(value_buff);  Serial.print(F(":"));  Serial.print(Second/10);  Serial.println(Second%10);
-#endif
-return value_buff;
-};
 
 
 
@@ -737,8 +749,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   subscribeTimer = millis();
   rebootTimer = millis();
 
-  int i = 0;
-
+  size_t i=0;
   // create character buffer with ending null terminator (string)
   for(i=0; i<length; i++) {
     value_buff[i] = payload[i];
@@ -749,33 +760,31 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print(F("callback: "));  Serial.print(topic);  Serial.print(F(" payload "));  Serial.println(value_buff);
   #endif
 
-
+  // Обрабатываем данные о состоянии светодиодной ленты (AUTO, ON, OFF)
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType, ConfDevice.mqtt_name);
   if (strcmp (topic,topic_buff) == 0){
+
+    String AUTO;       AUTO += FPSTR(AUTOP);
+    String ON;         ON += FPSTR(ONP);
+    String OFF;        OFF += FPSTR(OFFP);
+
     #ifdef DEBUG
       Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
     #endif
     if (strncmp (value_buff,"1",1) == 0){
-      #ifdef DEBUG
-        Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.println(F(" contains ON"));
-      #endif
-      StringData.lightState = String(F("ON"));
-      //digitalWrite(ConfDevice.light_pin, HIGH);
+      StringData.lightState = ON;
     } else if (strncmp (value_buff,"0",1) == 0){
-      #ifdef DEBUG
-        Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.println(F(" contains OFF"));
-      #endif
-      StringData.lightState = String(F("OFF"));
-      //digitalWrite(ConfDevice.light_pin, LOW);
+      StringData.lightState = OFF;
     } else if (strncmp (value_buff,"2",1) == 0){
-      #ifdef DEBUG
-        Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.println(F(" contains Auto"));
-      #endif
-      StringData.lightState = String(F("AUTO"));
+      StringData.lightState = AUTO;
     }
+
+    #ifdef DEBUG
+      Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.print(F(" contains "));   Serial.print(StringData.lightState);
+    #endif
+
     LightControl();
   }
-
 
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer, ConfDevice.mqtt_name);
@@ -815,11 +824,14 @@ void MqttPubLightState(){
     Serial.print(F("MqttPubLightState()"));  Serial.println();
   #endif
 
+  String ON;         ON += FPSTR(ONP);
+  String OFF;        OFF += FPSTR(OFFP);
+
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lightType, ConfDevice.mqtt_name);
   String lightStateNum;
-  if (StringData.lightState == "ON"){
+  if (StringData.lightState == ON){
     lightStateNum = String(F("1"));
-  } else if (StringData.lightState == "OFF"){
+  } else if (StringData.lightState == OFF){
     lightStateNum = String(F("0"));
   } else {
     lightStateNum = String(F("2"));
@@ -827,9 +839,9 @@ void MqttPubLightState(){
   client.publish(topic_buff, lightStateNum.c_str());
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lightType2, ConfDevice.mqtt_name);
-  if (StringData.lightState2 == "ON"){
+  if (StringData.lightState2 == ON){
     lightStateNum = String(F("1"));
-  } else if (StringData.lightState2 == "OFF"){
+  } else if (StringData.lightState2 == OFF){
     lightStateNum = String(F("0"));
   } else {
     lightStateNum = String(F("2"));
@@ -894,10 +906,6 @@ void MqttSubscribePrint(char *sub_buff)
 {
   #ifdef DEBUG
     Serial.print(F("MqttSubscribePrint()"));  Serial.println();
-  #endif
-
-  #ifdef DEBUG
-    Serial.print(F("Try subscribe: "));  Serial.println(sub_buff);
   #endif
 
   if (client.subscribe(sub_buff)) {
@@ -1225,7 +1233,7 @@ bool loadConfig() {
   if (json["staticIpMode"]){
     const char* staticIpMode_char = json["staticIpMode"];
     conv = String(staticIpMode_char);
-    staticIpMode = atoi(conv.c_str());
+    staticIpMode = atoi(staticIpMode_char);
   } else {
     saveConfig();
   }
@@ -1326,7 +1334,6 @@ void rootWebPage(void) {
     server.sendHeader("Access-Control-Allow-Origin", "*");
 
     String headerStart;           headerStart += FPSTR(headerStartP);
-    String headerRefreshStatus;   headerRefreshStatus += FPSTR(headerRefreshStatusP);
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String javaScript;            javaScript += FPSTR(javaScriptP);
     String javaScriptEnd;         javaScriptEnd += FPSTR(javaScriptEndP);
@@ -1391,7 +1398,7 @@ void rebootWebPage(void) {
     String containerEnd;          containerEnd += FPSTR(containerEndP);
     String siteEnd;               siteEnd += FPSTR(siteEndP);
 
-    String data = "<div class='col-md-4'><div class='page-header'><h1>Reboot ESP</h1></div><div class='alert alert-info' role='alert'><a href='#' class='alert-link'>Rebooting...</a></div></div>";
+    String data = String(F("<div class='col-md-4'><div class='page-header'><h1>Reboot ESP</h1></div><div class='alert alert-info' role='alert'><a href='#' class='alert-link'>Rebooting...</a></div></div>"));
     server.send ( 200, "text/html", headerStart + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
     ESP.restart();
 
@@ -1526,7 +1533,7 @@ void web_espConf(void) {
     data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + ConfDevice.sta_ssid + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("sta_pwd");
-    if (payload.length() > 7 &&  payload != "********") {
+    if (payload.length() > 7 &&  payload != String(F("********"))) {
       payload.toCharArray(ConfDevice.sta_pwd, sizeof(ConfDevice.sta_pwd));
     }
     data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
@@ -1636,11 +1643,6 @@ void web_mqttConf(void) {
     String siteEnd;               siteEnd += FPSTR(siteEndP);
     String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
     String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
-    String panelEnd;              panelEnd += FPSTR(panelEndP);
-    String panelBodySymbol;       panelBodySymbol += FPSTR(panelBodySymbolP);
-    String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
-    String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
-    String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
 
     String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
     String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
@@ -1652,8 +1654,11 @@ void web_mqttConf(void) {
     String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
     String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
 
-    String title1 = panelHeaderName + String(F("MQTT Configuration")) + panelHeaderEnd;
-    String data = title1 + inputBodyStart;
+    String data;
+    data += panelHeaderName;
+    data += String(F("MQTT Configuration"));
+    data += panelHeaderEnd;
+    data += inputBodyStart;
 
     String payload=server.arg("mqtt_ip");
     if (payload.length() > 0 ) {
@@ -1711,30 +1716,34 @@ void handleControl(){
   server.sendHeader("Connection", "close");
   server.sendHeader("Access-Control-Allow-Origin", "*");
 
+  String AUTO;       AUTO += FPSTR(AUTOP);
+  String ON;         ON += FPSTR(ONP);
+  String OFF;        OFF += FPSTR(OFFP);
+
   if (server.args() > 0 ) {
-    for ( uint8_t i = 0; i < server.args(); i++ ) {
+    for ( size_t i = 0; i < server.args(); i++ ) {
       if (server.argName(i) == "1" && server.arg(i) == "1") {
         digitalWrite(ConfDevice.light_pin, !digitalRead(ConfDevice.light_pin));
         if (digitalRead(ConfDevice.light_pin) == HIGH){
-          StringData.lightState = "ON";
+          StringData.lightState = ON;
         } else {
-          StringData.lightState = "OFF";
+          StringData.lightState = OFF;
         }
       }
       if (server.argName(i) == "1" && server.arg(i) == "2") {
-        StringData.lightState = "AUTO";
+        StringData.lightState = AUTO;
       }
 
       if (server.argName(i) == "2" && server.arg(i) == "1") {
         digitalWrite(ConfDevice.light_pin2, !digitalRead(ConfDevice.light_pin2));
         if (digitalRead(ConfDevice.light_pin2) == HIGH){
-          StringData.lightState2 = "ON";
+          StringData.lightState2 = ON;
         } else {
-          StringData.lightState2 = "OFF";
+          StringData.lightState2 = OFF;
         }
       }
       if (server.argName(i) == "2" && server.arg(i) == "2") {
-        StringData.lightState2 = "AUTO";
+        StringData.lightState2 = AUTO;
       }
       #ifdef DEBUG
       Serial.println(server.argName(i));
@@ -1793,6 +1802,10 @@ void web_Control(void) {
     String ClassDanger;     ClassDanger += FPSTR(ClassDangerP);
     String ClassDefault;    ClassDefault += FPSTR(ClassDefaultP);
     String ClassSuccess;    ClassSuccess += FPSTR(ClassSuccessP);
+    String AUTO;            AUTO += FPSTR(AUTOP);
+    String ON;              ON += FPSTR(ONP);
+    String OFF;             OFF += FPSTR(OFFP);
+
 
     if (digitalRead(ConfDevice.light_pin) == HIGH){
       pinState = true;
@@ -1808,18 +1821,18 @@ void web_Control(void) {
 
 
     String mode;
-    if (StringData.lightState == "AUTO"){
+    if (StringData.lightState == AUTO){
       mode = ClassSuccess;
-    } else if (StringData.lightState == "ON") {
+    } else if (StringData.lightState == ON) {
       mode = ClassInfo;
     } else {
       mode = ClassDanger;
     }
 
     String mode2;
-    if (StringData.lightState2 == "AUTO"){
+    if (StringData.lightState2 == AUTO){
       mode2 = ClassSuccess;
-    } else if (StringData.lightState2 == "ON") {
+    } else if (StringData.lightState2 == ON) {
       mode2 = ClassInfo;
     } else {
       mode2 = ClassDanger;
@@ -1827,95 +1840,59 @@ void web_Control(void) {
 
 
     unsigned long timeOff = 0;
-      if (millis() - lightOffTimer < atoi(StringData.lightOffTimerStting.c_str())*60*1000){
-        timeOff = atoi(StringData.lightOffTimerStting.c_str())*60*1000 - (millis() - lightOffTimer);
-        timeOff = timeOff/1000;
-      } 
+    if (millis() - lightOffTimer < atoi(StringData.lightOffTimerStting.c_str())*60*1000){
+      timeOff = atoi(StringData.lightOffTimerStting.c_str())*60*1000 - (millis() - lightOffTimer);
+      timeOff = timeOff/1000;
+    }
 
     unsigned long timeOff2 = 0;
-      if (millis() - lightOffTimer2 < atoi(StringData.lightOffTimerStting2.c_str())*60*1000){
-        timeOff2 = atoi(StringData.lightOffTimerStting2.c_str())*60*1000 - (millis() - lightOffTimer2);
-        timeOff2 = timeOff2/1000;
-      } 
+    if (millis() - lightOffTimer2 < atoi(StringData.lightOffTimerStting2.c_str())*60*1000){
+      timeOff2 = atoi(StringData.lightOffTimerStting2.c_str())*60*1000 - (millis() - lightOffTimer2);
+      timeOff2 = timeOff2/1000;
+    }
 
     String data;    data += FPSTR(div1P);
     
 
-    if (StringData.lightState == "AUTO") { data+=ClassDefault; } else if (pinState == true) { data+=ClassDanger; } else { data+=ClassInfo; }
-
+    if (StringData.lightState == AUTO) { data+=ClassDefault; } else if (pinState == true) { data+=ClassDanger; } else { data+=ClassInfo; }
     data+=String(F("' value='"));
-
     if (pinState == true) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
-
     data+=String(F("'></div></td><td class='active'><div onclick='Auto1();'><input id='Auto' type='submit' class='btn btn-"));
-
-    if (StringData.lightState == "AUTO") { data+=ClassDanger; } else { data+=ClassDefault; }
-
+    if (StringData.lightState == AUTO) { data+=ClassDanger; } else { data+=ClassDefault; }
     data+=String(F("' value='Auto'></div></td><td class='"));
-
     if (pinState == true) { data+=ClassInfo; } else { data+=ClassDanger; }
-
     data+=String(F("'><h4>"));
-        
-    if (pinState == true) { data+=String(F("ON")); } else { data+=String(F("OFF")); }
-
+    if (pinState == true) { data+=ON; } else { data+=OFF; }
     data+=String(F("</h4></td><td class='"));
-
     data+=mode;    
-
     data+=String(F("'><h4>"));
-
     data+=StringData.lightState;
-
     data+=String(F("</h4></td><td class='"));
-
     data+=String(F("active"));
-
     data+=String(F("'><h4>"));
-
     data+=String(timeOff);
-
     data+=String(F("</h4></td></tr>"));
 
 
     data+=String(F("<tr><td class='active'><h4>Led Strip 2</h4></td><td class='active'><div onclick='Pin2();'><input id='OnOff2' type='submit' class='btn btn-"));
-
-    if (StringData.lightState2 == "AUTO") { data+=ClassDefault; } else if (pinState2 == true) { data+=ClassDanger; } else { data+=ClassInfo; }
-
+    if (StringData.lightState2 == AUTO) { data+=ClassDefault; } else if (pinState2 == true) { data+=ClassDanger; } else { data+=ClassInfo; }
     data+=String(F("' value='"));
-
     if (pinState2 == true) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
-
     data+=String(F("'></div></td><td class='active'><div onclick='Auto2();'><input id='Auto2' type='submit' class='btn btn-"));
-
-    if (StringData.lightState2 == "AUTO") { data+=ClassDanger; } else { data+=ClassDefault; }
-
+    if (StringData.lightState2 == AUTO) { data+=ClassDanger; } else { data+=ClassDefault; }
     data+=String(F("' value='Auto'></div></td><td class='"));
-
     if (pinState2 == true) { data+=ClassInfo; } else { data+=ClassDanger; }
-
     data+=String(F("'><h4>"));
-        
-    if (pinState2 == true) { data+=String(F("ON")); } else { data+=String(F("OFF")); }
-
+    if (pinState2 == true) { data+=ON; } else { data+=OFF; }
     data+=String(F("</h4></td><td class='"));
-
     data+=mode2;    
-
     data+=String(F("'><h4>"));
-
     data+=StringData.lightState2;
-
     data+=String(F("</h4></td><td class='"));
-
     data+=String(F("active"));
-
     data+=String(F("'><h4>"));
-
     data+=String(timeOff2);
-
     data+=String(F("</h4></td></tr>"));
-
     data+=String(F("</tbody></table></div>"));
 
 
@@ -2135,7 +2112,8 @@ void loop() {
     MotionDetect();
   }
 
-  if (StringData.lightState == "AUTO"){
+  String AUTO;   AUTO += FPSTR(AUTOP);
+  if (StringData.lightState == AUTO){
     LightControl();
   }
 
