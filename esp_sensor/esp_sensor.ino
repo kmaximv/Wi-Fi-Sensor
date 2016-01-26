@@ -686,7 +686,7 @@ void MotionDetect()
     run = true;
     if (client.connect(ConfDevice.mqtt_name)) {
       sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  motionSensor, ConfDevice.mqtt_name);
-      client.publish(topic_buff, ONP);
+      client.publish(topic_buff, "ON");
     }
   }
 }
