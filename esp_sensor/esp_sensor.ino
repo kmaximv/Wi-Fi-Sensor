@@ -1232,7 +1232,6 @@ bool loadConfig() {
 
   if (json["staticIpMode"]){
     const char* staticIpMode_char = json["staticIpMode"];
-    conv = String(staticIpMode_char);
     staticIpMode = atoi(staticIpMode_char);
   } else {
     saveConfig();
@@ -1240,72 +1239,63 @@ bool loadConfig() {
 
   if (json["light_pin"]){
     const char* light_pin_char = json["light_pin"];
-    conv = String(light_pin_char);
-    ConfDevice.light_pin = atoi(conv.c_str());
+    ConfDevice.light_pin = atoi(light_pin_char);
   } else {
     saveConfig();
   }
 
   if (json["light_pin2"]){
     const char* light_pin_char2 = json["light_pin2"];
-    conv = String(light_pin_char2);
-    ConfDevice.light_pin2 = atoi(conv.c_str());
+    ConfDevice.light_pin2 = atoi(light_pin_char2);
   } else {
     saveConfig();
   }
 
   if (json["motion_pin"]){
     const char* motion_pin_char = json["motion_pin"];
-    conv = String(motion_pin_char);
-    ConfDevice.motion_pin = atoi(conv.c_str());
+    ConfDevice.motion_pin = atoi(motion_pin_char);
   } else {
     saveConfig();
   }
 
   if (json["dht_pin"]){
     const char* dht_pin_char = json["dht_pin"];
-    conv = String(dht_pin_char);
-    ConfDevice.dht_pin = atoi(conv.c_str());
+    ConfDevice.dht_pin = atoi(dht_pin_char);
   } else {
     saveConfig();
   }
 
   if (json["get_data_delay"]){
     const char* get_data_delay_char = json["get_data_delay"];
-    conv = String(get_data_delay_char);
-    ConfDevice.get_data_delay = atoi(conv.c_str());
+    ConfDevice.get_data_delay = atoi(get_data_delay_char);
   } else {
     saveConfig();
   }
 
   if (json["publish_delay"]){
     const char* publish_delay_char = json["publish_delay"];
-    conv = String(publish_delay_char);
-    ConfDevice.publish_delay = atoi(conv.c_str());
+    ConfDevice.publish_delay = atoi(publish_delay_char);
   } else {
     saveConfig();
   }
 
   if (json["subscribe_delay"]){
     const char* subscribe_delay_char = json["subscribe_delay"];
-    conv = String(subscribe_delay_char);
-    ConfDevice.subscribe_delay = atoi(conv.c_str());
+    ConfDevice.subscribe_delay = atoi(subscribe_delay_char);
   } else {
     saveConfig();
   }
 
   if (json["motion_read_delay"]){
     const char* motion_read_delay_char = json["motion_read_delay"];
-    conv = String(motion_read_delay_char);
-    ConfDevice.motion_read_delay = atoi(conv.c_str());
+    ConfDevice.motion_read_delay = atoi(motion_read_delay_char);
   } else {
     saveConfig();
   }
 
   if (json["reboot_delay"]){
     const char* reboot_delay_char = json["reboot_delay"];
-    conv = String(reboot_delay_char);
-    ConfDevice.reboot_delay = atoi(conv.c_str());
+    ConfDevice.reboot_delay = atoi(reboot_delay_char);
   } else {
     saveConfig();
   }
