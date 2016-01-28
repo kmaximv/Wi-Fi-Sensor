@@ -54,6 +54,7 @@ const char *pressure = "Pressure";
 const char *altitude = "Altitude";
 const char *motionSensor = "MotionSensor";
 const char *motionsensortimer = "MotionSensorTimer";
+const char *motionsensortimer2 = "MotionSensorTimer2";
 const char *version = "Version";
 const char *freeMemory = "FreeMemory";
 const char *ip = "IP";
@@ -117,9 +118,9 @@ struct StringDataStruct {
   String uptimeString;
   String freeMemoryString;
   String lightState;
-  String lightOffTimerStting;
+  String lightOffTimerString;
   String lightState2;
-  String lightOffTimerStting2;
+  String lightOffTimerString2;
 
 
 } StringData = {
@@ -459,7 +460,7 @@ void LightControl(bool motion = false)
       digitalWrite(ConfDevice.light_pin, HIGH);
       lightOffTimer = millis();
   } else if (StringData.lightState == AUTO && motion == false && digitalRead(ConfDevice.light_pin) == HIGH){
-    if (millis() - lightOffTimer >= atoi(StringData.lightOffTimerStting.c_str())*60*1000){
+    if (millis() - lightOffTimer >= atoi(StringData.lightOffTimerString.c_str())*60*1000){
       digitalWrite(ConfDevice.light_pin, LOW);
     }
   }
@@ -472,7 +473,7 @@ void LightControl(bool motion = false)
       digitalWrite(ConfDevice.light_pin2, HIGH);
       lightOffTimer2 = millis();
   } else if (StringData.lightState2 == AUTO && motion == false && digitalRead(ConfDevice.light_pin2) == HIGH){
-    if (millis() - lightOffTimer2 >= atoi(StringData.lightOffTimerStting2.c_str())*60*1000){
+    if (millis() - lightOffTimer2 >= atoi(StringData.lightOffTimerString2.c_str())*60*1000){
       digitalWrite(ConfDevice.light_pin2, LOW);
     }
   }
@@ -792,8 +793,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
       #ifdef DEBUG
         Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
       #endif
-      StringData.lightOffTimerStting = value_buff;
+      StringData.lightOffTimerString = value_buff;
     }
+
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer2, ConfDevice.mqtt_name);
+    if (strcmp (topic,topic_buff) == 0){
+      #ifdef DEBUG
+        Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
+      #endif
+      StringData.lightOffTimerString2 = value_buff;
+    }
+
 
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.subscribe_topic, version, ConfDevice.mqtt_name);
@@ -1135,7 +1145,9 @@ bool saveConfig() {
   json["publish_topic"] = ConfDevice.publish_topic;
   json["subscribe_topic"] = ConfDevice.subscribe_topic;
   json["light_pin"] = ConfDevice.light_pin;
+  json["lightOff_delay"] = StringData.lightOffTimerString;
   json["light_pin2"] = ConfDevice.light_pin2;
+  json["light2Off_delay"] = StringData.lightOffTimerString2;
   json["motion_pin"] = ConfDevice.motion_pin;
   json["dht_pin"] = ConfDevice.dht_pin;
   json["get_data_delay"] = ConfDevice.get_data_delay;
@@ -1244,12 +1256,18 @@ bool loadConfig() {
     saveConfig();
   }
 
+  const char* lightOff_delay_char = json["lightOff_delay"];
+  StringData.lightOffTimerString = String(lightOff_delay_char);
+
   if (json["light_pin2"]){
     const char* light_pin_char2 = json["light_pin2"];
     ConfDevice.light_pin2 = atoi(light_pin_char2);
   } else {
     saveConfig();
   }
+
+  const char* light2Off_delay_char = json["light2Off_delay"];
+  StringData.lightOffTimerString2 = String(light2Off_delay_char);
 
   if (json["motion_pin"]){
     const char* motion_pin_char = json["motion_pin"];
@@ -1564,11 +1582,23 @@ void web_espConf(void) {
     }
     data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + String(ConfDevice.light_pin) + inputBodyClose + inputBodyCloseDiv;
 
+    payload=server.arg("lightOff_delay");
+    if (payload.length() > 0 ) {
+      StringData.lightOffTimerString = atoi(payload.c_str())*60*1000;
+    }
+    data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightOff_delay")) + inputPlaceHolder + String(atoi(StringData.lightOffTimerString.c_str())*60) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+
     payload=server.arg("light_pin2");
     if (payload.length() > 0 ) {
       ConfDevice.light_pin2 = atoi(payload.c_str());
     }
     data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light_pin2")) + inputPlaceHolder + String(ConfDevice.light_pin2) + inputBodyClose + inputBodyCloseDiv;
+
+    payload=server.arg("light2Off_delay");
+    if (payload.length() > 0 ) {
+      StringData.lightOffTimerString2 = atoi(payload.c_str())*60*1000;
+    }
+    data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightOff_delay")) + inputPlaceHolder + String(atoi(StringData.lightOffTimerString2.c_str())*60) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("motion_pin");
     if (payload.length() > 0 ) {
@@ -1830,14 +1860,14 @@ void web_Control(void) {
 
 
     unsigned long timeOff = 0;
-    if (millis() - lightOffTimer < atoi(StringData.lightOffTimerStting.c_str())*60*1000){
-      timeOff = atoi(StringData.lightOffTimerStting.c_str())*60*1000 - (millis() - lightOffTimer);
+    if (millis() - lightOffTimer < atoi(StringData.lightOffTimerString.c_str())*60*1000){
+      timeOff = atoi(StringData.lightOffTimerString.c_str())*60*1000 - (millis() - lightOffTimer);
       timeOff = timeOff/1000;
     }
 
     unsigned long timeOff2 = 0;
-    if (millis() - lightOffTimer2 < atoi(StringData.lightOffTimerStting2.c_str())*60*1000){
-      timeOff2 = atoi(StringData.lightOffTimerStting2.c_str())*60*1000 - (millis() - lightOffTimer2);
+    if (millis() - lightOffTimer2 < atoi(StringData.lightOffTimerString2.c_str())*60*1000){
+      timeOff2 = atoi(StringData.lightOffTimerString2.c_str())*60*1000 - (millis() - lightOffTimer2);
       timeOff2 = timeOff2/1000;
     }
 
