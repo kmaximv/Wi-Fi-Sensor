@@ -8,9 +8,10 @@
 class Espuart
 {
   public:
-    bool crcCheck(uint8_t *data, size_t length, uint8_t crcControl);
+    bool crcCheck(String dataStr, uint8_t crcControl);
     bool serialEvent(void);
-    uint8_t crcCalc(uint8_t *data, size_t length);
+    uint8_t crcCalc(String dataStr);
+    bool Send(String data);
     String dataString;
     String startMarker;
     String stopMarker;

@@ -1,7 +1,7 @@
 #include "ESP_UART.h"
 
 //#define PARSE_CELLS 4     //Кол-во ячеек в массиве принимаемых данных
-//#define DATA_LENGTH 10    //Максимальный размер пакета данных без маркеров и CRC
+#define DATA_LENGTH 10    //Максимальный размер пакета данных без маркеров и CRC
 
 
 String startMarker = "<beg>";           // Переменная, содержащая маркер начала пакета
@@ -34,8 +34,17 @@ uint8_t crc8_ccitt(uint8_t crc, uint8_t data){
 }
 
 
-/* Вспомогательная функция вычисления CRC для массива байтов */
-uint8_t Espuart::crcCalc(uint8_t *data, size_t length){
+/* Вспомогательная функция вычисления CRC для строки */
+uint8_t Espuart::crcCalc(String dataStr){
+
+  uint8_t data[DATA_LENGTH];
+  size_t length = dataStr.length();
+  dataStr.getBytes(data, length + 1); // + 1 для дополнительного символа окончания строки
+
+  #ifdef DEBUG
+  printByte(data);
+  #endif
+
   uint8_t crc = 0;
   for (size_t i = 0; i < length; ++i) {
     crc = crc8_ccitt(crc, data[i]);
@@ -47,40 +56,24 @@ uint8_t Espuart::crcCalc(uint8_t *data, size_t length){
 }
 
 
-
-bool Espuart::crcCheck(uint8_t *data, size_t length, uint8_t crcControl) {
-
-  #ifdef DEBUG
-  Serial.println();
-  Serial.print(F("length: ")); Serial.println(length);
-  for (uint8_t i = 0;  i < length; ++i){
-    Serial.print(data[i], DEC); Serial.print(F(" "));
-  }
-  Serial.println();
-  #endif
-
-  uint8_t crc = crcCalc(data, length);
-
+bool Espuart::crcCheck(String dataStr, uint8_t crcControl) {
+  uint8_t crc = crcCalc(dataStr);
   #ifdef DEBUG
   Serial.print(F("CRC:        "));    Serial.println(crc);    Serial.print(F("crcControl: "));    Serial.println(crcControl);
   #endif
-
   if (crc == crcControl) {
-
     #ifdef DEBUG
     Serial.println(F("CRC OK!"));
     #endif
-
     return true;
   } else {
-
     #ifdef DEBUG
     Serial.println(F("CRC Error!"));
     #endif
-
     return false;
   }
 }
+
 
 
 void sp_Reset(){
@@ -141,12 +134,31 @@ void sp_Read()
 }
 
 
-void sp_Send(String data){
-  Serial.print(startMarker);         // Отправляем маркер начала пакета
-  //Serial.write(data.length());          // Отправляем длину передаваемых данных
-  Serial.print(data);                   // Отправляем сами данные
-  Serial.println(stopMarker);          // Отправляем маркер конца пакета
+bool Espuart::Send(String data){
+  String packet = startMarker;      // Отправляем маркер начала пакета
+  packet += String(data.length());  // Отправляем длину передаваемых данных
+  packet += String(crcCalc(data));  // Отправляем контрольную сумму данных
+  packet += data;                   // Отправляем сами данные
+  packet += stopMarker;             // Отправляем маркер конца пакета
+  Serial.print(packet);
+
+  #ifdef DEBUG
+    Serial.print(F("Send Uart:"));  Serial.println(data);
+  #endif
+
+  if (serialEvent() &&  dataString == data){
+    return true;
+  }
+
+  #ifdef DEBUG
+    Serial.print(F("Receive Uart:"));  Serial.println(dataString);
+  #endif
+
+  return false;
 }
+
+
+
 
 
 bool Espuart::serialEvent(){

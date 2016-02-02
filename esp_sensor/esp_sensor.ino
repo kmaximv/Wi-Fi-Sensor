@@ -7,13 +7,19 @@
 #include <BH1750.h>
 #include <ArduinoJson.h>
 #include "FS.h"
-#include "ESP_UART.h"
+
 
 
 #define DEBUG
+#define UART_ON
 //#define DHT_ON
 #define BME280_ON
 //#define SHT21_ON
+
+#if defined(UART_ON)
+#include "ESP_UART.h"
+Espuart Uart;
+#endif
 
 
 #if defined(DHT_ON)
@@ -36,7 +42,6 @@ HTU21D myHTU21D;
 #endif
 
 
-Espuart Uart;
 
 
 char staticIpStr[16] = "192.168.1.220";
@@ -2114,19 +2119,6 @@ void handleXML(){
   server.send(200,"text/xml",XML);
 }
 
-/*
-void TestUart(String data){
-  char charBufVar[50];
-  data.toCharArray(charBufVar, 50);
-
-
-  String packet = Uart.startMarker;
-  packet += String(data.length());
-  packet += Uart.crcCalc(charBufVar, 10);
-  packet += data;
-  packet += Uart.stopMarker;
-}
-*/
 
 void setup() {
 
@@ -2281,6 +2273,12 @@ void loop() {
     #ifdef DEBUG
       TestSystemPrint();
     #endif
+
+    #ifdef UART_ON
+      if (Uart.Send("out&03")){
+        Serial.println("out&03 Send OK");
+      }
+    #endif
   }
 
 
@@ -2333,8 +2331,9 @@ void loop() {
     }
   }
 
-
-  if (Uart.serialEvent()){
-    Serial.println(Uart.dataString);
-  }
+  #ifdef UART_ON
+    if (Uart.serialEvent()){
+      Serial.println(Uart.dataString);
+    }
+  #endif
 }
