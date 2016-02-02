@@ -7,6 +7,7 @@
 #include <BH1750.h>
 #include <ArduinoJson.h>
 #include "FS.h"
+#include "ESP_UART.h"
 
 
 #define DEBUG
@@ -33,6 +34,9 @@ BME280 bmeSensor;
 #include "HTU21D.h"
 HTU21D myHTU21D;
 #endif
+
+
+Espuart Uart;
 
 
 char staticIpStr[16] = "192.168.1.220";
@@ -2110,8 +2114,19 @@ void handleXML(){
   server.send(200,"text/xml",XML);
 }
 
+/*
+void TestUart(String data){
+  char charBufVar[50];
+  data.toCharArray(charBufVar, 50);
 
 
+  String packet = Uart.startMarker;
+  packet += String(data.length());
+  packet += Uart.crcCalc(charBufVar, 10);
+  packet += data;
+  packet += Uart.stopMarker;
+}
+*/
 
 void setup() {
 
@@ -2316,5 +2331,10 @@ void loop() {
       publishTimer = millis();
       MqttPubData();
     }
+  }
+
+
+  if (Uart.serialEvent()){
+    Serial.println(Uart.dataString);
   }
 }
