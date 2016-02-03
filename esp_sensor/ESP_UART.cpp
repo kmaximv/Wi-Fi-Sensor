@@ -1,23 +1,85 @@
+/* Команды управления
+
+<beg>6љout&03<end>
+<beg>4Sin&3<end>
+<beg>5Son&03<end>
+<beg>6Eoff&03<end>
+<beg>49rd&3<end>
+
+<beg>8дp&03&100<end>
+
+<beg>4щra&3<end>
+
+<beg>4!a&03&10&s<end>
+*/
+
 #include "ESP_UART.h"
 
-//#define PARSE_CELLS 4     //Кол-во ячеек в массиве принимаемых данных
+#define DEBUG
+#define CRC_ENABLE
+
+#define DIGITAL_PINS 14   //Кол-во цифровых входов/выходов
+#define ANALOG_PINS 6     //Кол-во цифровых входов/выходов
+#define PARSE_CELLS 4     //Кол-во ячеек в массиве принимаемых данных
 #define DATA_LENGTH 10    //Максимальный размер пакета данных без маркеров и CRC
+
+
+unsigned int  stateAnalogPin[ANALOG_PINS];
+unsigned long timerAnalogPin[ANALOG_PINS];
+//unsigned long delayAnalogPin[ANALOG_PINS];
+
 
 
 String startMarker = "<beg>";           // Переменная, содержащая маркер начала пакета
 String stopMarker  = "<end>";            // Переменная, содержащая маркер конца пакета
 String dataString;            // Здесь будут храниться принимаемые данные
-//uint8_t sp_data[DATA_LENGTH];             
-int startMarkerStatus;        // Флаг состояния маркера начала пакета
-int stopMarkerStatus;         // Флаг состояния маркера конца пакета
+uint8_t startMarkerStatus;        // Флаг состояния маркера начала пакета
+uint8_t stopMarkerStatus;         // Флаг состояния маркера конца пакета
 uint8_t dataLength;               // Флаг состояния принимаемых данных
 boolean packetAvailable;      // Флаг завершения приема пакета
 uint8_t crc_byte;
 
-//String parseArray[PARSE_CELLS];            //Распарсенный массив принимаемых данных
+String parseArray[PARSE_CELLS];            //Распарсенный массив принимаемых данных
 
 char delimiter = '&';             // Разделительный символ в пакете данных
 
+
+
+
+bool Espuart::Send(String data){
+  String packet = startMarker;      // Отправляем маркер начала пакета
+  packet += String(data.length());  // Отправляем длину передаваемых данных
+  packet += String(crcCalc(data));  // Отправляем контрольную сумму данных
+  packet += data;                   // Отправляем сами данные
+  packet += stopMarker;             // Отправляем маркер конца пакета
+  Serial.print(packet);
+
+  #ifdef DEBUG
+    Serial.print(F("Send Uart:"));  Serial.println(data);
+  #endif
+
+  if (serialEvent() &&  dataString == data){
+    return true;
+  }
+
+  #ifdef DEBUG
+    Serial.print(F("Receive Uart:"));  Serial.println(dataString);
+  #endif
+
+  return false;
+}
+
+
+void printByte(uint8_t *data) {
+  Serial.println(F("printByte =================="));
+  uint8_t length = dataLength;
+  Serial.print(F("length: ")); Serial.println(length);
+  for (uint8_t i = 0;  i < length; ++i){
+    Serial.print(data[i], DEC); Serial.print(F(" "));
+  }
+  Serial.println();
+  Serial.println(F("Done ======================="));
+}
 
 
 uint8_t crc8(uint8_t crc, uint8_t data, uint8_t polynomial){
@@ -75,8 +137,7 @@ bool Espuart::crcCheck(String dataStr, uint8_t crcControl) {
 }
 
 
-
-void sp_Reset(){
+void Reset(){
   dataString = "";           // Обнуляем буфер приема данных
   startMarkerStatus = 0;     // Сброс флага маркера начала пакета
   stopMarkerStatus = 0;      // Сброс флага маркера конца пакета
@@ -86,7 +147,7 @@ void sp_Reset(){
 }
 
 
-void sp_Read()
+void Read()
 {
   while(Serial.available() && !packetAvailable) {                   // Пока в буфере есть что читать и пакет не является принятым
     uint8_t bufferChar = Serial.read();                               // Читаем очередной байт из буфера
@@ -94,7 +155,7 @@ void sp_Read()
       if(startMarker[startMarkerStatus] == bufferChar) {        // Если очередной байт из буфера совпадает с очередным байтом в маркере
        startMarkerStatus++;                                        // Увеличиваем счетчик совпавших байт маркера
       } else {
-       sp_Reset();                                                 // Если байты не совпали, то это не маркер. Нас нае****, расходимся. 
+       Reset();                                                 // Если байты не совпали, то это не маркер. Нас нае****, расходимся. 
       }
     } else {
      // Стартовый маркер прочитан полностью
@@ -124,7 +185,7 @@ void sp_Read()
                 packetAvailable = true;                            // и устанавливаем флаг готовности пакета
               }
             } else {
-              sp_Reset();                                          // Иначе это не маркер, а х.з. что. Полный ресет.
+              Reset();                                          // Иначе это не маркер, а х.з. что. Полный ресет.
             }
           }
         }
@@ -134,39 +195,65 @@ void sp_Read()
 }
 
 
-bool Espuart::Send(String data){
-  String packet = startMarker;      // Отправляем маркер начала пакета
-  packet += String(data.length());  // Отправляем длину передаваемых данных
-  packet += String(crcCalc(data));  // Отправляем контрольную сумму данных
-  packet += data;                   // Отправляем сами данные
-  packet += stopMarker;             // Отправляем маркер конца пакета
-  Serial.print(packet);
+bool ParseCommand() {
 
-  #ifdef DEBUG
-    Serial.print(F("Send Uart:"));  Serial.println(data);
+  #ifdef CRC_ENABLE
+  if (!Uart.crcCheck(dataString, crc_byte)) {
+    return false;
+  }
   #endif
 
-  if (serialEvent() &&  dataString == data){
-    return true;
+
+  uint8_t z = 0;
+  for ( size_t i = 0; i < dataString.length(); i++ ) {
+    if (dataString[i] != delimiter ) {
+      parseArray[z] += dataString[i];
+    } else if (dataString[i] == delimiter ) {
+      z++;
+    } 
+    if (z > PARSE_CELLS) {
+      #ifdef DEBUG
+      Serial.println(F("Error Parse Command"));
+      #endif
+      for ( size_t i = 0; i < 3; i++ ) {
+        parseArray[i] = "";
+      }
+      return false;
+    }
   }
 
   #ifdef DEBUG
-    Serial.print(F("Receive Uart:"));  Serial.println(dataString);
+  for ( size_t i = 0; i < 3; i++ ) {
+    Serial.print(parseArray[i]);   Serial.print(F(" "));
+  }
+  Serial.println(F("<--"));
   #endif
 
-  return false;
+  if (parseArray[0] == "av") {
+    #ifdef DEBUG
+      Serial.print(F("Analog pin: ")); Serial.print(parseArray[1]);
+      Serial.print(F("   value: ")); Serial.println(parseArray[2]);
+    #endif
+
+    stateAnalogPin[parseArray[1].toInt()] = parseArray[2].toInt();
+    timerAnalogPin[parseArray[1].toInt()] = millis();
+  }
+
+
+  for ( size_t i = 0; i < PARSE_CELLS; i++ ) {
+    parseArray[i] = "";
+  }
+  
+  Reset();
 }
 
 
-
-
-
 bool Espuart::serialEvent(){
-  sp_Read();                         // Вызов «читалки» принятых данных
+  Read();                          // Вызов «читалки» принятых данных
   if(packetAvailable){             // Если после вызова «читалки» пакет полностью принят
-    //ParseCommand();                   // Обрабатываем принятую информацию
-    sp_Reset();                    // Полный сброс протокола.
-  	return true;
+    ParseCommand();                // Обрабатываем принятую информацию
+    Reset();                       // Полный сброс протокола.
+    return true;
   }
   return false;
 }

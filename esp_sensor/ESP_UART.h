@@ -4,7 +4,6 @@
 #include <Arduino.h>
 
 
-
 class Espuart
 {
   public:
@@ -16,8 +15,12 @@ class Espuart
     String startMarker;
     String stopMarker;
     char delimiter;
+    unsigned int * stateAnalogPin;
+    unsigned long * timerAnalogPin;
+
   private:
 
 };
 
+extern Espuart Uart;
 #endif

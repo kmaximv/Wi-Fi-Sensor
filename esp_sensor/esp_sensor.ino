@@ -2150,6 +2150,12 @@ void loop() {
       if (Uart.Send("out&03")){
         Serial.println("out&03 Send OK");
       }
+
+      if (Uart.Send("a&03&10&s")){
+        Serial.println("a&03&10&s Send OK");
+      }
+
+      Serial.println(Uart.stateAnalogPin[3+1]);
     #endif
   }
 
