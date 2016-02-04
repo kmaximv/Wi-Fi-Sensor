@@ -15,35 +15,37 @@
 
 #include "ESP_UART.h"
 
-#define DEBUG
-#define CRC_ENABLE
-
-#define DIGITAL_PINS 14   //Кол-во цифровых входов/выходов
-#define ANALOG_PINS 6     //Кол-во цифровых входов/выходов
-#define PARSE_CELLS 4     //Кол-во ячеек в массиве принимаемых данных
-#define DATA_LENGTH 10    //Максимальный размер пакета данных без маркеров и CRC
 
 
-unsigned int  stateAnalogPin[ANALOG_PINS];
+unsigned int  valueAnalogPin[ANALOG_PINS];
 unsigned long timerAnalogPin[ANALOG_PINS];
-//unsigned long delayAnalogPin[ANALOG_PINS];
+unsigned long delayAnalogPin[ANALOG_PINS];
 
-
-
-String startMarker = "<beg>";           // Переменная, содержащая маркер начала пакета
-String stopMarker  = "<end>";            // Переменная, содержащая маркер конца пакета
-String dataString;            // Здесь будут храниться принимаемые данные
+String startMarker = "<beg>";     // Переменная, содержащая маркер начала пакета
+String stopMarker  = "<end>";     // Переменная, содержащая маркер конца пакета
+String dataString;                // Здесь будут храниться принимаемые данные
 uint8_t startMarkerStatus;        // Флаг состояния маркера начала пакета
 uint8_t stopMarkerStatus;         // Флаг состояния маркера конца пакета
 uint8_t dataLength;               // Флаг состояния принимаемых данных
-boolean packetAvailable;      // Флаг завершения приема пакета
+boolean packetAvailable;          // Флаг завершения приема пакета
 uint8_t crc_byte;
 
-String parseArray[PARSE_CELLS];            //Распарсенный массив принимаемых данных
+String parseArray[PARSE_CELLS];   //Распарсенный массив принимаемых данных
 
 char delimiter = '&';             // Разделительный символ в пакете данных
 
 
+
+void Espuart::SetAnalogReadCycle(int pin, int delay, String timeRank){
+  String data = String(F("a"));
+  data += String(Uart.delimiter);
+  data += String(pin);
+  data += String(Uart.delimiter);
+  data += String(delay);
+  data += String(Uart.delimiter);
+  data += timeRank;
+  Uart.Send(data);
+}
 
 
 bool Espuart::Send(String data){
@@ -54,7 +56,7 @@ bool Espuart::Send(String data){
   packet += stopMarker;             // Отправляем маркер конца пакета
   Serial.print(packet);
 
-  #ifdef DEBUG
+  #ifdef DEBUG_ESP_UART
     Serial.print(F("Send Uart:"));  Serial.println(data);
   #endif
 
@@ -62,7 +64,7 @@ bool Espuart::Send(String data){
     return true;
   }
 
-  #ifdef DEBUG
+  #ifdef DEBUG_ESP_UART
     Serial.print(F("Receive Uart:"));  Serial.println(dataString);
   #endif
 
@@ -103,14 +105,14 @@ uint8_t Espuart::crcCalc(String dataStr){
   size_t length = dataStr.length();
   dataStr.getBytes(data, length + 1); // + 1 для дополнительного символа окончания строки
 
-  #ifdef DEBUG
+  #ifdef DEBUG_ESP_UART
   printByte(data);
   #endif
 
   uint8_t crc = 0;
   for (size_t i = 0; i < length; ++i) {
     crc = crc8_ccitt(crc, data[i]);
-    #ifdef DEBUG
+    #ifdef DEBUG_ESP_UART
     Serial.print(crc, DEC); Serial.print(F(" "));
     #endif
   }
@@ -120,16 +122,16 @@ uint8_t Espuart::crcCalc(String dataStr){
 
 bool Espuart::crcCheck(String dataStr, uint8_t crcControl) {
   uint8_t crc = crcCalc(dataStr);
-  #ifdef DEBUG
+  #ifdef DEBUG_ESP_UART
   Serial.print(F("CRC:        "));    Serial.println(crc);    Serial.print(F("crcControl: "));    Serial.println(crcControl);
   #endif
   if (crc == crcControl) {
-    #ifdef DEBUG
+    #ifdef DEBUG_ESP_UART
     Serial.println(F("CRC OK!"));
     #endif
     return true;
   } else {
-    #ifdef DEBUG
+    #ifdef DEBUG_ESP_UART
     Serial.println(F("CRC Error!"));
     #endif
     return false;
@@ -161,13 +163,13 @@ void Read()
      // Стартовый маркер прочитан полностью
       if(dataLength <= 0) {                                        // Если длинна пакета не установлена
         dataLength = (int)bufferChar - 48;                          // Значит этот байт содержит длину пакета данных
-        #ifdef DEBUG
+        #ifdef DEBUG_ESP_UART
         Serial.println();   Serial.println();
         Serial.print(F("dataLength: "));  Serial.println(dataLength);
         #endif
       } else if (crc_byte <= 0) { 
         crc_byte = bufferChar;                                        // Значит этот байт содержит контрольную сумму пакета данных
-        #ifdef DEBUG
+        #ifdef DEBUG_ESP_UART
         Serial.print(F("crc_byte: "));  Serial.println(crc_byte);
         #endif
       } else {                                                        // Если прочитанная из буфера длинна пакета больше нуля
@@ -178,7 +180,7 @@ void Read()
             if(stopMarker[stopMarkerStatus] == bufferChar) {    // Если очередной байт из буфера совпадает с очередным байтом маркера
               stopMarkerStatus++;                                  // Увеличиваем счетчик удачно найденных байт маркера
               if(stopMarkerStatus == stopMarker.length()) {
-                #ifdef DEBUG
+                #ifdef DEBUG_ESP_UART
                 Serial.println(F("Packet recieve!"));
                 Serial.println(dataString);
                 #endif
@@ -212,7 +214,7 @@ bool ParseCommand() {
       z++;
     } 
     if (z > PARSE_CELLS) {
-      #ifdef DEBUG
+      #ifdef DEBUG_ESP_UART
       Serial.println(F("Error Parse Command"));
       #endif
       for ( size_t i = 0; i < 3; i++ ) {
@@ -222,7 +224,7 @@ bool ParseCommand() {
     }
   }
 
-  #ifdef DEBUG
+  #ifdef DEBUG_ESP_UART
   for ( size_t i = 0; i < 3; i++ ) {
     Serial.print(parseArray[i]);   Serial.print(F(" "));
   }
@@ -230,12 +232,12 @@ bool ParseCommand() {
   #endif
 
   if (parseArray[0] == "av") {
-    #ifdef DEBUG
+    #ifdef DEBUG_ESP_UART
       Serial.print(F("Analog pin: ")); Serial.print(parseArray[1]);
       Serial.print(F("   value: ")); Serial.println(parseArray[2]);
     #endif
 
-    stateAnalogPin[parseArray[1].toInt()] = parseArray[2].toInt();
+    valueAnalogPin[parseArray[1].toInt()] = parseArray[2].toInt();
     timerAnalogPin[parseArray[1].toInt()] = millis();
   }
 

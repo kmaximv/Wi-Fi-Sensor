@@ -42,7 +42,6 @@ HTU21D myHTU21D;
 
 
 
-
 char staticIpStr[16] = "192.168.1.220";
 char staticGatewayStr[16] = "192.168.1.1";
 char staticSubnetStr[16] = "255.255.255.0";
@@ -238,30 +237,6 @@ const char headerEndP[] PROGMEM =
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>\
 <script src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js'></script></head>";
 
-const char javaScriptP[] PROGMEM = 
-"<SCRIPT>\
-var xmlHttp=createXmlHttpObject();\
-function createXmlHttpObject(){\
-  if(window.XMLHttpRequest){\
-    xmlHttp=new XMLHttpRequest();\
-  }else{\
-    xmlHttp=new ActiveXObject('Microsoft.XMLHTTP');\
- }\
- return xmlHttp;\
-}\
-function process(){\
- if(xmlHttp.readyState==0 || xmlHttp.readyState==4){\
-   xmlHttp.open('PUT','xml',true);\
-   xmlHttp.onreadystatechange=handleServerResponse;\
-   xmlHttp.send(null);\
- }\
- setTimeout('process()',10000);\
-}\
-function handleServerResponse(){\
- if(xmlHttp.readyState==4 && xmlHttp.status==200){\
-   xmlResponse=xmlHttp.responseXML;";
-
-
 const char javaScriptPinControlP[] PROGMEM = 
 "<div id='content'></div>\
 <div id='pin1'></div>\
@@ -343,6 +318,58 @@ const char div1P[] PROGMEM =
     <td class='active'><div onclick='Pin1();'><input id='OnOff' type='submit' class='btn btn-";
 
 
+const char javaScriptP[] PROGMEM = 
+"<SCRIPT>\
+var xmlHttp=createXmlHttpObject();\
+function createXmlHttpObject(){\
+  if(window.XMLHttpRequest){\
+    xmlHttp=new XMLHttpRequest();\
+  }else{\
+    xmlHttp=new ActiveXObject('Microsoft.XMLHTTP');\
+ }\
+ return xmlHttp;\
+}\
+function process(){\
+ if(xmlHttp.readyState==0 || xmlHttp.readyState==4){\
+   xmlHttp.open('PUT','xml',true);\
+   xmlHttp.onreadystatechange=handleServerResponse;\
+   xmlHttp.send(null);\
+ }\
+ setTimeout('process()',10000);\
+}\
+function handleServerResponse(){\
+ if(xmlHttp.readyState==4 && xmlHttp.status==200){\
+   xmlResponse=xmlHttp.responseXML;";
+
+#if defined(UART_ON)
+const char javaScript2P[] PROGMEM = 
+"xmldoc = xmlResponse.getElementsByTagName('apin0');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('apin0Id').innerHTML=message;\
+\
+xmldoc = xmlResponse.getElementsByTagName('apin1');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('apin1Id').innerHTML=message;\
+\
+xmldoc = xmlResponse.getElementsByTagName('apin2');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('apin2Id').innerHTML=message;\
+\
+xmldoc = xmlResponse.getElementsByTagName('apin3');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('apin3Id').innerHTML=message;\
+\
+xmldoc = xmlResponse.getElementsByTagName('apin4');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('apin4Id').innerHTML=message;\
+\
+xmldoc = xmlResponse.getElementsByTagName('apin5');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('apin5Id').innerHTML=message;\
+ }\
+}\
+</SCRIPT>";
+#endif
 
 // Длина строки не должна быть больше 1024 символов
 const char javaScriptEndP[] PROGMEM = 
@@ -777,6 +804,14 @@ bool saveConfig() {
   json["motion_read_delay"] = ConfDevice.motion_read_delay;
   json["reboot_delay"] = ConfDevice.reboot_delay;
 
+  #ifdef UART_ON
+  json["delayAnalogPin0"] = Uart.delayAnalogPin[0];
+  json["delayAnalogPin1"] = Uart.delayAnalogPin[1];
+  json["delayAnalogPin2"] = Uart.delayAnalogPin[2];
+  json["delayAnalogPin3"] = Uart.delayAnalogPin[3];
+  json["delayAnalogPin4"] = Uart.delayAnalogPin[4];
+  json["delayAnalogPin5"] = Uart.delayAnalogPin[5];
+  #endif
 
   File configFile = SPIFFS.open("/config.json", "w");
   if (!configFile) {
@@ -946,6 +981,42 @@ bool loadConfig() {
   } else {
     saveConfig();
   }
+
+
+  #ifdef UART_ON
+  if (json["delayAnalogPin0"]){
+    const char* val = json["delayAnalogPin0"];
+    Uart.delayAnalogPin[0] = atoi(val);
+  }
+  if (json["delayAnalogPin1"]){
+    const char* val = json["delayAnalogPin1"];
+    Uart.delayAnalogPin[1] = atoi(val);
+  }
+  if (json["delayAnalogPin2"]){
+    const char* val = json["delayAnalogPin2"];
+    Uart.delayAnalogPin[2] = atoi(val);
+  }
+  if (json["delayAnalogPin3"]){
+    const char* val = json["delayAnalogPin3"];
+    Uart.delayAnalogPin[3] = atoi(val);
+  }
+  if (json["delayAnalogPin4"]){
+    const char* val = json["delayAnalogPin4"];
+    Uart.delayAnalogPin[4] = atoi(val);
+  }
+  if (json["delayAnalogPin5"]){
+    const char* val = json["delayAnalogPin5"];
+    Uart.delayAnalogPin[5] = atoi(val);
+  }
+  #endif  
+  
+  saveConfig();
+  
+
+
+
+
+
 
   // Real world application would store these values in some variables for
   // later use.
@@ -1357,9 +1428,67 @@ void TestSystemPrint()
 ///////////////////////////////////   WEB PAGES  Start  //////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void rootWebPage(void) {
+#if defined(UART_ON)
+void WebAnalogUart(void) {
   #ifdef DEBUG
-    Serial.print(F("rootWebPage()"));  Serial.println();
+    Serial.print(F("WebAnalogUart()"));  Serial.println();
+  #endif
+
+  server.on("/analog", []() {
+
+    server.sendHeader("Connection", "close");
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+
+    String headerStart;           headerStart += FPSTR(headerStartP);
+    String headerEnd;             headerEnd += FPSTR(headerEndP);
+    String javaScript;            javaScript += FPSTR(javaScriptP);
+    String javaScript2;         javaScript2 += FPSTR(javaScript2P);
+    String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
+    String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarActive;          navbarActive += FPSTR(navbarActiveP);
+    String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
+    String containerStart;        containerStart += FPSTR(containerStartP);
+    String containerEnd;          containerEnd += FPSTR(containerEndP);
+    String siteEnd;               siteEnd += FPSTR(siteEndP);
+    String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
+    String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
+    String panelEnd;              panelEnd += FPSTR(panelEndP);
+    String panelBodySymbol;       panelBodySymbol += FPSTR(panelBodySymbolP);
+    String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
+    String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
+    String closingAngleBracket; closingAngleBracket += FPSTR(closingAngleBracketP);
+    String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
+
+    String title1  = panelHeaderName + String(F("Analog Pins value"))   + panelHeaderEnd;
+
+    String ApinV0 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + String(F(" id='apin0Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinV1 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + String(F(" id='apin1Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinV2 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + String(F(" id='apin2Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinV3 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + String(F(" id='apin3Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinV4 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + String(F(" id='apin4Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinV5 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + String(F(" id='apin5Id'")) + closingAngleBracket + panelBodyEnd;
+
+    
+    String title2 = panelHeaderName + String(F("Analog Pins delay"))  + panelHeaderEnd;
+
+    String ApinD0 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[0] + panelBodyEnd;
+    String ApinD1 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[1] + panelBodyEnd;
+    String ApinD2 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[2] + panelBodyEnd;
+    String ApinD3 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[3] + panelBodyEnd;
+    String ApinD4 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[4] + panelBodyEnd;
+    String ApinD5 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[5] + panelBodyEnd;
+    
+    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + ApinV0 + ApinV1 + ApinV2 + ApinV3 + ApinV4 + ApinV5 + panelEnd + title2 + ApinD0 + ApinD1 + ApinD2 + ApinD3 + ApinD4 + ApinD5 + panelEnd + containerEnd + siteEnd);
+  });
+}
+#endif
+
+
+
+
+void WebRoot(void) {
+  #ifdef DEBUG
+    Serial.print(F("WebRoot()"));  Serial.println();
   #endif
 
   server.on("/", []() {
@@ -1405,15 +1534,15 @@ void rootWebPage(void) {
     String FreeMem      = panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
     String Ver          = panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + ver                              + panelBodyEnd;
     
-    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + Temperature + Humidity + Pressure + Lux + panelEnd + title2 + ssid + IPAddClient + MacAddr + MqttPrefix + Uptime + FreeMem + Ver + panelEnd + panelEnd + containerEnd + siteEnd);
+    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + Temperature + Humidity + Pressure + Lux + panelEnd + title2 + ssid + IPAddClient + MacAddr + MqttPrefix + Uptime + FreeMem + Ver + panelEnd + containerEnd + siteEnd);
   });
 }
 
 
 
-void rebootWebPage(void) {
+void WebReboot(void) {
   #ifdef DEBUG
-    Serial.print(F("rebootWebPage()"));  Serial.println();
+    Serial.print(F("WebReboot()"));  Serial.println();
   #endif
 
   server.on("/reboot", []() {
@@ -1441,9 +1570,9 @@ void rebootWebPage(void) {
 
 
 
-void setupWebUpdate(void) {
+void WebUpdate(void) {
   #ifdef DEBUG
-    Serial.print(F("setupWebUpdate()"));  Serial.println();
+    Serial.print(F("WebUpdate()"));  Serial.println();
   #endif
 
   server.on("/update", HTTP_GET, []() {
@@ -1519,9 +1648,9 @@ void setupWebUpdate(void) {
 
 
 
-void web_espConf(void) {
+void WebEspConf(void) {
   #ifdef DEBUG
-    Serial.print(F("web_espConf()"));  Serial.println();
+    Serial.print(F("WebEspConf()"));  Serial.println();
   #endif
 
   server.on("/espconf", []() {
@@ -1670,9 +1799,9 @@ void web_espConf(void) {
 
 
 
-void web_mqttConf(void) {
+void WebMqttConf(void) {
   #ifdef DEBUG
-    Serial.print(F("web_mqttConf()"));  Serial.println();
+    Serial.print(F("WebMqttConf()"));  Serial.println();
   #endif
 
   server.on("/mqttconf", []() {
@@ -1807,9 +1936,9 @@ void handleControl(){
 
 
 
-void web_Control(void) {
+void WebControl(void) {
   #ifdef DEBUG
-    Serial.print(F("web_Control()"));  Serial.println();
+    Serial.print(F("WebControl()"));  Serial.println();
   #endif
 
   server.on("/pincontrol", []() {
@@ -1986,10 +2115,20 @@ void handleXML(){
   XML+=String(F("<freeMemory>"));
   XML+=StringData.freeMemoryString;
   XML+=String(F("</freeMemory>"));
+
+  #ifdef UART_ON
+  for (int i = 0; i < ANALOG_PINS; i++){
+    XML+=String(F("<apin"));  XML+=String(i);  XML+=String(F(">"));
+    XML+=Uart.valueAnalogPin[i];
+    XML+=String(F("</apin")); XML+=String(i);  XML+=String(F(">"));
+  }
+  #endif
+
   XML+=String(F("</Donnees>")); 
 
   server.send(200,"text/xml",XML);
 }
+
 
 
 void setup() {
@@ -2078,12 +2217,15 @@ void setup() {
   }
 
 
-  setupWebUpdate();
-  rebootWebPage();
-  rootWebPage();
-  web_espConf();
-  web_mqttConf();
-  web_Control();
+  WebUpdate();
+  WebReboot();
+  WebRoot();
+  WebEspConf();
+  WebMqttConf();
+  WebControl();
+  #ifdef UART_ON
+  WebAnalogUart();
+  #endif
   server.on("/xml",handleXML);
 
   // start Web Server
@@ -2109,6 +2251,14 @@ void setup() {
 
   // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
+
+
+  #ifdef UART_ON
+  for (int i = 0; i < ANALOG_PINS; i++){
+  Uart.SetAnalogReadCycle(i, 10, "s");
+  }
+  #endif
+
 }
 
 
@@ -2155,7 +2305,7 @@ void loop() {
         Serial.println("a&03&10&s Send OK");
       }
 
-      Serial.println(Uart.stateAnalogPin[3+1]);
+      Serial.println(Uart.valueAnalogPin[3+1]);
     #endif
   }
 
@@ -2213,6 +2363,7 @@ void loop() {
   #ifdef UART_ON
     if (Uart.serialEvent()){
       Serial.println(Uart.dataString);
+
     }
   #endif
 }
