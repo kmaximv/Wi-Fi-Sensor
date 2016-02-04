@@ -21,14 +21,11 @@ class Espuart
     uint8_t crcCalc(String dataStr);
     bool Send(String data);
     void SetAnalogReadCycle(int pin, int delay, String timeRank);
-    String dataString;
-    String startMarker;
-    String stopMarker;
-    char delimiter;
-    unsigned int  * valueAnalogPin;
-    unsigned long * timerAnalogPin;
-    unsigned long * delayAnalogPin;
-    String * parseArray;
+	char delimiter = '&';             // Разделительный символ в пакете данных
+	unsigned int  valueAnalogPin[ANALOG_PINS];
+	unsigned long timerAnalogPin[ANALOG_PINS];
+    unsigned long delayAnalogPin[ANALOG_PINS];
+	String parseArray[PARSE_CELLS];   //Распарсенный массив принимаемых данных
 
   private:
 

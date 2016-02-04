@@ -346,23 +346,18 @@ const char javaScript2P[] PROGMEM =
 "xmldoc = xmlResponse.getElementsByTagName('apin0');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('apin0Id').innerHTML=message;\
-\
 xmldoc = xmlResponse.getElementsByTagName('apin1');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('apin1Id').innerHTML=message;\
-\
 xmldoc = xmlResponse.getElementsByTagName('apin2');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('apin2Id').innerHTML=message;\
-\
 xmldoc = xmlResponse.getElementsByTagName('apin3');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('apin3Id').innerHTML=message;\
-\
 xmldoc = xmlResponse.getElementsByTagName('apin4');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('apin4Id').innerHTML=message;\
-\
 xmldoc = xmlResponse.getElementsByTagName('apin5');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('apin5Id').innerHTML=message;\
@@ -476,13 +471,7 @@ const char OFFP[] PROGMEM  = "OFF";
 
 
 
-void LightControl()
-{
-
-  #ifdef DEBUG
-    Serial.print(F("LightControl()"));  Serial.println();
-  #endif
-
+void LightControl(){
   String AUTO;       AUTO += FPSTR(AUTOP);
   String ON;         ON += FPSTR(ONP);
   String OFF;        OFF += FPSTR(OFFP);
@@ -707,12 +696,7 @@ void DHT22Sensor()
 
 
 
-void MotionDetect()
-{
-  #ifdef DEBUG
-    Serial.print(F("MotionDetect()"));  Serial.println();
-  #endif
-
+void MotionDetect(){
   if (digitalRead(ConfDevice.motion_pin) == HIGH) {
     #ifdef DEBUG
       Serial.println(F("MotionSensor moove detected"));
@@ -1233,12 +1217,7 @@ void MqttSubscribePrint(char *sub_buff)
 
 
 
-void MqttSubscribe()
-{
-  #ifdef DEBUG
-    Serial.print(F("MqttSubscribe()"));  Serial.println();
-  #endif
-
+void MqttSubscribe(){
   if (millis() - subscribeTimer >= ConfDevice.subscribe_delay) {
     subscribeTimer = millis();
     
@@ -1442,7 +1421,7 @@ void WebAnalogUart(void) {
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String javaScript;            javaScript += FPSTR(javaScriptP);
-    String javaScript2;         javaScript2 += FPSTR(javaScript2P);
+    String javaScript2;           javaScript2 += FPSTR(javaScript2P);
     String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
     String navbarActive;          navbarActive += FPSTR(navbarActiveP);
@@ -1456,7 +1435,7 @@ void WebAnalogUart(void) {
     String panelBodySymbol;       panelBodySymbol += FPSTR(panelBodySymbolP);
     String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
     String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
-    String closingAngleBracket; closingAngleBracket += FPSTR(closingAngleBracketP);
+    String closingAngleBracket;   closingAngleBracket += FPSTR(closingAngleBracketP);
     String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
 
     String title1  = panelHeaderName + String(F("Analog Pins value"))   + panelHeaderEnd;
@@ -1471,12 +1450,12 @@ void WebAnalogUart(void) {
     
     String title2 = panelHeaderName + String(F("Analog Pins delay"))  + panelHeaderEnd;
 
-    String ApinD0 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[0] + panelBodyEnd;
-    String ApinD1 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[1] + panelBodyEnd;
-    String ApinD2 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[2] + panelBodyEnd;
-    String ApinD3 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[3] + panelBodyEnd;
-    String ApinD4 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[4] + panelBodyEnd;
-    String ApinD5 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + Uart.delayAnalogPin[5] + panelBodyEnd;
+    String ApinD0 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[0]) + panelBodyEnd;
+    String ApinD1 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[1]) + panelBodyEnd;
+    String ApinD2 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[2]) + panelBodyEnd;
+    String ApinD3 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[3]) + panelBodyEnd;
+    String ApinD4 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[4]) + panelBodyEnd;
+    String ApinD5 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[5]) + panelBodyEnd;
     
     server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + ApinV0 + ApinV1 + ApinV2 + ApinV3 + ApinV4 + ApinV5 + panelEnd + title2 + ApinD0 + ApinD1 + ApinD2 + ApinD3 + ApinD4 + ApinD5 + panelEnd + containerEnd + siteEnd);
   });
@@ -2119,7 +2098,7 @@ void handleXML(){
   #ifdef UART_ON
   for (int i = 0; i < ANALOG_PINS; i++){
     XML+=String(F("<apin"));  XML+=String(i);  XML+=String(F(">"));
-    XML+=Uart.valueAnalogPin[i];
+    XML+=String(Uart.valueAnalogPin[i]);
     XML+=String(F("</apin")); XML+=String(i);  XML+=String(F(">"));
   }
   #endif
@@ -2142,7 +2121,7 @@ void setup() {
   #endif
   // Setup console
   #ifdef DEBUG
-    Serial.begin(115200);
+    Serial.begin(57600);
     delay(10);
     Serial.println();
   #endif
@@ -2253,11 +2232,6 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
 
 
-  #ifdef UART_ON
-  for (int i = 0; i < ANALOG_PINS; i++){
-  Uart.SetAnalogReadCycle(i, 10, "s");
-  }
-  #endif
 
 }
 
@@ -2267,10 +2241,9 @@ void loop() {
   // handle web server
   server.handleClient();
 
-  RebootESP();
-
   if (millis() - getDataTimer >= ConfDevice.get_data_delay){
     getDataTimer = millis();
+    RebootESP();
     GetLightSensorData();
     #ifdef BME280_ON
       GetBmeSensorData();
@@ -2297,15 +2270,15 @@ void loop() {
     #endif
 
     #ifdef UART_ON
-      if (Uart.Send("out&03")){
-        Serial.println("out&03 Send OK");
+    for (int i = 0; i < ANALOG_PINS; i++){
+      if (millis() - Uart.timerAnalogPin[i] >= 60000){
+        Uart.valueAnalogPin[i] = 0;
+        Uart.delayAnalogPin[i] = 0;
+        Uart.SetAnalogReadCycle(i, 10, "s");
+      } else {
+        Uart.delayAnalogPin[i] = 10;
       }
-
-      if (Uart.Send("a&03&10&s")){
-        Serial.println("a&03&10&s Send OK");
-      }
-
-      Serial.println(Uart.valueAnalogPin[3+1]);
+    }
     #endif
   }
 
@@ -2361,9 +2334,6 @@ void loop() {
   }
 
   #ifdef UART_ON
-    if (Uart.serialEvent()){
-      Serial.println(Uart.dataString);
-
-    }
+  Uart.serialEvent();
   #endif
 }

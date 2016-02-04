@@ -17,10 +17,6 @@
 
 
 
-unsigned int  valueAnalogPin[ANALOG_PINS];
-unsigned long timerAnalogPin[ANALOG_PINS];
-unsigned long delayAnalogPin[ANALOG_PINS];
-
 String startMarker = "<beg>";     // Переменная, содержащая маркер начала пакета
 String stopMarker  = "<end>";     // Переменная, содержащая маркер конца пакета
 String dataString;                // Здесь будут храниться принимаемые данные
@@ -30,9 +26,7 @@ uint8_t dataLength;               // Флаг состояния принима�
 boolean packetAvailable;          // Флаг завершения приема пакета
 uint8_t crc_byte;
 
-String parseArray[PARSE_CELLS];   //Распарсенный массив принимаемых данных
 
-char delimiter = '&';             // Разделительный символ в пакете данных
 
 
 
@@ -51,12 +45,13 @@ void Espuart::SetAnalogReadCycle(int pin, int delay, String timeRank){
 bool Espuart::Send(String data){
   String packet = startMarker;      // Отправляем маркер начала пакета
   packet += String(data.length());  // Отправляем длину передаваемых данных
-  packet += String(crcCalc(data));  // Отправляем контрольную сумму данных
+  packet += String((char)crcCalc(data));  // Отправляем контрольную сумму данных
   packet += data;                   // Отправляем сами данные
   packet += stopMarker;             // Отправляем маркер конца пакета
-  Serial.print(packet);
+  Serial.println(packet);
 
   #ifdef DEBUG_ESP_UART
+    Serial.println();
     Serial.print(F("Send Uart:"));  Serial.println(data);
   #endif
 
@@ -208,9 +203,9 @@ bool ParseCommand() {
 
   uint8_t z = 0;
   for ( size_t i = 0; i < dataString.length(); i++ ) {
-    if (dataString[i] != delimiter ) {
-      parseArray[z] += dataString[i];
-    } else if (dataString[i] == delimiter ) {
+    if (dataString[i] != Uart.delimiter ) {
+      Uart.parseArray[z] += dataString[i];
+    } else if (dataString[i] == Uart.delimiter ) {
       z++;
     } 
     if (z > PARSE_CELLS) {
@@ -218,7 +213,7 @@ bool ParseCommand() {
       Serial.println(F("Error Parse Command"));
       #endif
       for ( size_t i = 0; i < 3; i++ ) {
-        parseArray[i] = "";
+        Uart.parseArray[i] = "";
       }
       return false;
     }
@@ -226,24 +221,24 @@ bool ParseCommand() {
 
   #ifdef DEBUG_ESP_UART
   for ( size_t i = 0; i < 3; i++ ) {
-    Serial.print(parseArray[i]);   Serial.print(F(" "));
+    Serial.print(Uart.parseArray[i]);   Serial.print(F(" "));
   }
   Serial.println(F("<--"));
   #endif
 
-  if (parseArray[0] == "av") {
+  if (Uart.parseArray[0] == "av") {
     #ifdef DEBUG_ESP_UART
-      Serial.print(F("Analog pin: ")); Serial.print(parseArray[1]);
-      Serial.print(F("   value: ")); Serial.println(parseArray[2]);
+      Serial.print(F("Analog pin: ")); Serial.print(Uart.parseArray[1]);
+      Serial.print(F("   value: ")); Serial.println(Uart.parseArray[2]);
     #endif
 
-    valueAnalogPin[parseArray[1].toInt()] = parseArray[2].toInt();
-    timerAnalogPin[parseArray[1].toInt()] = millis();
+    Uart.valueAnalogPin[Uart.parseArray[1].toInt()] = Uart.parseArray[2].toInt();
+    Uart.timerAnalogPin[Uart.parseArray[1].toInt()] = millis();
   }
 
 
   for ( size_t i = 0; i < PARSE_CELLS; i++ ) {
-    parseArray[i] = "";
+    Uart.parseArray[i] = "";
   }
   
   Reset();
