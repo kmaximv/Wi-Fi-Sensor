@@ -24,9 +24,11 @@
   - Скачиваем программу и прошивку по [ссылке](https://github.com/kmaximv/Wi-Fi-Sensor/releases)
   - Переводим модуль в режим прошивки 
   - В коммандной строке выполняем комманду:
-  ```bash
-  C:\Soft/esptool.exe -vv -cd nodemcu -cb 115200 -cp COM6 -ca 0x00000 -cf C:\Soft/esp_sensor.ino.nodemcu.bin
-  ```
+
+```bash
+C:\Soft/esptool.exe -vv -cd nodemcu -cb 115200 -cp COM6 -ca 0x00000 -cf C:\Soft/esp_sensor.ino.nodemcu.bin
+```
+
   Пути и номер порта ставим свои.
 
 2 Прошиваем с помощью IDE Arduino
