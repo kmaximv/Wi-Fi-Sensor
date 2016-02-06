@@ -37,7 +37,8 @@ C:\Soft/esptool.exe -vv -cd nodemcu -cb 115200 -cp COM6 -ca 0x00000 -cf C:\Soft/
    - Устанавливаем библиотеки Arduino, перечисленные ниже
    - Скачиваем файлы по [ссылке](https://github.com/kmaximv/Wi-Fi-Sensor/tree/master/esp_sensor)
    - Открываем файл с расширением *.ino в программе IDE Arduino
-   - Выбираем наш модуль в настройках [![arduino-ide](/screenshots/thumbs/arduino-ide.png)](/screenshots/arduino-ide.png)
+   - Выбираем наш модуль в настройках 
+  [![arduino-ide](/screenshots/thumbs/arduino-ide.png)](/screenshots/arduino-ide.png)
    - Переводим модуль в режим прошивки 
    - Прошиваем, нажав кнопку "Загрузка"
 
