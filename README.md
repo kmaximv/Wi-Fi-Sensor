@@ -20,7 +20,7 @@
 
 ### Варианты прошивки модуля ESP
 
-####1 Прошиваем с помощью утилиты Esptool
+####1. Прошиваем с помощью утилиты Esptool
   - Скачиваем программу и прошивку по [ссылке](https://github.com/kmaximv/Wi-Fi-Sensor/releases)
   - Переводим модуль в режим прошивки 
   - В коммандной строке выполняем комманду:
@@ -31,7 +31,7 @@ C:\Soft/esptool.exe -vv -cd nodemcu -cb 115200 -cp COM6 -ca 0x00000 -cf C:\Soft/
 
   Пути и номер порта ставим свои.
 
-####2 Прошиваем с помощью IDE Arduino
+####2. Прошиваем с помощью IDE Arduino
    - Устанавливаем IDE Arduino 1.6.5
    - Устанавливаем Arduino core for ESP8266 Staging version  [Ссылка](https://github.com/esp8266/Arduino)
    - Устанавливаем библиотеки Arduino, перечисленные ниже
