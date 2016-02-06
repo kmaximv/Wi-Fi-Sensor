@@ -18,6 +18,51 @@
 - Обновление прошивки через веб-интерфейс
 
 
+### Варианты прошивки модуля ESP
+
+1 Прошиваем с помощью утилиты Esptool
+  - Скачиваем программу и прошивку по [ссылке](https://github.com/kmaximv/Wi-Fi-Sensor/releases)
+  - Переводим модуль в режим прошивки 
+  - В коммандной строке выполняем комманду:
+  ```bash
+  C:\Soft/esptool.exe -vv -cd nodemcu -cb 115200 -cp COM6 -ca 0x00000 -cf C:\Soft/esp_sensor.ino.nodemcu.bin
+  ```
+  Пути и номер порта ставим свои.
+
+2 Прошиваем с помощью IDE Arduino
+   - Устанавливаем IDE Arduino 1.6.5
+   - Устанавливаем Arduino core for ESP8266 Staging version  [Ссылка](https://github.com/esp8266/Arduino)
+   - Устанавливаем библиотеки Arduino, перечисленные ниже
+   - Скачиваем файлы по [ссылке](https://github.com/kmaximv/Wi-Fi-Sensor/tree/master/esp_sensor)
+   - Открываем файл с расширением *.ino в программе IDE Arduino
+   - Выбираем наш модуль в настройках [![arduino-ide](/screenshots/thumbs/arduino-ide.png)](/screenshots/arduino-ide.png)
+   - Переводим модуль в режим прошивки 
+   - Прошиваем, нажав кнопку "Загрузка"
+
+
+### Библиотеки Arduino:
+
+- ArduinoJson   [Ссылка](https://github.com/bblanchon/ArduinoJson)
+- Pubsubclient  [Ссылка](https://github.com/knolleary/pubsubclient)
+- BH1750        [Ссылка](https://github.com/claws/BH1750)
+- BME280        [Ссылка](https://github.com/sparkfun/SparkFun_BME280_Arduino_Library)
+- HTU21D        [Ссылка](https://github.com/enjoyneering/HTU21D)
+
+
+### Первоначальная настройка модуля ESP
+
+- Прошиваем модуль одним из выше описанных вариантов. 
+- Подключаемся к нему по Wi-Fi
+- Через браузер заходим на адрес http://192.168.4.1
+- Прописываем свои настройки, перезагружаемся.
+
+По умолчанию модуль пытается подключиться к Wi-Fi точке доступа со следующими параметрами:
+```bash
+SSID:       HomeNET
+Password:   Asdf1234
+```
+
+
 ### Железо, которое использовалось в этом проекте:
 
 - BME280 - Датчик температуры, влажности, давления   [Покупал здесь](http://www.ebay.com/itm/361366521095?_trksid=p2060353.m2749.l2649&ssPageName=STRK%3AMEBIDX%3AIT) 
@@ -29,22 +74,6 @@
 - MP1584EN - DC-DC преобразователь   [Покупал здесь](http://www.aliexpress.com/snapshot/7056558454.html?orderId=70501426988354)
 - IRLU024N - Mosfet транзистор
 - Sharp S202s02 - Твёрдотельное реле   [Покупал здесь](http://www.aliexpress.com/snapshot/7220777148.html?orderId=71990495728354)
-
-
-### Необходимое ПО:
-
-- IDE Arduino 1.6.5
-- Arduino core for ESP8266 Staging version  [Ссылка](https://github.com/esp8266/Arduino)
-- Eagle 7.5.0
-
-
-### Библиотеки Arduino:
-
-- ArduinoJson   [Ссылка](https://github.com/bblanchon/ArduinoJson)
-- Pubsubclient  [Ссылка](https://github.com/knolleary/pubsubclient)
-- BH1750        [Ссылка](https://github.com/claws/BH1750)
-- BME280        [Ссылка](https://github.com/sparkfun/SparkFun_BME280_Arduino_Library)
-- HTU21D        [Ссылка](https://github.com/enjoyneering/HTU21D)
 
 
 ### Датчик движения HC-SR501
