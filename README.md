@@ -36,12 +36,17 @@
 ### Варианты прошивки модуля ESP
 
 ####1. Прошиваем с помощью утилиты Esptool
-  - Скачиваем программу и прошивку по [ссылке](https://github.com/kmaximv/Wi-Fi-Sensor/releases)
+  - Скачиваем Esptool для своей ОС [ссылка](https://github.com/igrr/esptool-ck/releases)
+  - Скачиваем прошивку по [ссылке](https://github.com/kmaximv/Wi-Fi-Sensor/releases)
   - Переводим модуль в режим прошивки 
   - В коммандной строке выполняем комманду:
 
 ```bash
+Windows
 C:\Soft/esptool.exe -vv -cd nodemcu -cb 115200 -cp COM6 -ca 0x00000 -cf C:\Soft/esp_sensor.ino.nodemcu.bin
+
+Linux
+./esptool -vv -cd nodemcu -cb 115200 -cp /dev/ttyUSB0 -ca 0x00000 -cf esp_sensor.ino.bin
 ```
 
   Пути и номер порта ставим свои.
@@ -79,6 +84,7 @@ C:\Soft/esptool.exe -vv -cd nodemcu -cb 115200 -cp COM6 -ca 0x00000 -cf C:\Soft/
 SSID:       HomeNET
 Password:   Asdf1234
 ```
+Параметр Reboot Delay перезагружает устройство если не получает никаких данных по MQTT за указанный промежуток времени. Если Вы не используете MQTT, установите этот параметр на максимальное значение 4294966 секунд (49 дней).
 
 
 ### Железо, которое использовалось в этом проекте:
