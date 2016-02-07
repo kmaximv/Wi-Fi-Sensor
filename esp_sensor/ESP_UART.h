@@ -1,5 +1,5 @@
-#ifndef ESP_UART_h
-#define ESP_UART_h
+#ifndef ESP_UART_H
+#define ESP_UART_H
 
 #include <Arduino.h>
 
@@ -21,11 +21,11 @@ class Espuart
     uint8_t crcCalc(String dataStr);
     bool Send(String data);
     void SetAnalogReadCycle(int pin, int delay, String timeRank);
-	char delimiter = '&';             // Разделительный символ в пакете данных
-	unsigned int  valueAnalogPin[ANALOG_PINS];
-	unsigned long timerAnalogPin[ANALOG_PINS];
+    char delimiter = '&';             // Разделительный символ в пакете данных
+    unsigned int  valueAnalogPin[ANALOG_PINS];
+    unsigned long timerAnalogPin[ANALOG_PINS];
     unsigned long delayAnalogPin[ANALOG_PINS];
-	String parseArray[PARSE_CELLS];   //Распарсенный массив принимаемых данных
+    String parseArray[PARSE_CELLS];   //Распарсенный массив принимаемых данных
 
   private:
 

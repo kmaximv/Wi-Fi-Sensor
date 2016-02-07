@@ -83,8 +83,8 @@ struct ConfDeviceStruct {
   uint8_t light_pin2;
   uint8_t motion_pin;
   uint8_t dht_pin;
-  uint8_t light_off_delay;
-  uint8_t light2_off_delay;
+  unsigned long light_off_delay;
+  unsigned long light2_off_delay;
   unsigned long publish_delay;
   unsigned long subscribe_delay;
   unsigned long motion_read_delay;
@@ -401,10 +401,17 @@ const char navbarStartP[] PROGMEM =
 const char navbarNonActiveP[] PROGMEM = "<li>";
 const char navbarActiveP[] PROGMEM = "<li class='active'>";
 
-const char navbarEndP[] PROGMEM  = 
+const char navbarBeginP[] PROGMEM  = 
 "<a href='/'><span class='glyphicon glyphicon-dashboard'></span> Status</a></li>\
-<li><a href='/pincontrol'><span class='glyphicon glyphicon-tasks'></span> Control Pins</a></li>\
-<li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'>\
+<li><a href='/pincontrol'><span class='glyphicon glyphicon-tasks'></span> Control Pins</a></li>";
+
+#if defined(UART_ON)
+const char navbarUartP[] PROGMEM = 
+"<li><a href='/analog'><span class='glyphicon glyphicon-tasks'></span> Analog Pins UART</a></li>";
+#endif
+
+const char navbarEndP[] PROGMEM =
+"<li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'>\
 <span class='glyphicon glyphicon-cog'></span> Configure<span class='caret'></span></a><ul class='dropdown-menu'>\
 <li><a href='/espconf'>Configure ESP</a></li>\
 <li><a href='/mqttconf'>Configure MQTT</a></li>\
@@ -1407,64 +1414,6 @@ void TestSystemPrint()
 ///////////////////////////////////   WEB PAGES  Start  //////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(UART_ON)
-void WebAnalogUart(void) {
-  #ifdef DEBUG
-    Serial.print(F("WebAnalogUart()"));  Serial.println();
-  #endif
-
-  server.on("/analog", []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
-
-    String headerStart;           headerStart += FPSTR(headerStartP);
-    String headerEnd;             headerEnd += FPSTR(headerEndP);
-    String javaScript;            javaScript += FPSTR(javaScriptP);
-    String javaScript2;           javaScript2 += FPSTR(javaScript2P);
-    String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
-    String navbarStart;           navbarStart += FPSTR(navbarStartP);
-    String navbarActive;          navbarActive += FPSTR(navbarActiveP);
-    String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-    String containerStart;        containerStart += FPSTR(containerStartP);
-    String containerEnd;          containerEnd += FPSTR(containerEndP);
-    String siteEnd;               siteEnd += FPSTR(siteEndP);
-    String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
-    String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
-    String panelEnd;              panelEnd += FPSTR(panelEndP);
-    String panelBodySymbol;       panelBodySymbol += FPSTR(panelBodySymbolP);
-    String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
-    String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
-    String closingAngleBracket;   closingAngleBracket += FPSTR(closingAngleBracketP);
-    String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
-
-    String title1  = panelHeaderName + String(F("Analog Pins value"))   + panelHeaderEnd;
-
-    String ApinV0 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + String(F(" id='apin0Id'")) + closingAngleBracket + panelBodyEnd;
-    String ApinV1 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + String(F(" id='apin1Id'")) + closingAngleBracket + panelBodyEnd;
-    String ApinV2 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + String(F(" id='apin2Id'")) + closingAngleBracket + panelBodyEnd;
-    String ApinV3 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + String(F(" id='apin3Id'")) + closingAngleBracket + panelBodyEnd;
-    String ApinV4 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + String(F(" id='apin4Id'")) + closingAngleBracket + panelBodyEnd;
-    String ApinV5 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + String(F(" id='apin5Id'")) + closingAngleBracket + panelBodyEnd;
-
-    
-    String title2 = panelHeaderName + String(F("Analog Pins delay"))  + panelHeaderEnd;
-
-    String ApinD0 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[0]) + panelBodyEnd;
-    String ApinD1 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[1]) + panelBodyEnd;
-    String ApinD2 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[2]) + panelBodyEnd;
-    String ApinD3 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[3]) + panelBodyEnd;
-    String ApinD4 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[4]) + panelBodyEnd;
-    String ApinD5 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[5]) + panelBodyEnd;
-    
-    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + ApinV0 + ApinV1 + ApinV2 + ApinV3 + ApinV4 + ApinV5 + panelEnd + title2 + ApinD0 + ApinD1 + ApinD2 + ApinD3 + ApinD4 + ApinD5 + panelEnd + containerEnd + siteEnd);
-  });
-}
-#endif
-
-
-
-
 void WebRoot(void) {
   #ifdef DEBUG
     Serial.print(F("WebRoot()"));  Serial.println();
@@ -1482,6 +1431,12 @@ void WebRoot(void) {
     String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
     String navbarActive;          navbarActive += FPSTR(navbarActiveP);
+
+    navbarActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarActive += FPSTR(navbarUartP);
+    #endif
+
     String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
     String containerStart;        containerStart += FPSTR(containerStartP);
     String containerEnd;          containerEnd += FPSTR(containerEndP);
@@ -1535,6 +1490,12 @@ void WebReboot(void) {
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarNonActive += FPSTR(navbarUartP);
+    #endif
+
     String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
     String containerStart;        containerStart += FPSTR(containerStartP);
     String containerEnd;          containerEnd += FPSTR(containerEndP);
@@ -1564,6 +1525,12 @@ void WebUpdate(void) {
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarNonActive += FPSTR(navbarUartP);
+    #endif
+
     String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
     String containerStart;        containerStart += FPSTR(containerStartP);
     String containerEnd;          containerEnd += FPSTR(containerEndP);
@@ -1612,6 +1579,12 @@ void WebUpdate(void) {
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarNonActive += FPSTR(navbarUartP);
+    #endif
+
     String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
     String containerStart;        containerStart += FPSTR(containerStartP);
     String containerEnd;          containerEnd += FPSTR(containerEndP);
@@ -1642,6 +1615,12 @@ void WebEspConf(void) {
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarNonActive += FPSTR(navbarUartP);
+    #endif
+
     String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
     String containerStart;        containerStart += FPSTR(containerStartP);
     String containerEnd;          containerEnd += FPSTR(containerEndP);
@@ -1793,6 +1772,12 @@ void WebMqttConf(void) {
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarNonActive += FPSTR(navbarUartP);
+    #endif
+
     String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
     String containerStart;        containerStart += FPSTR(containerStartP);
     String containerEnd;          containerEnd += FPSTR(containerEndP);
@@ -1930,6 +1915,12 @@ void WebControl(void) {
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarNonActive += FPSTR(navbarUartP);
+    #endif
+
     String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
     String containerStart;        containerStart += FPSTR(containerStartP);
     String containerEnd;          containerEnd += FPSTR(containerEndP);
@@ -2060,6 +2051,64 @@ void WebControl(void) {
 }
 
 
+#if defined(UART_ON)
+void WebAnalogUart(void) {
+  #ifdef DEBUG
+    Serial.print(F("WebAnalogUart()"));  Serial.println();
+  #endif
+
+  server.on("/analog", []() {
+
+    server.sendHeader("Connection", "close");
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+
+    String headerStart;           headerStart += FPSTR(headerStartP);
+    String headerEnd;             headerEnd += FPSTR(headerEndP);
+    String javaScript;            javaScript += FPSTR(javaScriptP);
+    String javaScript2;           javaScript2 += FPSTR(javaScript2P);
+    String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
+    String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    navbarNonActive += FPSTR(navbarUartP);
+
+    String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
+    String containerStart;        containerStart += FPSTR(containerStartP);
+    String containerEnd;          containerEnd += FPSTR(containerEndP);
+    String siteEnd;               siteEnd += FPSTR(siteEndP);
+    String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
+    String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
+    String panelEnd;              panelEnd += FPSTR(panelEndP);
+    String panelBodySymbol;       panelBodySymbol += FPSTR(panelBodySymbolP);
+    String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
+    String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
+    String closingAngleBracket;   closingAngleBracket += FPSTR(closingAngleBracketP);
+    String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
+
+    String title1  = panelHeaderName + String(F("Analog Pins value"))   + panelHeaderEnd;
+
+    String ApinV0 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + String(F(" id='apin0Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinV1 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + String(F(" id='apin1Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinV2 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + String(F(" id='apin2Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinV3 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + String(F(" id='apin3Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinV4 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + String(F(" id='apin4Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinV5 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + String(F(" id='apin5Id'")) + closingAngleBracket + panelBodyEnd;
+
+    
+    String title2 = panelHeaderName + String(F("Analog Pins delay"))  + panelHeaderEnd;
+
+    String ApinD0 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[0]) + panelBodyEnd;
+    String ApinD1 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[1]) + panelBodyEnd;
+    String ApinD2 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[2]) + panelBodyEnd;
+    String ApinD3 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[3]) + panelBodyEnd;
+    String ApinD4 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[4]) + panelBodyEnd;
+    String ApinD5 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[5]) + panelBodyEnd;
+    
+    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + title1 + ApinV0 + ApinV1 + ApinV2 + ApinV3 + ApinV4 + ApinV5 + panelEnd + title2 + ApinD0 + ApinD1 + ApinD2 + ApinD3 + ApinD4 + ApinD5 + panelEnd + containerEnd + siteEnd);
+  });
+}
+#endif
 
 ///////////////////////////////////   WEB PAGES  End  //////////////////////////////////////////////
 
