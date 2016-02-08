@@ -7,6 +7,7 @@
 #include <BH1750.h>
 #include <ArduinoJson.h>
 #include "FS.h"
+#include <NTPClient.h>
 
 
 #define DEBUG
@@ -40,7 +41,7 @@ BME280 bmeSensor;
 HTU21D myHTU21D;
 #endif
 
-
+NTPClient timeClient;
 
 char staticIpStr[16] = "192.168.1.220";
 char staticGatewayStr[16] = "192.168.1.1";
@@ -370,8 +371,8 @@ document.getElementById('apin5Id').innerHTML=message;\
 </SCRIPT>";
 #endif
 
-// Длина строки не должна быть больше 1024 символов
-const char javaScriptEndP[] PROGMEM = 
+
+const char javaScript3P[] PROGMEM = 
 "xmldoc = xmlResponse.getElementsByTagName('temperature');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('temperatureId').innerHTML=message;\
@@ -387,7 +388,14 @@ document.getElementById('pressureId').innerHTML=message;\
 xmldoc = xmlResponse.getElementsByTagName('uptime');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('uptimeId').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('freeMemory');\
+xmldoc = xmlResponse.getElementsByTagName('ntpTime');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('ntpTimeId').innerHTML=message;";
+
+
+// Длина строки не должна быть больше 1024 символов
+const char javaScriptEndP[] PROGMEM = 
+"xmldoc = xmlResponse.getElementsByTagName('freeMemory');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('freeMemoryId').innerHTML=message;\
  }\
@@ -1527,6 +1535,7 @@ void WebRoot(void) {
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String javaScript;            javaScript += FPSTR(javaScriptP);
+    String javaScript3;           javaScript3 += FPSTR(javaScript3P);
     String javaScriptEnd;         javaScriptEnd += FPSTR(javaScriptEndP);
     String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
@@ -1565,10 +1574,11 @@ void WebRoot(void) {
     String MacAddr      = panelBodySymbol + String(F("scale"))         + panelBodyName + String(F("MAC Address")) + panelBodyValue + closingAngleBracket + StringData.macString             + panelBodyEnd;
     String MqttPrefix   = panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + ConfDevice.mqtt_name             + panelBodyEnd;
     String Uptime       = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("Uptime"))      + panelBodyValue + String(F(" id='uptimeId'"))     + closingAngleBracket  + panelBodyEnd;
+    String ntpTime      = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("NTP time"))    + panelBodyValue + String(F(" id='ntpTimeId'"))    + closingAngleBracket  + panelBodyEnd;
     String FreeMem      = panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
     String Ver          = panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + ver                              + panelBodyEnd;
     
-    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + Temperature + Humidity + Pressure + Lux + panelEnd + title2 + ssid + IPAddClient + MacAddr + MqttPrefix + Uptime + FreeMem + Ver + panelEnd + containerEnd + siteEnd);
+    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript3 + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + Temperature + Humidity + Pressure + Lux + panelEnd + title2 + ssid + IPAddClient + MacAddr + MqttPrefix + Uptime + ntpTime + FreeMem + Ver + panelEnd + containerEnd + siteEnd);
   });
 }
 
@@ -2262,6 +2272,9 @@ void handleXML(){
   XML+=String(F("<uptime>"));
   XML+=StringData.uptimeString;
   XML+=String(F("</uptime>"));
+  XML+=String(F("<ntpTime>"));
+  XML+=timeClient.getFormattedTime();
+  XML+=String(F("</ntpTime>"));
   XML+=String(F("<freeMemory>"));
   XML+=StringData.freeMemoryString;
   XML+=String(F("</freeMemory>"));
@@ -2407,11 +2420,7 @@ void setup() {
 
   // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
-
-
-
 }
-
 
 
 void loop() {
@@ -2420,6 +2429,7 @@ void loop() {
 
   if (millis() - getDataTimer >= ConfDevice.get_data_delay){
     getDataTimer = millis();
+    timeClient.update();
     RebootESP();
     GetLightSensorData();
     #ifdef BME280_ON
