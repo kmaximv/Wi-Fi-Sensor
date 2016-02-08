@@ -41,6 +41,9 @@ BME280 bmeSensor;
 HTU21D myHTU21D;
 #endif
 
+ADC_MODE(ADC_VCC);
+int voltage;
+
 NTPClient timeClient;
 
 char staticIpStr[16] = "192.168.1.220";
@@ -132,12 +135,14 @@ struct StringDataStruct {
   String ipString;
   String macString;
   String uptimeString;
+  String ntpTimeString;
   String freeMemoryString;
   String lightState;
   String lightState2;
 
 
 } StringData = {
+  "None",
   "None",
   "None",
   "None",
@@ -395,7 +400,10 @@ document.getElementById('ntpTimeId').innerHTML=message;";
 
 // Длина строки не должна быть больше 1024 символов
 const char javaScriptEndP[] PROGMEM = 
-"xmldoc = xmlResponse.getElementsByTagName('freeMemory');\
+"xmldoc = xmlResponse.getElementsByTagName('vcc');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('vccId').innerHTML=message;\
+xmldoc = xmlResponse.getElementsByTagName('freeMemory');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('freeMemoryId').innerHTML=message;\
  }\
@@ -1568,17 +1576,21 @@ void WebRoot(void) {
     #endif
     String Lux          = panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket           + panelBodyEnd;
     
-    String title2       = panelHeaderName + String(F("ESP Settings"))  + panelHeaderEnd;
+    String title2       = panelHeaderName + String(F("Settings"))  + panelHeaderEnd;
     String ssid         = panelBodySymbol + String(F("signal"))        + panelBodyName + String(F("Wi-Fi SSID"))  + panelBodyValue + closingAngleBracket + ConfDevice.sta_ssid              + panelBodyEnd;
     String IPAddClient  = panelBodySymbol + String(F("globe"))         + panelBodyName + String(F("IP Address"))  + panelBodyValue + closingAngleBracket + StringData.ipString              + panelBodyEnd;
     String MacAddr      = panelBodySymbol + String(F("scale"))         + panelBodyName + String(F("MAC Address")) + panelBodyValue + closingAngleBracket + StringData.macString             + panelBodyEnd;
     String MqttPrefix   = panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + ConfDevice.mqtt_name             + panelBodyEnd;
+
+    String title3       = panelHeaderName + String(F("Device"))  + panelHeaderEnd;
     String Uptime       = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("Uptime"))      + panelBodyValue + String(F(" id='uptimeId'"))     + closingAngleBracket  + panelBodyEnd;
     String ntpTime      = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("NTP time"))    + panelBodyValue + String(F(" id='ntpTimeId'"))    + closingAngleBracket  + panelBodyEnd;
+    String vcc          = panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Voltage"))     + panelBodyValue + String(F(" id='vccId'"))        + closingAngleBracket  + panelBodyEnd;
     String FreeMem      = panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
     String Ver          = panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + ver                              + panelBodyEnd;
+
     
-    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript3 + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + Temperature + Humidity + Pressure + Lux + panelEnd + title2 + ssid + IPAddClient + MacAddr + MqttPrefix + Uptime + ntpTime + FreeMem + Ver + panelEnd + containerEnd + siteEnd);
+    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript3 + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + Temperature + Humidity + Pressure + Lux + panelEnd + title2 + ssid + IPAddClient + MacAddr + MqttPrefix + panelEnd + title3 + Uptime + ntpTime + vcc + FreeMem + Ver + panelEnd + containerEnd + siteEnd);
   });
 }
 
@@ -2273,8 +2285,11 @@ void handleXML(){
   XML+=StringData.uptimeString;
   XML+=String(F("</uptime>"));
   XML+=String(F("<ntpTime>"));
-  XML+=timeClient.getFormattedTime();
+  XML+=StringData.ntpTimeString;
   XML+=String(F("</ntpTime>"));
+  XML+=String(F("<vcc>"));
+  XML+=String(voltage);
+  XML+=String(F("</vcc>"));
   XML+=String(F("<freeMemory>"));
   XML+=StringData.freeMemoryString;
   XML+=String(F("</freeMemory>"));
@@ -2291,7 +2306,6 @@ void handleXML(){
 
   server.send(200,"text/xml",XML);
 }
-
 
 
 void setup() {
@@ -2430,6 +2444,8 @@ void loop() {
   if (millis() - getDataTimer >= ConfDevice.get_data_delay){
     getDataTimer = millis();
     timeClient.update();
+    StringData.ntpTimeString = timeClient.getFormattedTime();
+    voltage = ESP.getVcc();
     RebootESP();
     GetLightSensorData();
     #ifdef BME280_ON
