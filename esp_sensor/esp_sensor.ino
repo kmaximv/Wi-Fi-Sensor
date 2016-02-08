@@ -47,7 +47,11 @@ char staticGatewayStr[16] = "192.168.1.1";
 char staticSubnetStr[16] = "255.255.255.0";
 uint8_t staticIpMode = 0;
 
-char mqttServerIpStr[16] = "192.168.1.200";
+char mqttServerStr[16] = "192.168.1.200";
+uint16_t mqttPort = 1883;
+char mqttUser[32];
+char mqttPwd[64];
+
 
 
 const char *ver = "1.07";
@@ -691,7 +695,7 @@ void DHT22Sensor()
     #ifdef DEBUG
       Serial.print(F("Failed to read from DHT. Number errors: "));  Serial.println(errorDHTdata);
     #endif
-  } else if (client.connect(ConfDevice.mqtt_name)) {
+  } else if (client.connected()) {
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  temperature, ConfDevice.mqtt_name);
     client.publish(topic_buff, floatToChar(temperatureData));
     
@@ -710,7 +714,7 @@ void MotionDetect(){
     #endif
     motionDetect = true;
     LightControl();
-    if (client.connect(ConfDevice.mqtt_name)) {
+    if (client.connected()) {
       sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  motionSensor, ConfDevice.mqtt_name);
       client.publish(topic_buff, "ON");
     }
@@ -779,7 +783,8 @@ bool saveConfig() {
   json["staticIP"] = staticIpStr;
   json["staticGateway"] = staticGatewayStr;
   json["staticSubnet"] = staticSubnetStr;
-  json["mqtt_server_ip_srting"] = mqttServerIpStr;
+  json["mqtt_server_ip_srting"] = mqttServerStr;
+  json["mqttPort"] = mqttPort;
   json["mqtt_name"] = ConfDevice.mqtt_name;
   json["publish_topic"] = ConfDevice.publish_topic;
   json["subscribe_topic"] = ConfDevice.subscribe_topic;
@@ -878,7 +883,12 @@ bool loadConfig() {
   sprintf_P(staticSubnetStr, ("%s"), staticSubnet_char);
 
   const char* mqtt_server_ip_srting_char = json["mqtt_server_ip_srting"];
-  sprintf_P(mqttServerIpStr, ("%s"), mqtt_server_ip_srting_char);
+  sprintf_P(mqttServerStr, ("%s"), mqtt_server_ip_srting_char);
+
+  if (json["mqttPort"]){
+    const char* var = json["mqttPort"];
+    mqttPort = atoi(var);
+  }
 
   const char* mqtt_name_char = json["mqtt_name"];
   sprintf_P(ConfDevice.mqtt_name, ("%s"), mqtt_name_char);
@@ -1107,11 +1117,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 
 
-void MqttPubLightState(){
+bool MqttPubLightState(){
 
   #ifdef DEBUG
     Serial.print(F("MqttPubLightState()"));  Serial.println();
   #endif
+
+  if (!client.connected()){
+    return false;
+  }
 
   String ON;         ON += FPSTR(ONP);
   String OFF;        OFF += FPSTR(OFFP);
@@ -1137,11 +1151,15 @@ void MqttPubLightState(){
   }
   client.publish(topic_buff, lightStateNum.c_str());
 
-
+  return true;
 }
 
 
-void MqttPubLightOffDelay() {
+bool MqttPubLightOffDelay() {
+
+  if (!client.connected()){
+    return false;
+  }
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  motionsensortimer, ConfDevice.mqtt_name);
   sprintf_P(value_buff, "%d", ConfDevice.light_off_delay);
@@ -1150,16 +1168,22 @@ void MqttPubLightOffDelay() {
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  motionsensortimer2, ConfDevice.mqtt_name);
   sprintf_P(value_buff, "%d", ConfDevice.light2_off_delay);
   client.publish(topic_buff, value_buff);
+
+  return true;
 }
 
 
 
 
-void MqttPubData()
+bool MqttPubData()
 {
   #ifdef DEBUG
     Serial.print(F("MqttPubData()"));  Serial.println();
   #endif
+
+  if (!client.connected()){
+    return false;
+  }
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lux, ConfDevice.mqtt_name);
   client.publish(topic_buff, StringData.luxString.c_str());
@@ -1200,15 +1224,21 @@ void MqttPubData()
     sprintf_P(value_buff, (const char *)F("%d"), errorDHTdata);  
     client.publish(topic_buff, value_buff);
   #endif
+
+  return true;
 }
 
 
 
-void MqttSubscribePrint(char *sub_buff)
+bool MqttSubscribePrint(char *sub_buff)
 {
   #ifdef DEBUG
     Serial.print(F("MqttSubscribePrint()"));  Serial.println();
   #endif
+
+  if (!client.connected()){
+    return false;
+  }
 
   if (client.subscribe(sub_buff)) {
     #ifdef DEBUG
@@ -1220,11 +1250,18 @@ void MqttSubscribePrint(char *sub_buff)
       Serial.print(F("ERROR subscribe: "));  Serial.println(sub_buff);
     #endif
   }
+
+  return true;
 }
 
 
 
-void MqttSubscribe(){
+bool MqttSubscribe(){
+
+  if (!client.connected()){
+    return false;
+  }
+
   if (millis() - subscribeTimer >= ConfDevice.subscribe_delay) {
     subscribeTimer = millis();
     
@@ -1243,6 +1280,8 @@ void MqttSubscribe(){
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.subscribe_topic, version, ConfDevice.mqtt_name);
     MqttSubscribePrint(topic_buff);
   }
+
+  return true;
 }
 
 
@@ -1371,6 +1410,55 @@ IPAddress stringToIp (String strIp) {
   return ip;
 }
 
+
+bool isIPValid(char * IP)
+{
+    //limited size
+    int internalcount=0;
+    int dotcount = 0;
+    bool previouswasdot=false;
+    char c;
+
+    if (strlen(IP)>15 || strlen(IP)==0) {
+        return false;
+    }
+    //cannot start with .
+    if (IP[0]=='.') {
+        return false;
+    }
+    //only letter and digit
+    for (int i=0; i < strlen(IP); i++) {
+        c = IP[i];
+        if (isdigit(c)) {
+            //only 3 digit at once
+            internalcount++;
+            previouswasdot=false;
+            if (internalcount>3) {
+                return false;
+            }
+        } else if(c=='.') {
+            //cannot have 2 dots side by side
+            if (previouswasdot) {
+                return false;
+            }
+            previouswasdot=true;
+            internalcount=0;
+            dotcount++;
+        }//if not a dot neither a digit it is wrong
+        else {
+            return false;
+        }
+    }
+    //if not 3 dots then it is wrong
+    if (dotcount!=3) {
+        return false;
+    }
+    //cannot have the last dot as last char
+    if (IP[strlen(IP)-1]=='.') {
+        return false;
+    }
+    return true;
+}
 
 
 void TestSystemPrint()
@@ -1803,9 +1891,15 @@ void WebMqttConf(void) {
 
     String payload=server.arg("mqtt_ip");
     if (payload.length() > 0 ) {
-      payload.toCharArray(mqttServerIpStr, sizeof(mqttServerIpStr));
+      payload.toCharArray(mqttServerStr, sizeof(mqttServerStr));
     }
-    data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_ip")) + inputPlaceHolder + mqttServerIpStr + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_ip")) + inputPlaceHolder + mqttServerStr + inputBodyClose + inputBodyCloseDiv;
+
+    payload=server.arg("mqttPort");
+    if (payload.length() > 0 ) {
+      mqttPort = atoi(payload.c_str());
+    }
+    data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqttPort")) + inputPlaceHolder + String(mqttPort) + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqtt_name");
     if (payload.length() > 0 ) {
@@ -2204,8 +2298,14 @@ void setup() {
 
 
   client.setClient(espClient);
-  IPAddress mqtt_ip = stringToIp(mqttServerIpStr);
-  client.setServer(mqtt_ip, 1883);
+  if (isIPValid(mqttServerStr)){
+    IPAddress mqtt_ip = stringToIp(mqttServerStr);
+    client.setServer(mqtt_ip, mqttPort);
+  } else {
+    client.setServer(mqttServerStr, mqttPort);
+  }
+  
+  
   client.setCallback (callback);
 
   #ifdef BME280_ON
@@ -2370,11 +2470,10 @@ void loop() {
 
     if (!client.connected()) {
       client.connect(ConfDevice.mqtt_name);
-    }
-
-    if (client.connected())
+    } else {
       client.loop();
       MqttSubscribe();
+    }
 
     if (millis() - publishTimer >= ConfDevice.publish_delay){
       publishTimer = millis();
