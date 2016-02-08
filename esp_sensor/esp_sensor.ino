@@ -50,7 +50,7 @@ uint8_t staticIpMode = 0;
 char mqttServerStr[16] = "192.168.1.200";
 uint16_t mqttPort = 1883;
 char mqttUser[32];
-char mqttPwd[64];
+char mqttPwd[32];
 
 
 
@@ -785,6 +785,8 @@ bool saveConfig() {
   json["staticSubnet"] = staticSubnetStr;
   json["mqtt_server_ip_srting"] = mqttServerStr;
   json["mqttPort"] = mqttPort;
+  json["mqttUser"] = mqttUser;
+  json["mqttPwd"] = mqttPwd;
   json["mqtt_name"] = ConfDevice.mqtt_name;
   json["publish_topic"] = ConfDevice.publish_topic;
   json["subscribe_topic"] = ConfDevice.subscribe_topic;
@@ -888,6 +890,16 @@ bool loadConfig() {
   if (json["mqttPort"]){
     const char* var = json["mqttPort"];
     mqttPort = atoi(var);
+  }
+
+  if (json["mqttUser"]){
+    const char* var = json["mqttUser"];
+    sprintf_P(mqttUser, ("%s"), var);
+  }
+
+  if (json["mqttPwd"]){
+    const char* var = json["mqttPwd"];
+    sprintf_P(mqttPwd, ("%s"), var);
   }
 
   const char* mqtt_name_char = json["mqtt_name"];
@@ -1896,10 +1908,26 @@ void WebMqttConf(void) {
     data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_ip")) + inputPlaceHolder + mqttServerStr + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqttPort");
-    if (payload.length() > 0 ) {
+    if (payload.length() > 0 && payload.length() < 6) {
       mqttPort = atoi(payload.c_str());
     }
     data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqttPort")) + inputPlaceHolder + String(mqttPort) + inputBodyClose + inputBodyCloseDiv;
+
+    payload=server.arg("mqttUser");
+    if (payload.length() > 0 && payload.length() < 32) {
+      payload.toCharArray(mqttUser, sizeof(mqttUser));
+    } else {
+      sprintf_P(mqttUser, ("%s"), "");
+    }
+    data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqttUser")) + inputPlaceHolder + String(mqttUser) + inputBodyClose + inputBodyCloseDiv;
+
+    payload=server.arg("mqttPwd");
+    if (payload.length() > 0 && payload.length() < 32) {
+      payload.toCharArray(mqttPwd, sizeof(mqttPwd));
+    } else {
+      sprintf_P(mqttPwd, ("%s"), "");
+    }
+    data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqttPwd")) + inputPlaceHolder + String(mqttPwd) + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqtt_name");
     if (payload.length() > 0 ) {
@@ -2469,7 +2497,11 @@ void loop() {
   if (WiFi.status() == WL_CONNECTED) {
 
     if (!client.connected()) {
-      client.connect(ConfDevice.mqtt_name);
+      if (strlen(mqttUser) > 0 && strlen(mqttPwd) > 0){
+        client.connect(ConfDevice.mqtt_name, mqttUser, mqttPwd);
+      } else {
+        client.connect(ConfDevice.mqtt_name);
+      }
     } else {
       client.loop();
       MqttSubscribe();
