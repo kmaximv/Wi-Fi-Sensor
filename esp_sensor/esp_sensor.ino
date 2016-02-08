@@ -186,6 +186,13 @@ String network_html;          // Список доступных Wi-Fi точе�
 ESP8266WebServer server(80);
 
 
+String greenLightOn;
+String greenLightOff;
+String greenLightPin;
+String greenHumidityThresholdUp;
+String greenHumidityThresholdDown;
+String greenHumiditySensorPin;
+String greenPumpPin;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
 
 /*
@@ -827,6 +834,16 @@ bool saveConfig() {
   json["delayAnalogPin5"] = Uart.delayAnalogPin[5];
   #endif
 
+  json["greenLightOn"] = greenLightOn;
+  json["greenLightOff"] = greenLightOff;
+  json["greenLightPin"] = greenLightPin;
+  json["greenHumidityThresholdUp"] = greenHumidityThresholdUp;
+  json["greenHumidityThresholdDown"] = greenHumidityThresholdDown;
+  json["greenHumiditySensorPin"] = greenHumiditySensorPin;
+  json["greenPumpPin"] = greenPumpPin;
+
+
+
   File configFile = SPIFFS.open("/config.json", "w");
   if (!configFile) {
     #ifdef DEBUG
@@ -1038,17 +1055,30 @@ bool loadConfig() {
     Uart.delayAnalogPin[5] = atoi(val);
   }
   #endif  
+
+  const char* val = json["greenLightOn"];
+  greenLightOn = String(val);
+
+  val = json["greenLightOff"];
+  greenLightOff = String(val);
+
+  val = json["greenLightPin"];
+  greenLightPin = String(val);
+
+  val = json["greenHumidityThresholdUp"];
+  greenHumidityThresholdUp = String(val);
+
+  val = json["greenHumidityThresholdDown"];
+  greenHumidityThresholdDown = String(val);
+
+  val = json["greenHumiditySensorPin"];
+  greenHumiditySensorPin = String(val);
+
+  val = json["greenPumpPin"];
+  greenPumpPin = String(val);
+
   
   saveConfig();
-  
-
-
-
-
-
-
-  // Real world application would store these values in some variables for
-  // later use.
 
   return true;
 }
@@ -2254,6 +2284,108 @@ void WebAnalogUart(void) {
 }
 #endif
 
+
+void WebGreenhouse(void) {
+  #ifdef DEBUG
+    Serial.print(F("WebGreenhouse()"));  Serial.println();
+  #endif
+
+  server.on("/greenhouse", []() {
+
+    server.sendHeader("Connection", "close");
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+
+    String headerStart;           headerStart += FPSTR(headerStartP);
+    String headerEnd;             headerEnd += FPSTR(headerEndP);
+    String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
+    String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarNonActive += FPSTR(navbarUartP);
+    #endif
+
+    String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
+    String containerStart;        containerStart += FPSTR(containerStartP);
+    String containerEnd;          containerEnd += FPSTR(containerEndP);
+    String siteEnd;               siteEnd += FPSTR(siteEndP);
+    String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
+    String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
+
+    String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
+    String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
+    String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
+    String inputPlaceHolder;      inputPlaceHolder += FPSTR(inputPlaceHolderP);
+    String inputBodyClose;        inputBodyClose += FPSTR(inputBodyCloseP);
+    String inputBodyCloseDiv;     inputBodyCloseDiv += FPSTR(inputBodyCloseDivP);
+    String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
+    String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
+    String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
+
+    String data;
+    data += panelHeaderName;
+    data += String(F("Подсветка"));
+    data += panelHeaderEnd;
+    data += inputBodyStart;
+
+    String payload=server.arg("greenLightOn");
+    if (payload.length() > 0 ) {
+      greenLightOn = payload;
+    }
+    data += inputBodyName + String(F("Время включения")) + inputBodyPOST + String(F("greenLightOn")) + inputPlaceHolder + greenLightOn + inputBodyClose + inputBodyCloseDiv;
+
+    payload=server.arg("greenLightOff");
+    if (payload.length() > 0 ) {
+      greenLightOff = payload;
+    }
+    data += inputBodyName + String(F("Время выключения")) + inputBodyPOST + String(F("greenLightOff")) + inputPlaceHolder + greenLightOff + inputBodyClose + inputBodyCloseDiv;
+
+    payload=server.arg("greenLightPin");
+    if (payload.length() > 0 ) {
+      greenLightPin = payload;
+    }
+    data += inputBodyName + String(F("Пин лампы")) + inputBodyPOST + String(F("greenLightPin")) + inputPlaceHolder + greenLightPin + inputBodyClose + inputBodyCloseDiv;
+
+    data += inputBodyEnd;
+
+    data += panelHeaderName;
+    data += String(F("Влажность почвы"));
+    data += panelHeaderEnd;
+    data += inputBodyStart;
+
+    payload=server.arg("greenHumidityThresholdUp");
+    if (payload.length() > 0 ) {
+      greenHumidityThresholdUp = payload;
+    }
+    data += inputBodyName + String(F("Верхний порог")) + inputBodyPOST + String(F("greenHumidityThresholdUp")) + inputPlaceHolder + greenHumidityThresholdUp + inputBodyClose + inputBodyCloseDiv;
+
+    payload=server.arg("greenHumidityThresholdDown");
+    if (payload.length() > 0 ) {
+      greenHumidityThresholdDown = payload;
+    }
+    data += inputBodyName + String(F("Нижний порог")) + inputBodyPOST + String(F("greenHumidityThresholdDown")) + inputPlaceHolder + greenHumidityThresholdDown + inputBodyClose + inputBodyCloseDiv;
+
+    payload=server.arg("greenHumiditySensorPin");
+    if (payload.length() > 0 ) {
+      greenHumiditySensorPin = payload;
+    }
+    data += inputBodyName + String(F("Пин датчика")) + inputBodyPOST + String(F("greenHumiditySensorPin")) + inputPlaceHolder + greenHumiditySensorPin + inputBodyClose + inputBodyCloseDiv;
+
+    payload=server.arg("greenPumpPin");
+    if (payload.length() > 0 ) {
+      greenPumpPin = payload;
+    }
+    data += inputBodyName + String(F("Пин насоса")) + inputBodyPOST + String(F("greenPumpPin")) + inputPlaceHolder + greenPumpPin + inputBodyClose + inputBodyCloseDiv;
+
+    data += inputBodyEnd;
+
+
+    //saveConfig();
+
+    server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+  });
+}
 ///////////////////////////////////   WEB PAGES  End  //////////////////////////////////////////////
 
 
