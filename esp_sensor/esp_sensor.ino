@@ -44,17 +44,17 @@ HTU21D myHTU21D;
 ADC_MODE(ADC_VCC);
 int voltage;
 
-NTPClient timeClient;
+NTPClient timeClient("europe.pool.ntp.org", 21600, 60000);
 
 char staticIpStr[16] = "192.168.1.220";
 char staticGatewayStr[16] = "192.168.1.1";
 char staticSubnetStr[16] = "255.255.255.0";
 uint8_t staticIpMode = 0;
 
-char mqttServerStr[16] = "192.168.1.200";
+char mqttServerStr[64] = "192.168.1.200";
 uint16_t mqttPort = 1883;
-char mqttUser[32];
-char mqttPwd[32];
+char mqttUser[32] = " ";
+char mqttPwd[32] = " ";
 
 
 
@@ -186,13 +186,13 @@ String network_html;          // Список доступных Wi-Fi точе�
 ESP8266WebServer server(80);
 
 
-String greenLightOn;
-String greenLightOff;
-String greenLightPin;
-String greenHumidityThresholdUp;
-String greenHumidityThresholdDown;
-String greenHumiditySensorPin;
-String greenPumpPin;
+String greenLightOn = "8:00";
+String greenLightOff = "8:00";
+String greenLightPin = "23";
+String greenHumidityThresholdUp = "800";
+String greenHumidityThresholdDown = "300";
+String greenHumiditySensorPin = "60";
+String greenPumpPin = "26";
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
 
 /*
@@ -1056,26 +1056,41 @@ bool loadConfig() {
   }
   #endif  
 
-  const char* val = json["greenLightOn"];
-  greenLightOn = String(val);
 
-  val = json["greenLightOff"];
-  greenLightOff = String(val);
+  if (json["greenLightOn"]){
+    const char* val = json["greenLightOn"];
+    greenLightOn = String(val);
+  }
 
-  val = json["greenLightPin"];
-  greenLightPin = String(val);
+  if (json["greenLightOff"]){
+    const char* val = json["greenLightOff"];
+    greenLightOff = String(val);
+  }
 
-  val = json["greenHumidityThresholdUp"];
-  greenHumidityThresholdUp = String(val);
+  if (json["greenLightPin"]){
+    const char* val = json["greenLightPin"];
+    greenLightPin = String(val);
+  }
 
-  val = json["greenHumidityThresholdDown"];
-  greenHumidityThresholdDown = String(val);
+  if (json["greenHumidityThresholdUp"]){
+    const char* val = json["greenHumidityThresholdUp"];
+    greenHumidityThresholdUp = String(val);
+  }
 
-  val = json["greenHumiditySensorPin"];
-  greenHumiditySensorPin = String(val);
+  if (json["greenHumidityThresholdDown"]){
+    const char* val = json["greenHumidityThresholdDown"];
+    greenHumidityThresholdDown = String(val);
+  }
 
-  val = json["greenPumpPin"];
-  greenPumpPin = String(val);
+  if (json["greenHumiditySensorPin"]){
+    const char* val = json["greenHumiditySensorPin"];
+    greenHumiditySensorPin = String(val);
+  }
+
+  if (json["greenPumpPin"]){
+    const char* val = json["greenPumpPin"];
+    greenPumpPin = String(val);
+  }
 
   
   saveConfig();
@@ -1968,17 +1983,13 @@ void WebMqttConf(void) {
     payload=server.arg("mqttUser");
     if (payload.length() > 0 && payload.length() < 32) {
       payload.toCharArray(mqttUser, sizeof(mqttUser));
-    } else {
-      sprintf_P(mqttUser, ("%s"), "");
-    }
+    } 
     data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqttUser")) + inputPlaceHolder + String(mqttUser) + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqttPwd");
     if (payload.length() > 0 && payload.length() < 32) {
       payload.toCharArray(mqttPwd, sizeof(mqttPwd));
-    } else {
-      sprintf_P(mqttPwd, ("%s"), "");
-    }
+    } 
     data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqttPwd")) + inputPlaceHolder + String(mqttPwd) + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqtt_name");
@@ -2349,7 +2360,7 @@ void WebGreenhouse(void) {
 
     data += inputBodyEnd;
 
-    data += panelHeaderName;
+    data += String(F("<div class='page-header'><h1>"));
     data += String(F("Влажность почвы"));
     data += panelHeaderEnd;
     data += inputBodyStart;
@@ -2541,6 +2552,7 @@ void setup() {
   #ifdef UART_ON
   WebAnalogUart();
   #endif
+  WebGreenhouse();
   server.on("/xml",handleXML);
 
   // start Web Server
@@ -2566,6 +2578,7 @@ void setup() {
 
   // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
+
 }
 
 
