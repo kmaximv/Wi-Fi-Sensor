@@ -5,9 +5,8 @@
 #include <Wire.h>
 #include "SPI.h"
 #include <BH1750.h>
-#include <ArduinoJson.h>
-#include "FS.h"
 #include <NTPClient.h>
+#include "json_config.h"
 
 
 #define DEBUG
@@ -46,16 +45,7 @@ int voltage;
 
 NTPClient timeClient("europe.pool.ntp.org", 21600, 60000);
 
-char staticIpStr[16] = "192.168.1.220";
-char staticGatewayStr[16] = "192.168.1.1";
-char staticSubnetStr[16] = "255.255.255.0";
-uint8_t staticIpMode = 0;
-
-char mqttServerStr[64] = "192.168.1.200";
-uint16_t mqttPort = 1883;
-char mqttUser[32] = " ";
-char mqttPwd[32] = " ";
-
+JsonConf JConf;
 
 
 const char *ver = "1.07";
@@ -80,14 +70,8 @@ const char *uptime = "Uptime";
 const char sec[] PROGMEM = "sec";
 
 struct ConfDeviceStruct {
-  char sta_ssid[32];
-  char sta_pwd[64];
   char module_id[32];
-  char mqtt_name[32];
-  char publish_topic[32];
-  char subscribe_topic[32];
   char commandPub_topic[32];
-  uint8_t light_pin;
   uint8_t light_pin2;
   uint8_t motion_pin;
   uint8_t dht_pin;
@@ -104,14 +88,8 @@ struct ConfDeviceStruct {
 
 
 } ConfDevice = {
-  "HomeNET",
-  "Asdf1234",
   "",
-  "_BedM",
-  "/stateSub/",
-  "/statePub/",
   "/commandPub/",
-  13,
   12,
   2,
   14,
@@ -504,6 +482,13 @@ const char OFFP[] PROGMEM  = "OFF";
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         ROOT 
 
 
+char* StringToChar(String data){
+  int lengthString = data.length();
+  char charBufVar[lengthString + 1];
+  data.toCharArray(charBufVar, lengthString);
+  return charBufVar;
+}
+
 
 void LightControl(){
   String AUTO;       AUTO += FPSTR(AUTOP);
@@ -511,15 +496,15 @@ void LightControl(){
   String OFF;        OFF += FPSTR(OFFP);
 
   if (StringData.lightState == ON){
-    digitalWrite(ConfDevice.light_pin, HIGH);
+    digitalWrite(LIGHT_PIN.toInt(), HIGH);
   } else if (StringData.lightState == OFF){
-    digitalWrite(ConfDevice.light_pin, LOW);
+    digitalWrite(LIGHT_PIN.toInt(), LOW);
   } else if (StringData.lightState == AUTO && motionDetect == true ){
-      digitalWrite(ConfDevice.light_pin, HIGH);
+      digitalWrite(LIGHT_PIN.toInt(), HIGH);
       lightOffTimer = millis();
-  } else if (StringData.lightState == AUTO && motionDetect == false && digitalRead(ConfDevice.light_pin) == HIGH){
+  } else if (StringData.lightState == AUTO && motionDetect == false && digitalRead(LIGHT_PIN.toInt()) == HIGH){
     if (millis() - lightOffTimer >= ConfDevice.light_off_delay * 60 * 1000){
-      digitalWrite(ConfDevice.light_pin, LOW);
+      digitalWrite(LIGHT_PIN.toInt(), LOW);
     }
   }
 
@@ -656,7 +641,7 @@ void GetBmeSensorData()
     Serial.println("m");
   #endif
   float altitudeData = bmeSensor.readFloatAltitudeMeters();
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  altitude, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  altitude, StringToChar(MQTT_NAME));
   client.publish(topic_buff, floatToChar(altitudeData));
 */
 }
@@ -719,10 +704,10 @@ void DHT22Sensor()
       Serial.print(F("Failed to read from DHT. Number errors: "));  Serial.println(errorDHTdata);
     #endif
   } else if (client.connected()) {
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  temperature, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  temperature, StringToChar(MQTT_NAME));
     client.publish(topic_buff, floatToChar(temperatureData));
     
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  humidity, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  humidity, StringToChar(MQTT_NAME));
     client.publish(topic_buff, floatToChar(humidityData));
   }
 }
@@ -738,7 +723,7 @@ void MotionDetect(){
     motionDetect = true;
     LightControl();
     if (client.connected()) {
-      sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  motionSensor, ConfDevice.mqtt_name);
+      sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  motionSensor, StringToChar(MQTT_NAME));
       client.publish(topic_buff, "ON");
     }
   }
@@ -791,315 +776,6 @@ void RebootESP()
 }
 
 
-
-bool saveConfig() {
-  StaticJsonBuffer<1000> jsonBuffer;
-  #ifdef DEBUG
-    Serial.print(F("saveConfig()"));  Serial.println();
-  #endif
-
-  JsonObject& json = jsonBuffer.createObject();
-
-  json["sta_ssid"] = ConfDevice.sta_ssid;
-  json["sta_pwd"] = ConfDevice.sta_pwd;
-  json["staticIpMode"] = staticIpMode;
-  json["staticIP"] = staticIpStr;
-  json["staticGateway"] = staticGatewayStr;
-  json["staticSubnet"] = staticSubnetStr;
-  json["mqtt_server_ip_srting"] = mqttServerStr;
-  json["mqttPort"] = mqttPort;
-  json["mqttUser"] = mqttUser;
-  json["mqttPwd"] = mqttPwd;
-  json["mqtt_name"] = ConfDevice.mqtt_name;
-  json["publish_topic"] = ConfDevice.publish_topic;
-  json["subscribe_topic"] = ConfDevice.subscribe_topic;
-  json["light_pin"] = ConfDevice.light_pin;
-  json["lightOff_delay"] = ConfDevice.light_off_delay;
-  json["light_pin2"] = ConfDevice.light_pin2;
-  json["light2Off_delay"] = ConfDevice.light2_off_delay;
-  json["motion_pin"] = ConfDevice.motion_pin;
-  json["dht_pin"] = ConfDevice.dht_pin;
-  json["get_data_delay"] = ConfDevice.get_data_delay;
-  json["publish_delay"] = ConfDevice.publish_delay;
-  json["subscribe_delay"] = ConfDevice.subscribe_delay;
-  json["motion_read_delay"] = ConfDevice.motion_read_delay;
-  json["reboot_delay"] = ConfDevice.reboot_delay;
-
-  #ifdef UART_ON
-  json["delayAnalogPin0"] = Uart.delayAnalogPin[0];
-  json["delayAnalogPin1"] = Uart.delayAnalogPin[1];
-  json["delayAnalogPin2"] = Uart.delayAnalogPin[2];
-  json["delayAnalogPin3"] = Uart.delayAnalogPin[3];
-  json["delayAnalogPin4"] = Uart.delayAnalogPin[4];
-  json["delayAnalogPin5"] = Uart.delayAnalogPin[5];
-  #endif
-
-  json["greenLightOn"] = greenLightOn;
-  json["greenLightOff"] = greenLightOff;
-  json["greenLightPin"] = greenLightPin;
-  json["greenHumidityThresholdUp"] = greenHumidityThresholdUp;
-  json["greenHumidityThresholdDown"] = greenHumidityThresholdDown;
-  json["greenHumiditySensorPin"] = greenHumiditySensorPin;
-  json["greenPumpPin"] = greenPumpPin;
-
-
-
-  File configFile = SPIFFS.open("/config.json", "w");
-  if (!configFile) {
-    #ifdef DEBUG
-    Serial.println(F("Failed to open config file for writing"));
-    #endif
-    return false;
-  }
-
-  json.printTo(configFile);
-  return true;
-}
-
-
-
-bool loadConfig() {
-  #ifdef DEBUG
-    Serial.print(F("loadConfig()"));  Serial.println();
-  #endif
-
-  File configFile = SPIFFS.open("/config.json", "r");
-  if (!configFile) {
-    #ifdef DEBUG
-    Serial.println(F("Failed to open config file"));
-    #endif
-    return false;
-  }
-
-  size_t size = configFile.size();
-  if (size > 1024) {
-    #ifdef DEBUG
-    Serial.println(F("Config file size is too large"));
-    #endif
-    return false;
-  }
-
-  // Allocate a buffer to store contents of the file.
-  std::unique_ptr<char[]> buf(new char[size]);
-
-  // We don't use String here because ArduinoJson library requires the input
-  // buffer to be mutable. If you don't use ArduinoJson, you may as well
-  // use configFile.readString instead.
-  configFile.readBytes(buf.get(), size);
-
-  StaticJsonBuffer<1000> jsonBuffer;
-  JsonObject& json = jsonBuffer.parseObject(buf.get());
-
-  String conv;
-
-  if (!json.success()) {
-    #ifdef DEBUG
-    Serial.println(F("Failed to parse config file"));
-    #endif
-    return false;
-  }
-
-  const char* sta_ssid_char = json["sta_ssid"];
-  sprintf_P(ConfDevice.sta_ssid, ("%s"), sta_ssid_char);
-
-  const char* sta_pwd_char = json["sta_pwd"];
-  sprintf_P(ConfDevice.sta_pwd, ("%s"), sta_pwd_char);
-
-  const char* staticIpMode_char = json["staticIpMode"];
-  sprintf_P(staticIpStr, ("%s"), staticIpMode_char);
-
-  const char* staticIP_char = json["staticIP"];
-  sprintf_P(staticIpStr, ("%s"), staticIP_char);
-
-  const char* staticGateway_char = json["staticGateway"];
-  sprintf_P(staticGatewayStr, ("%s"), staticGateway_char);
-
-  const char* staticSubnet_char = json["staticSubnet"];
-  sprintf_P(staticSubnetStr, ("%s"), staticSubnet_char);
-
-  const char* mqtt_server_ip_srting_char = json["mqtt_server_ip_srting"];
-  sprintf_P(mqttServerStr, ("%s"), mqtt_server_ip_srting_char);
-
-  if (json["mqttPort"]){
-    const char* var = json["mqttPort"];
-    mqttPort = atoi(var);
-  }
-
-  if (json["mqttUser"]){
-    const char* var = json["mqttUser"];
-    sprintf_P(mqttUser, ("%s"), var);
-  }
-
-  if (json["mqttPwd"]){
-    const char* var = json["mqttPwd"];
-    sprintf_P(mqttPwd, ("%s"), var);
-  }
-
-  const char* mqtt_name_char = json["mqtt_name"];
-  sprintf_P(ConfDevice.mqtt_name, ("%s"), mqtt_name_char);
-
-  const char* publish_topic_char = json["publish_topic"];
-  sprintf_P(ConfDevice.publish_topic, ("%s"), publish_topic_char);
-
-  const char* subscribe_topic_char = json["subscribe_topic"];
-  sprintf_P(ConfDevice.subscribe_topic, ("%s"), subscribe_topic_char);
-
-  if (json["staticIpMode"]){
-    const char* staticIpMode_char = json["staticIpMode"];
-    staticIpMode = atoi(staticIpMode_char);
-  } else {
-    saveConfig();
-  }
-
-  if (json["light_pin"]){
-    const char* light_pin_char = json["light_pin"];
-    ConfDevice.light_pin = atoi(light_pin_char);
-  } else {
-    saveConfig();
-  }
-
-  if (json["lightOff_delay"]){
-  const char* lightOff_delay_char = json["lightOff_delay"];
-  ConfDevice.light_off_delay = atoi(lightOff_delay_char);
-  } else {
-    saveConfig();
-  }
-
-  if (json["light_pin2"]){
-    const char* light_pin_char2 = json["light_pin2"];
-    ConfDevice.light_pin2 = atoi(light_pin_char2);
-  } else {
-    saveConfig();
-  }
-
-  if (json["light2Off_delay"]){
-  const char* light2Off_delay_char = json["light2Off_delay"];
-  ConfDevice.light2_off_delay = atoi(light2Off_delay_char);
-  } else {
-    saveConfig();
-  }
-
-  if (json["motion_pin"]){
-    const char* motion_pin_char = json["motion_pin"];
-    ConfDevice.motion_pin = atoi(motion_pin_char);
-  } else {
-    saveConfig();
-  }
-
-  if (json["dht_pin"]){
-    const char* dht_pin_char = json["dht_pin"];
-    ConfDevice.dht_pin = atoi(dht_pin_char);
-  } else {
-    saveConfig();
-  }
-
-  if (json["get_data_delay"]){
-    const char* get_data_delay_char = json["get_data_delay"];
-    ConfDevice.get_data_delay = atoi(get_data_delay_char);
-  } else {
-    saveConfig();
-  }
-
-  if (json["publish_delay"]){
-    const char* publish_delay_char = json["publish_delay"];
-    ConfDevice.publish_delay = atoi(publish_delay_char);
-  } else {
-    saveConfig();
-  }
-
-  if (json["subscribe_delay"]){
-    const char* subscribe_delay_char = json["subscribe_delay"];
-    ConfDevice.subscribe_delay = atoi(subscribe_delay_char);
-  } else {
-    saveConfig();
-  }
-
-  if (json["motion_read_delay"]){
-    const char* motion_read_delay_char = json["motion_read_delay"];
-    ConfDevice.motion_read_delay = atoi(motion_read_delay_char);
-  } else {
-    saveConfig();
-  }
-
-  if (json["reboot_delay"]){
-    const char* reboot_delay_char = json["reboot_delay"];
-    ConfDevice.reboot_delay = atoi(reboot_delay_char);
-  } else {
-    saveConfig();
-  }
-
-
-  #ifdef UART_ON
-  if (json["delayAnalogPin0"]){
-    const char* val = json["delayAnalogPin0"];
-    Uart.delayAnalogPin[0] = atoi(val);
-  }
-  if (json["delayAnalogPin1"]){
-    const char* val = json["delayAnalogPin1"];
-    Uart.delayAnalogPin[1] = atoi(val);
-  }
-  if (json["delayAnalogPin2"]){
-    const char* val = json["delayAnalogPin2"];
-    Uart.delayAnalogPin[2] = atoi(val);
-  }
-  if (json["delayAnalogPin3"]){
-    const char* val = json["delayAnalogPin3"];
-    Uart.delayAnalogPin[3] = atoi(val);
-  }
-  if (json["delayAnalogPin4"]){
-    const char* val = json["delayAnalogPin4"];
-    Uart.delayAnalogPin[4] = atoi(val);
-  }
-  if (json["delayAnalogPin5"]){
-    const char* val = json["delayAnalogPin5"];
-    Uart.delayAnalogPin[5] = atoi(val);
-  }
-  #endif  
-
-
-  if (json["greenLightOn"]){
-    const char* val = json["greenLightOn"];
-    greenLightOn = String(val);
-  }
-
-  if (json["greenLightOff"]){
-    const char* val = json["greenLightOff"];
-    greenLightOff = String(val);
-  }
-
-  if (json["greenLightPin"]){
-    const char* val = json["greenLightPin"];
-    greenLightPin = String(val);
-  }
-
-  if (json["greenHumidityThresholdUp"]){
-    const char* val = json["greenHumidityThresholdUp"];
-    greenHumidityThresholdUp = String(val);
-  }
-
-  if (json["greenHumidityThresholdDown"]){
-    const char* val = json["greenHumidityThresholdDown"];
-    greenHumidityThresholdDown = String(val);
-  }
-
-  if (json["greenHumiditySensorPin"]){
-    const char* val = json["greenHumiditySensorPin"];
-    greenHumiditySensorPin = String(val);
-  }
-
-  if (json["greenPumpPin"]){
-    const char* val = json["greenPumpPin"];
-    greenPumpPin = String(val);
-  }
-
-  
-  saveConfig();
-
-  return true;
-}
-
-
-
 // handles message arrived on subscribed topic(s)
 void callback(char* topic, byte* payload, unsigned int length) {
 
@@ -1122,7 +798,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   #endif
 
   // Обрабатываем данные о состоянии светодиодной ленты (AUTO, ON, OFF)
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType, StringToChar(MQTT_NAME));
   if (strcmp (topic,topic_buff) == 0){
 
     String AUTO;       AUTO += FPSTR(AUTOP);
@@ -1148,27 +824,27 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer, StringToChar(MQTT_NAME));
     if (strcmp (topic,topic_buff) == 0){
       #ifdef DEBUG
         Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
       #endif
       ConfDevice.light_off_delay = atoi(value_buff);
-      saveConfig();
+      JConf.saveConfig();
     }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer2, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer2, StringToChar(MQTT_NAME));
     if (strcmp (topic,topic_buff) == 0){
       #ifdef DEBUG
         Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
       #endif
       ConfDevice.light2_off_delay = atoi(value_buff);
-      saveConfig();
+      JConf.saveConfig();
     }
 
 
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.subscribe_topic, version, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(SUBSCRIBE_TOPIC), version, StringToChar(MQTT_NAME));
   if (strcmp (topic,topic_buff) == 0){
     if (strncmp (value_buff, ver, 4) == 0){
       ConfDevice.ver_send = true;
@@ -1203,7 +879,7 @@ bool MqttPubLightState(){
   String ON;         ON += FPSTR(ONP);
   String OFF;        OFF += FPSTR(OFFP);
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lightType, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  lightType, StringToChar(MQTT_NAME));
   String lightStateNum;
   if (StringData.lightState == ON){
     lightStateNum = String(F("1"));
@@ -1214,7 +890,7 @@ bool MqttPubLightState(){
   }
   client.publish(topic_buff, lightStateNum.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lightType2, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  lightType2, StringToChar(MQTT_NAME));
   if (StringData.lightState2 == ON){
     lightStateNum = String(F("1"));
   } else if (StringData.lightState2 == OFF){
@@ -1234,11 +910,11 @@ bool MqttPubLightOffDelay() {
     return false;
   }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  motionsensortimer, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  motionsensortimer, StringToChar(MQTT_NAME));
   sprintf_P(value_buff, "%d", ConfDevice.light_off_delay);
   client.publish(topic_buff, value_buff);
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  motionsensortimer2, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  motionsensortimer2, StringToChar(MQTT_NAME));
   sprintf_P(value_buff, "%d", ConfDevice.light2_off_delay);
   client.publish(topic_buff, value_buff);
 
@@ -1258,42 +934,42 @@ bool MqttPubData()
     return false;
   }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  lux, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  lux, StringToChar(MQTT_NAME));
   client.publish(topic_buff, StringData.luxString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic, temperature, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC), temperature, StringToChar(MQTT_NAME));
   client.publish(topic_buff, StringData.temperatureString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic, pressure, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC), pressure, StringToChar(MQTT_NAME));
   client.publish(topic_buff, StringData.pressureString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  humidity, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  humidity, StringToChar(MQTT_NAME));
   client.publish(topic_buff, StringData.humidityString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  freeMemory, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  freeMemory, StringToChar(MQTT_NAME));
   client.publish(topic_buff, StringData.freeMemoryString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic, uptime, ConfDevice.mqtt_name);
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC), uptime, StringToChar(MQTT_NAME));
   client.publish(topic_buff, StringData.uptimeString.c_str());
 
 
   if (ConfDevice.ver_send == false){
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  version, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  version, StringToChar(MQTT_NAME));
     client.publish(topic_buff, ver);
   }
   
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  ip, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  ip, StringToChar(MQTT_NAME));
     client.publish(topic_buff, StringData.ipString.c_str());
 
   
   if (ConfDevice.mac_send == false){  
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  mac, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  mac, StringToChar(MQTT_NAME));
     client.publish(topic_buff, StringData.macString.c_str());
   }
 
  
   #ifdef DHT_ON
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.publish_topic,  errorsDHT, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  errorsDHT, StringToChar(MQTT_NAME));
     sprintf_P(value_buff, (const char *)F("%d"), errorDHTdata);  
     client.publish(topic_buff, value_buff);
   #endif
@@ -1338,19 +1014,19 @@ bool MqttSubscribe(){
   if (millis() - subscribeTimer >= ConfDevice.subscribe_delay) {
     subscribeTimer = millis();
     
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer, StringToChar(MQTT_NAME));
     MqttSubscribePrint(topic_buff);
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType, StringToChar(MQTT_NAME));
     MqttSubscribePrint(topic_buff);
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType2, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType2, StringToChar(MQTT_NAME));
     MqttSubscribePrint(topic_buff);
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.subscribe_topic, uptime, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(SUBSCRIBE_TOPIC), uptime, StringToChar(MQTT_NAME));
     MqttSubscribePrint(topic_buff);
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.subscribe_topic, version, ConfDevice.mqtt_name);
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(SUBSCRIBE_TOPIC), version, StringToChar(MQTT_NAME));
     MqttSubscribePrint(topic_buff);
   }
 
@@ -1619,20 +1295,20 @@ void WebRoot(void) {
     #ifdef BME280_ON
       Pressure          = panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + String(F(" id='pressureId'")) + closingAngleBracket      + panelBodyEnd;
     #endif
-    String Lux          = panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket           + panelBodyEnd;
+    String Lux          = panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket   + panelBodyEnd;
     
     String title2       = panelHeaderName + String(F("Settings"))  + panelHeaderEnd;
-    String ssid         = panelBodySymbol + String(F("signal"))        + panelBodyName + String(F("Wi-Fi SSID"))  + panelBodyValue + closingAngleBracket + ConfDevice.sta_ssid              + panelBodyEnd;
+    String ssid         = panelBodySymbol + String(F("signal"))        + panelBodyName + String(F("Wi-Fi SSID"))  + panelBodyValue + closingAngleBracket + STA_SSID                         + panelBodyEnd;
     String IPAddClient  = panelBodySymbol + String(F("globe"))         + panelBodyName + String(F("IP Address"))  + panelBodyValue + closingAngleBracket + StringData.ipString              + panelBodyEnd;
     String MacAddr      = panelBodySymbol + String(F("scale"))         + panelBodyName + String(F("MAC Address")) + panelBodyValue + closingAngleBracket + StringData.macString             + panelBodyEnd;
-    String MqttPrefix   = panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + ConfDevice.mqtt_name             + panelBodyEnd;
+    String MqttPrefix   = panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + MQTT_NAME              + panelBodyEnd;
 
     String title3       = panelHeaderName + String(F("Device"))  + panelHeaderEnd;
     String Uptime       = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("Uptime"))      + panelBodyValue + String(F(" id='uptimeId'"))     + closingAngleBracket  + panelBodyEnd;
     String ntpTime      = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("NTP time"))    + panelBodyValue + String(F(" id='ntpTimeId'"))    + closingAngleBracket  + panelBodyEnd;
     String vcc          = panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Voltage"))     + panelBodyValue + String(F(" id='vccId'"))        + closingAngleBracket  + panelBodyEnd;
     String FreeMem      = panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
-    String Ver          = panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + ver                              + panelBodyEnd;
+    String Ver          = panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + String(ver)                      + panelBodyEnd;
 
     
     server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript3 + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + Temperature + Humidity + Pressure + Lux + panelEnd + title2 + ssid + IPAddClient + MacAddr + MqttPrefix + panelEnd + title3 + Uptime + ntpTime + vcc + FreeMem + Ver + panelEnd + containerEnd + siteEnd);
@@ -1816,51 +1492,53 @@ void WebEspConf(void) {
 
     String payload=server.arg("sta_ssid");
     if (payload.length() > 0 ) {
-      payload.toCharArray(ConfDevice.sta_ssid, sizeof(ConfDevice.sta_ssid));
+      STA_SSID = payload;
     }
-    data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + ConfDevice.sta_ssid + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + STA_SSID + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("sta_pwd");
     if (payload.length() > 7 &&  payload != String(F("********"))) {
-      payload.toCharArray(ConfDevice.sta_pwd, sizeof(ConfDevice.sta_pwd));
+      STA_PWD = payload;
     }
     data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
 
     payload=server.arg("staticIP");
     if (payload.length() > 6 ) {
-      payload.toCharArray(staticIpStr, sizeof(staticIpStr));
-      staticIpMode = 1;
+      STATIC_IP = payload;
+      STATIC_IP_MODE = String(1);
     }
 
     payload=server.arg("staticGateway");
     if (payload.length() > 6 ) {
-      payload.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
-      staticIpMode += 1;
+      STATIC_GATEWAY = payload;
+      int var = STATIC_IP_MODE.toInt() + 1;
+      STATIC_IP_MODE = String(var);
     }
 
     payload=server.arg("staticSubnet");
     if (payload.length() > 6 ) {
-      payload.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
-      staticIpMode += 1;
+      STATIC_SUBNET = payload;
+      int var = STATIC_IP_MODE.toInt() + 1;
+      STATIC_IP_MODE = String(var);
     }
 
-    if (staticIpMode != 3) {
-      d.toCharArray(staticIpStr, sizeof(staticIpStr));
-      d.toCharArray(staticGatewayStr, sizeof(staticGatewayStr));
-      d.toCharArray(staticSubnetStr, sizeof(staticSubnetStr));
+    if (STATIC_IP_MODE.toInt() != 3) {
+      STATIC_IP = "";
+      STATIC_GATEWAY = "";
+      STATIC_SUBNET = "";
     }
 
-    data += inputBodyName + String(F("Static IP")) + inputBodyPOST + String(F("staticIP")) + inputPlaceHolder + staticIpStr + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("staticGateway")) + inputPlaceHolder + staticGatewayStr + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Static Subnet")) + inputBodyPOST + String(F("staticSubnet")) + inputPlaceHolder + staticSubnetStr + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Static IP"))      + inputBodyPOST + String(F("staticIP"))      + inputPlaceHolder + STATIC_IP      + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("staticGateway")) + inputPlaceHolder + STATIC_GATEWAY + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Static Subnet"))  + inputBodyPOST + String(F("staticSubnet"))  + inputPlaceHolder + STATIC_SUBNET  + inputBodyClose + inputBodyCloseDiv;
 
 
     payload=server.arg("light_pin");
     if (payload.length() > 0 ) {
-      ConfDevice.light_pin = atoi(payload.c_str());
+      LIGHT_PIN = payload;
     }
-    data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + String(ConfDevice.light_pin) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + LIGHT_PIN + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("lightOff_delay");
     if (payload.length() > 0 ) {
@@ -1916,7 +1594,7 @@ void WebEspConf(void) {
     data += inputBodyEnd;
 
 
-    saveConfig();
+    JConf.saveConfig();
 
     server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
   });
@@ -1970,47 +1648,47 @@ void WebMqttConf(void) {
 
     String payload=server.arg("mqtt_ip");
     if (payload.length() > 0 ) {
-      payload.toCharArray(mqttServerStr, sizeof(mqttServerStr));
+      MQTT_SERVER = payload;
     }
-    data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_ip")) + inputPlaceHolder + mqttServerStr + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_ip")) + inputPlaceHolder + MQTT_SERVER + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqttPort");
-    if (payload.length() > 0 && payload.length() < 6) {
-      mqttPort = atoi(payload.c_str());
+    if (payload.length() > 0 ) {
+      MQTT_PORT = payload;
     }
-    data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqttPort")) + inputPlaceHolder + String(mqttPort) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqttPort")) + inputPlaceHolder + MQTT_PORT + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqttUser");
-    if (payload.length() > 0 && payload.length() < 32) {
-      payload.toCharArray(mqttUser, sizeof(mqttUser));
+    if (payload.length() > 0 ) {
+      MQTT_USER = payload;
     } 
-    data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqttUser")) + inputPlaceHolder + String(mqttUser) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqttUser")) + inputPlaceHolder + MQTT_USER + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqttPwd");
-    if (payload.length() > 0 && payload.length() < 32) {
-      payload.toCharArray(mqttPwd, sizeof(mqttPwd));
+    if (payload.length() > 0 ) {
+      MQTT_PWD = payload;
     } 
-    data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqttPwd")) + inputPlaceHolder + String(mqttPwd) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqttPwd")) + inputPlaceHolder + MQTT_PWD + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqtt_name");
     if (payload.length() > 0 ) {
-      payload.toCharArray(ConfDevice.mqtt_name, sizeof(ConfDevice.mqtt_name));
+      MQTT_NAME = payload;
     }
-    data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + ConfDevice.mqtt_name + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + MQTT_NAME + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("publish_topic");
     if (payload.length() > 0 ) {
       payload.replace("%2F", String(F("/")));
-      payload.toCharArray(ConfDevice.publish_topic, sizeof(ConfDevice.publish_topic));
+      PUBLISH_TOPIC = payload;
     }
-    data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + ConfDevice.publish_topic + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + PUBLISH_TOPIC + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("subscribe_topic");
     if (payload.length() > 0 ) {
       payload.replace("%2F", String(F("/")));
-      payload.toCharArray(ConfDevice.subscribe_topic, sizeof(ConfDevice.subscribe_topic));
+      SUBSCRIBE_TOPIC = payload;
     }
-    data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + ConfDevice.subscribe_topic + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + SUBSCRIBE_TOPIC + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("publish_delay");
     if (payload.length() > 0 ) {
@@ -2026,7 +1704,7 @@ void WebMqttConf(void) {
 
 
     data += inputBodyEnd;
-    saveConfig();
+    JConf.saveConfig();
 
     server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
   });
@@ -2049,8 +1727,8 @@ void handleControl(){
   if (server.args() > 0 ) {
     for ( size_t i = 0; i < server.args(); i++ ) {
       if (server.argName(i) == "1" && server.arg(i) == "1") {
-        digitalWrite(ConfDevice.light_pin, !digitalRead(ConfDevice.light_pin));
-        if (digitalRead(ConfDevice.light_pin) == HIGH){
+        digitalWrite(LIGHT_PIN.toInt(), !digitalRead(LIGHT_PIN.toInt()));
+        if (digitalRead(LIGHT_PIN.toInt()) == HIGH){
           StringData.lightState = ON;
         } else {
           StringData.lightState = OFF;
@@ -2139,7 +1817,7 @@ void WebControl(void) {
     String OFF;             OFF += FPSTR(OFFP);
 
 
-    if (digitalRead(ConfDevice.light_pin) == HIGH){
+    if (digitalRead(LIGHT_PIN.toInt()) == HIGH){
       pinState = true;
     } else {
       pinState = false;
@@ -2273,24 +1951,24 @@ void WebAnalogUart(void) {
 
     String title1  = panelHeaderName + String(F("Analog Pins value"))   + panelHeaderEnd;
 
-    String ApinV0 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + String(F(" id='apin0Id'")) + closingAngleBracket + panelBodyEnd;
-    String ApinV1 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + String(F(" id='apin1Id'")) + closingAngleBracket + panelBodyEnd;
-    String ApinV2 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + String(F(" id='apin2Id'")) + closingAngleBracket + panelBodyEnd;
-    String ApinV3 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + String(F(" id='apin3Id'")) + closingAngleBracket + panelBodyEnd;
-    String ApinV4 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + String(F(" id='apin4Id'")) + closingAngleBracket + panelBodyEnd;
-    String ApinV5 = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + String(F(" id='apin5Id'")) + closingAngleBracket + panelBodyEnd;
+    String ApinValue = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + String(F(" id='apin0Id'")) + closingAngleBracket + panelBodyEnd;
+    ApinValue       += panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + String(F(" id='apin1Id'")) + closingAngleBracket + panelBodyEnd;
+    ApinValue       += panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + String(F(" id='apin2Id'")) + closingAngleBracket + panelBodyEnd;
+    ApinValue       += panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + String(F(" id='apin3Id'")) + closingAngleBracket + panelBodyEnd;
+    ApinValue       += panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + String(F(" id='apin4Id'")) + closingAngleBracket + panelBodyEnd;
+    ApinValue       += panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + String(F(" id='apin5Id'")) + closingAngleBracket + panelBodyEnd;
 
     
     String title2 = panelHeaderName + String(F("Analog Pins delay"))  + panelHeaderEnd;
 
-    String ApinD0 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[0]) + panelBodyEnd;
-    String ApinD1 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[1]) + panelBodyEnd;
-    String ApinD2 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[2]) + panelBodyEnd;
-    String ApinD3 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[3]) + panelBodyEnd;
-    String ApinD4 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[4]) + panelBodyEnd;
-    String ApinD5 = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[5]) + panelBodyEnd;
+    String ApinDelay = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[0]) + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[1]) + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[2]) + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[3]) + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[4]) + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[5]) + panelBodyEnd;
     
-    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + title1 + ApinV0 + ApinV1 + ApinV2 + ApinV3 + ApinV4 + ApinV5 + panelEnd + title2 + ApinD0 + ApinD1 + ApinD2 + ApinD3 + ApinD4 + ApinD5 + panelEnd + containerEnd + siteEnd);
+    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + title1 + ApinValue + panelEnd + title2 + ApinDelay + panelEnd + containerEnd + siteEnd);
   });
 }
 #endif
@@ -2392,7 +2070,7 @@ void WebGreenhouse(void) {
     data += inputBodyEnd;
 
 
-    //saveConfig();
+    JConf.saveConfig();
 
     server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
   });
@@ -2474,13 +2152,13 @@ void setup() {
     return;
   }
 /*
-  if (!saveConfig()) {
+  if (!JConf.saveConfig()) {
     Serial.println("Failed to save config");
   } else {
     Serial.println("Config saved");
   }
 */
-  if (!loadConfig()) {
+  if (!JConf.loadConfig()) {
     #ifdef DEBUG
     Serial.println(F("Failed to load config"));
     #endif
@@ -2490,17 +2168,17 @@ void setup() {
     #endif
   }
 
-  pinMode(ConfDevice.light_pin, OUTPUT);
+  pinMode(LIGHT_PIN.toInt(), OUTPUT);
   pinMode(ConfDevice.light_pin2, OUTPUT);
   pinMode(ConfDevice.motion_pin, INPUT);           // set pin to input
 
 
   client.setClient(espClient);
-  if (isIPValid(mqttServerStr)){
-    IPAddress mqtt_ip = stringToIp(mqttServerStr);
-    client.setServer(mqtt_ip, mqttPort);
+  if (isIPValid(StringToChar(MQTT_SERVER))){
+    IPAddress mqtt_ip = stringToIp(MQTT_SERVER);
+    client.setServer(mqtt_ip, MQTT_PORT.toInt());
   } else {
-    client.setServer(mqttServerStr, mqttPort);
+    client.setServer(StringToChar(MQTT_SERVER), MQTT_PORT.toInt());
   }
   
   
@@ -2526,13 +2204,13 @@ void setup() {
 
   // start WiFi
   WiFi.mode(WIFI_AP_STA);
-  if (staticIpMode == 3){
-    IPAddress staticIP = stringToIp(staticIpStr);
-    IPAddress staticGateway = stringToIp(staticGatewayStr);
-    IPAddress staticSubnet = stringToIp(staticSubnetStr);
+  if (STATIC_IP_MODE.toInt() == 3) {
+    IPAddress staticIP = stringToIp(STATIC_IP);
+    IPAddress staticGateway = stringToIp(STATIC_GATEWAY);
+    IPAddress staticSubnet = stringToIp(STATIC_SUBNET);
     WiFi.config(staticIP, staticGateway, staticSubnet);
   }
-  WiFi.begin(ConfDevice.sta_ssid, ConfDevice.sta_pwd);
+  WiFi.begin(StringToChar(STA_SSID), StringToChar(STA_PWD));
 
   waitConnected();
   if (WiFi.status() == WL_CONNECTED) {
@@ -2650,11 +2328,11 @@ void loop() {
   if (WiFi.status() != WL_CONNECTED) {
     #ifdef DEBUG
     Serial.print(F("Connecting to "));
-    Serial.print(ConfDevice.sta_ssid);
+    Serial.print(STA_SSID);
     Serial.println(F("..."));
     #endif
     WiFi.mode(WIFI_AP_STA);
-    WiFi.begin(ConfDevice.sta_ssid, ConfDevice.sta_pwd);
+    WiFi.begin(StringToChar(STA_SSID), StringToChar(STA_PWD));
     delay(100);
 
     if (WiFi.waitForConnectResult() != WL_CONNECTED)
@@ -2668,10 +2346,10 @@ void loop() {
   if (WiFi.status() == WL_CONNECTED) {
 
     if (!client.connected()) {
-      if (strlen(mqttUser) > 0 && strlen(mqttPwd) > 0){
-        client.connect(ConfDevice.mqtt_name, mqttUser, mqttPwd);
+      if (MQTT_USER != "none" && MQTT_PWD != "none"){
+        client.connect(StringToChar(MQTT_NAME), StringToChar(MQTT_USER), StringToChar(MQTT_PWD));
       } else {
-        client.connect(ConfDevice.mqtt_name);
+        client.connect(StringToChar(MQTT_NAME));
       }
     } else {
       client.loop();
