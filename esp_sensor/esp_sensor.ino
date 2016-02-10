@@ -11,7 +11,7 @@
 
 #define DEBUG
 #define UART_ON
-//#define DHT_ON
+#define DHT_ON
 #define BME280_ON
 //#define SHT21_ON
 
@@ -20,11 +20,12 @@
 Espuart Uart;
 #endif
 
+JsonConf JConf;
 
 #if defined(DHT_ON)
 #include "DHT.h"
 #define DHTTYPE DHT22
-DHT dht(ConfDevice.dht_pin, DHTTYPE);
+DHT dht(DHT_PIN.toInt(), DHTTYPE);
 int errorDHTdata = 0;  // количество ошибок чтения датчика DHT
 #endif
 
@@ -42,10 +43,6 @@ HTU21D myHTU21D;
 
 ADC_MODE(ADC_VCC);
 int voltage;
-
-NTPClient timeClient("europe.pool.ntp.org", 21600, 60000);
-
-JsonConf JConf;
 
 
 const char *ver = "1.07";
@@ -69,41 +66,11 @@ const char *uptime = "Uptime";
 
 const char sec[] PROGMEM = "sec";
 
-struct ConfDeviceStruct {
-  char module_id[32];
-  char commandPub_topic[32];
-  uint8_t light_pin2;
-  uint8_t motion_pin;
-  uint8_t dht_pin;
-  unsigned long light_off_delay;
-  unsigned long light2_off_delay;
-  unsigned long publish_delay;
-  unsigned long subscribe_delay;
-  unsigned long motion_read_delay;
-  unsigned long reboot_delay;
-  unsigned long get_data_delay;
-  bool ver_send;
-  bool ip_send;
-  bool mac_send;
 
+bool ver_send = false;
+bool ip_send = false;
+bool mac_send = false;
 
-} ConfDevice = {
-  "",
-  "/commandPub/",
-  12,
-  2,
-  14,
-  5,
-  5,
-  10000,
-  60000,
-  10000,
-  180000,
-  10000,
-  false,
-  false,
-  false
-};
 
 struct StringDataStruct {
   String temperatureString;
@@ -147,12 +114,12 @@ unsigned long getDataTimer = 0;
 unsigned long publishTimer = 2000;
 unsigned long motionTimer = 4000;
 unsigned long rebootTimer = 6000;
-unsigned long subscribeTimer = ConfDevice.subscribe_delay - 5000;
+unsigned long subscribeTimer = (SUBSCRIBE_DELAY.toInt() *1000) - 5000;
 unsigned long lightOffTimer = 0;
 unsigned long lightOffTimer2 = 0;
 
 
-boolean motionDetect = false;
+bool motionDetect = false;
 
 WiFiClient espClient;
 
@@ -164,13 +131,6 @@ String network_html;          // Список доступных Wi-Fi точе�
 ESP8266WebServer server(80);
 
 
-String greenLightOn = "8:00";
-String greenLightOff = "8:00";
-String greenLightPin = "23";
-String greenHumidityThresholdUp = "800";
-String greenHumidityThresholdDown = "300";
-String greenHumiditySensorPin = "60";
-String greenPumpPin = "26";
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
 
 /*
@@ -490,6 +450,20 @@ char* StringToChar(String data){
 }
 
 
+NTPClient timeClient(StringToChar(NTP_SERVER), TIME_ZONE.toInt() * 60 * 60, 60000);
+
+
+static char* floatToChar(float charester)
+{
+  #ifdef DEBUG
+    Serial.print(F("floatToChar()"));  Serial.println();
+  #endif
+
+ dtostrf(charester, 1, 0, value_buff);
+ return value_buff;
+}
+
+
 void LightControl(){
   String AUTO;       AUTO += FPSTR(AUTOP);
   String ON;         ON += FPSTR(ONP);
@@ -503,21 +477,21 @@ void LightControl(){
       digitalWrite(LIGHT_PIN.toInt(), HIGH);
       lightOffTimer = millis();
   } else if (StringData.lightState == AUTO && motionDetect == false && digitalRead(LIGHT_PIN.toInt()) == HIGH){
-    if (millis() - lightOffTimer >= ConfDevice.light_off_delay * 60 * 1000){
+    if (millis() - lightOffTimer >= LIGHTOFF_DELAY.toInt() * 60 * 1000){
       digitalWrite(LIGHT_PIN.toInt(), LOW);
     }
   }
 
   if (StringData.lightState2 == ON){
-    digitalWrite(ConfDevice.light_pin2, HIGH);
+    digitalWrite(LIGHT_PIN2.toInt(), HIGH);
   } else if (StringData.lightState2 == OFF){
-    digitalWrite(ConfDevice.light_pin2, LOW);
+    digitalWrite(LIGHT_PIN2.toInt(), LOW);
   } else if (StringData.lightState2 == AUTO && motionDetect == true ){
-      digitalWrite(ConfDevice.light_pin2, HIGH);
+      digitalWrite(LIGHT_PIN2.toInt(), HIGH);
       lightOffTimer2 = millis();
-  } else if (StringData.lightState2 == AUTO && motionDetect == false && digitalRead(ConfDevice.light_pin2) == HIGH){
-    if (millis() - lightOffTimer2 >= ConfDevice.light2_off_delay * 60 * 1000){
-      digitalWrite(ConfDevice.light_pin2, LOW);
+  } else if (StringData.lightState2 == AUTO && motionDetect == false && digitalRead(LIGHT_PIN2.toInt()) == HIGH){
+    if (millis() - lightOffTimer2 >= LIGHT2OFF_DELAY.toInt() * 60 * 1000){
+      digitalWrite(LIGHT_PIN2.toInt(), LOW);
     }
   }
 
@@ -716,7 +690,7 @@ void DHT22Sensor()
 
 
 void MotionDetect(){
-  if (digitalRead(ConfDevice.motion_pin) == HIGH) {
+  if (digitalRead(MOTION_PIN.toInt()) == HIGH) {
     #ifdef DEBUG
       Serial.println(F("MotionSensor moove detected"));
     #endif
@@ -770,7 +744,7 @@ void RebootESP()
     Serial.print(F("RebootESP()"));  Serial.println();
   #endif
 
-  if (millis() - rebootTimer >= ConfDevice.reboot_delay){
+  if (millis() - rebootTimer >= REBOOT_DELAY.toInt() * 1000){
   ESP.restart();
   }
 }
@@ -798,7 +772,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   #endif
 
   // Обрабатываем данные о состоянии светодиодной ленты (AUTO, ON, OFF)
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType, StringToChar(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(COMMAND_PUB_TOPIC), lightType, StringToChar(MQTT_NAME));
   if (strcmp (topic,topic_buff) == 0){
 
     String AUTO;       AUTO += FPSTR(AUTOP);
@@ -824,21 +798,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer, StringToChar(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(COMMAND_PUB_TOPIC), motionsensortimer, StringToChar(MQTT_NAME));
     if (strcmp (topic,topic_buff) == 0){
       #ifdef DEBUG
         Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
       #endif
-      ConfDevice.light_off_delay = atoi(value_buff);
+      LIGHTOFF_DELAY = String(value_buff);
       JConf.saveConfig();
     }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer2, StringToChar(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(COMMAND_PUB_TOPIC), motionsensortimer2, StringToChar(MQTT_NAME));
     if (strcmp (topic,topic_buff) == 0){
       #ifdef DEBUG
         Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
       #endif
-      ConfDevice.light2_off_delay = atoi(value_buff);
+      LIGHT2OFF_DELAY = String(value_buff);
       JConf.saveConfig();
     }
 
@@ -847,13 +821,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(SUBSCRIBE_TOPIC), version, StringToChar(MQTT_NAME));
   if (strcmp (topic,topic_buff) == 0){
     if (strncmp (value_buff, ver, 4) == 0){
-      ConfDevice.ver_send = true;
-      ConfDevice.ip_send = true;
-      ConfDevice.mac_send = true;
+      ver_send = true;
+      ip_send = true;
+      mac_send = true;
     } else {
-      ConfDevice.ver_send = false;
-      ConfDevice.ip_send = false;
-      ConfDevice.mac_send = false;
+      ver_send = false;
+      ip_send = false;
+      mac_send = false;
     }
   }
 
@@ -911,12 +885,10 @@ bool MqttPubLightOffDelay() {
   }
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  motionsensortimer, StringToChar(MQTT_NAME));
-  sprintf_P(value_buff, "%d", ConfDevice.light_off_delay);
-  client.publish(topic_buff, value_buff);
+  client.publish(topic_buff, StringToChar(LIGHTOFF_DELAY));
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  motionsensortimer2, StringToChar(MQTT_NAME));
-  sprintf_P(value_buff, "%d", ConfDevice.light2_off_delay);
-  client.publish(topic_buff, value_buff);
+  client.publish(topic_buff, StringToChar(LIGHT2OFF_DELAY));
 
   return true;
 }
@@ -953,7 +925,7 @@ bool MqttPubData()
   client.publish(topic_buff, StringData.uptimeString.c_str());
 
 
-  if (ConfDevice.ver_send == false){
+  if (ver_send == false){
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  version, StringToChar(MQTT_NAME));
     client.publish(topic_buff, ver);
   }
@@ -962,7 +934,7 @@ bool MqttPubData()
     client.publish(topic_buff, StringData.ipString.c_str());
 
   
-  if (ConfDevice.mac_send == false){  
+  if (mac_send == false){  
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(PUBLISH_TOPIC),  mac, StringToChar(MQTT_NAME));
     client.publish(topic_buff, StringData.macString.c_str());
   }
@@ -1011,16 +983,16 @@ bool MqttSubscribe(){
     return false;
   }
 
-  if (millis() - subscribeTimer >= ConfDevice.subscribe_delay) {
+  if (millis() - subscribeTimer >= SUBSCRIBE_DELAY.toInt() * 1000) {
     subscribeTimer = millis();
     
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, motionsensortimer, StringToChar(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(COMMAND_PUB_TOPIC), motionsensortimer, StringToChar(MQTT_NAME));
     MqttSubscribePrint(topic_buff);
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType, StringToChar(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(COMMAND_PUB_TOPIC), lightType, StringToChar(MQTT_NAME));
     MqttSubscribePrint(topic_buff);
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), ConfDevice.commandPub_topic, lightType2, StringToChar(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(COMMAND_PUB_TOPIC), lightType2, StringToChar(MQTT_NAME));
     MqttSubscribePrint(topic_buff);
 
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), StringToChar(SUBSCRIBE_TOPIC), uptime, StringToChar(MQTT_NAME));
@@ -1078,18 +1050,6 @@ void TestMQTTPrint()
 }
 
 
-static char* floatToChar(float charester)
-{
-  #ifdef DEBUG
-    Serial.print(F("floatToChar()"));  Serial.println();
-  #endif
-
- dtostrf(charester, 1, 0, value_buff);
- return value_buff;
-}
-
-
-
 void GetFreeMemory () {
   #ifdef DEBUG
     Serial.print(F("GetFreeMemory()"));  Serial.println();
@@ -1121,7 +1081,7 @@ void GetMacString () {
   sprintf_P(value_buff, (const char *)F("%x:%x:%x:%x:%x:%x"), macData[0],  macData[1], macData[2], macData[3], macData[4], macData[5]);
   if (StringData.macString != String(value_buff)){  
     StringData.macString = String(value_buff);
-    ConfDevice.mac_send = false;
+    mac_send = false;
   }
 }
 
@@ -1542,53 +1502,53 @@ void WebEspConf(void) {
 
     payload=server.arg("lightOff_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.light_off_delay = atoi(payload.c_str());
+      LIGHTOFF_DELAY = payload;
       MqttPubLightOffDelay();
     }
-    data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightOff_delay")) + inputPlaceHolder + String(ConfDevice.light_off_delay) + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightOff_delay")) + inputPlaceHolder + LIGHTOFF_DELAY + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("light_pin2");
     if (payload.length() > 0 ) {
-      ConfDevice.light_pin2 = atoi(payload.c_str());
+      LIGHT_PIN2 = payload;
     }
-    data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light_pin2")) + inputPlaceHolder + String(ConfDevice.light_pin2) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light_pin2")) + inputPlaceHolder + LIGHT_PIN2 + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("light2Off_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.light2_off_delay = atoi(payload.c_str());
+      LIGHT2OFF_DELAY = payload;
       MqttPubLightOffDelay();
     }
-    data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2Off_delay")) + inputPlaceHolder + String(ConfDevice.light2_off_delay) + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2Off_delay")) + inputPlaceHolder + LIGHT2OFF_DELAY + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("motion_pin");
     if (payload.length() > 0 ) {
-      ConfDevice.motion_pin = atoi(payload.c_str());
+      MOTION_PIN = payload;
     }
-    data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + String(ConfDevice.motion_pin) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + MOTION_PIN + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("dht_pin");
     if (payload.length() > 0 ) {
-      ConfDevice.dht_pin = atoi(payload.c_str());
+      DHT_PIN = payload;
     }
-    data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + String(ConfDevice.dht_pin) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + DHT_PIN + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("get_data_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.get_data_delay = atoi(payload.c_str())*1000;
+      GET_DATA_DELAY = payload;
     }
-    data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + String(ConfDevice.get_data_delay/1000) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + GET_DATA_DELAY + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("motion_read_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.motion_read_delay = atoi(payload.c_str())*1000;
+      MOTION_READ_DELAY = payload;
     }
-    data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + String(ConfDevice.motion_read_delay/1000) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + MOTION_READ_DELAY + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("reboot_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.reboot_delay = atoi(payload.c_str())*1000;
+      REBOOT_DELAY = payload;
     }
-    data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + String(ConfDevice.reboot_delay/1000) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + REBOOT_DELAY + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
 
     data += inputBodyEnd;
@@ -1692,15 +1652,15 @@ void WebMqttConf(void) {
 
     payload=server.arg("publish_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.publish_delay = atoi(payload.c_str())*1000;
+      PUBLISH_DELAY = payload;
     }
-    data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + String(ConfDevice.publish_delay/1000) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + PUBLISH_DELAY + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("subscribe_delay");
     if (payload.length() > 0 ) {
-      ConfDevice.subscribe_delay = atoi(payload.c_str())*1000;
+      SUBSCRIBE_DELAY = payload;
     }
-    data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + String(ConfDevice.subscribe_delay/1000) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + SUBSCRIBE_DELAY + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
 
     data += inputBodyEnd;
@@ -1739,8 +1699,8 @@ void handleControl(){
       }
 
       if (server.argName(i) == "2" && server.arg(i) == "1") {
-        digitalWrite(ConfDevice.light_pin2, !digitalRead(ConfDevice.light_pin2));
-        if (digitalRead(ConfDevice.light_pin2) == HIGH){
+        digitalWrite(LIGHT_PIN2.toInt(), !digitalRead(LIGHT_PIN2.toInt()));
+        if (digitalRead(LIGHT_PIN2.toInt()) == HIGH){
           StringData.lightState2 = ON;
         } else {
           StringData.lightState2 = OFF;
@@ -1823,7 +1783,7 @@ void WebControl(void) {
       pinState = false;
     }
 
-    if (digitalRead(ConfDevice.light_pin2) == HIGH){
+    if (digitalRead(LIGHT_PIN2.toInt()) == HIGH){
       pinState2 = true;
     } else {
       pinState2 = false;
@@ -1850,14 +1810,14 @@ void WebControl(void) {
 
 
     unsigned long timeOff = 0;
-    if (millis() - lightOffTimer < ConfDevice.light_off_delay * 60 * 1000){
-      timeOff = ConfDevice.light_off_delay * 60 * 1000 - (millis() - lightOffTimer);
+    if (millis() - lightOffTimer < LIGHTOFF_DELAY.toInt() * 60 * 1000){
+      timeOff = LIGHTOFF_DELAY.toInt() * 60 * 1000 - (millis() - lightOffTimer);
       timeOff = timeOff/1000;
     }
 
     unsigned long timeOff2 = 0;
-    if (millis() - lightOffTimer2 < ConfDevice.light2_off_delay * 60 * 1000){
-      timeOff2 = ConfDevice.light2_off_delay * 60 * 1000 - (millis() - lightOffTimer2);
+    if (millis() - lightOffTimer2 < LIGHT2OFF_DELAY.toInt() * 60 * 1000){
+      timeOff2 = LIGHT2OFF_DELAY.toInt() * 60 * 1000 - (millis() - lightOffTimer2);
       timeOff2 = timeOff2/1000;
     }
 
@@ -1961,12 +1921,12 @@ void WebAnalogUart(void) {
     
     String title2 = panelHeaderName + String(F("Analog Pins delay"))  + panelHeaderEnd;
 
-    String ApinDelay = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[0]) + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[1]) + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[2]) + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[3]) + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[4]) + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + String(Uart.delayAnalogPin[5]) + panelBodyEnd;
+    String ApinDelay = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN0 + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN1 + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN2 + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN3 + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN4 + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN5 + panelBodyEnd;
     
     server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + title1 + ApinValue + panelEnd + title2 + ApinDelay + panelEnd + containerEnd + siteEnd);
   });
@@ -2020,21 +1980,21 @@ void WebGreenhouse(void) {
 
     String payload=server.arg("greenLightOn");
     if (payload.length() > 0 ) {
-      greenLightOn = payload;
+      GREEN_LIGHT_ON = payload;
     }
-    data += inputBodyName + String(F("Время включения")) + inputBodyPOST + String(F("greenLightOn")) + inputPlaceHolder + greenLightOn + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Время включения")) + inputBodyPOST + String(F("greenLightOn")) + inputPlaceHolder + GREEN_LIGHT_ON + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("greenLightOff");
     if (payload.length() > 0 ) {
-      greenLightOff = payload;
+      GREEN_LIGHT_OFF = payload;
     }
-    data += inputBodyName + String(F("Время выключения")) + inputBodyPOST + String(F("greenLightOff")) + inputPlaceHolder + greenLightOff + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Время выключения")) + inputBodyPOST + String(F("greenLightOff")) + inputPlaceHolder + GREEN_LIGHT_OFF + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("greenLightPin");
     if (payload.length() > 0 ) {
-      greenLightPin = payload;
+      GREEN_LIGHT_PIN = payload;
     }
-    data += inputBodyName + String(F("Пин лампы")) + inputBodyPOST + String(F("greenLightPin")) + inputPlaceHolder + greenLightPin + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Пин лампы")) + inputBodyPOST + String(F("greenLightPin")) + inputPlaceHolder + GREEN_LIGHT_PIN + inputBodyClose + inputBodyCloseDiv;
 
     data += inputBodyEnd;
 
@@ -2045,27 +2005,27 @@ void WebGreenhouse(void) {
 
     payload=server.arg("greenHumidityThresholdUp");
     if (payload.length() > 0 ) {
-      greenHumidityThresholdUp = payload;
+      GREEN_HUMIDITY_THRESHOLD_UP = payload;
     }
-    data += inputBodyName + String(F("Верхний порог")) + inputBodyPOST + String(F("greenHumidityThresholdUp")) + inputPlaceHolder + greenHumidityThresholdUp + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Верхний порог")) + inputBodyPOST + String(F("greenHumidityThresholdUp")) + inputPlaceHolder + GREEN_HUMIDITY_THRESHOLD_UP + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("greenHumidityThresholdDown");
     if (payload.length() > 0 ) {
-      greenHumidityThresholdDown = payload;
+      GREEN_HUMIDITY_THRESHOLD_DOWN = payload;
     }
-    data += inputBodyName + String(F("Нижний порог")) + inputBodyPOST + String(F("greenHumidityThresholdDown")) + inputPlaceHolder + greenHumidityThresholdDown + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Нижний порог")) + inputBodyPOST + String(F("greenHumidityThresholdDown")) + inputPlaceHolder + GREEN_HUMIDITY_THRESHOLD_DOWN + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("greenHumiditySensorPin");
     if (payload.length() > 0 ) {
-      greenHumiditySensorPin = payload;
+      GREEN_HUMIDITY_SENSOR_PIN = payload;
     }
-    data += inputBodyName + String(F("Пин датчика")) + inputBodyPOST + String(F("greenHumiditySensorPin")) + inputPlaceHolder + greenHumiditySensorPin + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Пин датчика")) + inputBodyPOST + String(F("greenHumiditySensorPin")) + inputPlaceHolder + GREEN_HUMIDITY_SENSOR_PIN + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("greenPumpPin");
     if (payload.length() > 0 ) {
-      greenPumpPin = payload;
+      GREEN_PUMP_PIN = payload;
     }
-    data += inputBodyName + String(F("Пин насоса")) + inputBodyPOST + String(F("greenPumpPin")) + inputPlaceHolder + greenPumpPin + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Пин насоса")) + inputBodyPOST + String(F("greenPumpPin")) + inputPlaceHolder + GREEN_PUMP_PIN + inputBodyClose + inputBodyCloseDiv;
 
     data += inputBodyEnd;
 
@@ -2169,8 +2129,8 @@ void setup() {
   }
 
   pinMode(LIGHT_PIN.toInt(), OUTPUT);
-  pinMode(ConfDevice.light_pin2, OUTPUT);
-  pinMode(ConfDevice.motion_pin, INPUT);           // set pin to input
+  pinMode(LIGHT_PIN2.toInt(), OUTPUT);
+  pinMode(MOTION_PIN.toInt(), INPUT);           // set pin to input
 
 
   client.setClient(espClient);
@@ -2214,10 +2174,10 @@ void setup() {
 
   waitConnected();
   if (WiFi.status() == WL_CONNECTED) {
-    WiFi.softAP(ConfDevice.module_id);
+    WiFi.softAP(StringToChar(MODULE_ID));
   } else {
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(ConfDevice.module_id);
+    WiFi.softAP(StringToChar(MODULE_ID));
   }
 
 
@@ -2241,7 +2201,7 @@ void setup() {
   Serial.println();  Serial.println(F("Server started"));
   #endif
   // start mDNS responder
-  if (!MDNS.begin(ConfDevice.module_id)) {
+  if (!MDNS.begin(StringToChar(MODULE_ID))) {
     #ifdef DEBUG
     Serial.println();  Serial.println(F("Error setting up MDNS responder!"));
     #endif
@@ -2264,7 +2224,7 @@ void loop() {
   // handle web server
   server.handleClient();
 
-  if (millis() - getDataTimer >= ConfDevice.get_data_delay){
+  if (millis() - getDataTimer >= GET_DATA_DELAY.toInt() * 1000){
     getDataTimer = millis();
     timeClient.update();
     StringData.ntpTimeString = timeClient.getFormattedTime();
@@ -2299,10 +2259,10 @@ void loop() {
     for (int i = 0; i < ANALOG_PINS; i++){
       if (millis() - Uart.timerAnalogPin[i] >= 60000){
         Uart.valueAnalogPin[i] = 0;
-        Uart.delayAnalogPin[i] = 0;
+        JConf.jconfig_uart[i][JSON_KEY] = String(0);
         Uart.SetAnalogReadCycle(i, 10, "s");
       } else {
-        Uart.delayAnalogPin[i] = 10;
+        JConf.jconfig_uart[i][JSON_KEY] = String(10);
       }
     }
     #endif
@@ -2313,7 +2273,7 @@ void loop() {
     MotionDetect();
   }  
 
-  if (millis() - motionTimer >= ConfDevice.motion_read_delay){
+  if (millis() - motionTimer >= MOTION_READ_DELAY.toInt() * 1000){
     motionTimer = millis();
     motionDetect = false;
     MotionDetect();
@@ -2356,7 +2316,7 @@ void loop() {
       MqttSubscribe();
     }
 
-    if (millis() - publishTimer >= ConfDevice.publish_delay){
+    if (millis() - publishTimer >= PUBLISH_DELAY.toInt() * 1000){
       publishTimer = millis();
       MqttPubData();
     }

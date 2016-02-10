@@ -39,7 +39,6 @@ class Espuart
     char delimiter = '&';             // Разделительный символ в пакете данных
     unsigned int  valueAnalogPin[ANALOG_PINS];
     unsigned long timerAnalogPin[ANALOG_PINS];
-    unsigned long delayAnalogPin[ANALOG_PINS];
     String parseArray[PARSE_CELLS];   //Распарсенный массив принимаемых данных
 
   private:

@@ -1,6 +1,33 @@
 #include "json_config.h"
 
 
+bool JsonConf::saveConfig(String conf_key, String conf_value) {
+  StaticJsonBuffer<256> jsonBuffer;
+  #ifdef DEBUG_JSON_CONFIG
+    Serial.print(F("saveConfig()"));  Serial.println();
+  #endif
+
+  JsonObject& json = jsonBuffer.createObject();
+
+  json[conf_key] = conf_value;
+  #ifdef DEBUG_JSON_CONFIG
+    Serial.print(F("Json Save Key: ")); Serial.print(conf_key); 
+    Serial.print(F(" = Value: ")); Serial.println(conf_value);
+  #endif
+
+  File configFile = SPIFFS.open("/config.json", "w");
+  if (!configFile) {
+    #ifdef DEBUG_JSON_CONFIG
+      Serial.println(F("Failed to open config file for writing"));
+    #endif
+    return false;
+  }
+
+  json.printTo(configFile);
+  return true;
+}
+
+
 bool JsonConf::saveConfig() {
   StaticJsonBuffer<1000> jsonBuffer;
   #ifdef DEBUG_JSON_CONFIG
@@ -91,6 +118,9 @@ bool JsonConf::loadConfig() {
   }
 
   for (int i = 0; i < NUM_COMMON_KEYS; i++){
+    if (!json[jconfig_common_key[i]]){
+      saveConfig(jconfig_common_key[i], jconfig_common_value[i]);
+    }
     const char* val = json[jconfig_common_key[i]];
     jconfig_common_value[i] = String(val);
     #ifdef DEBUG_JSON_CONFIG
@@ -101,6 +131,9 @@ bool JsonConf::loadConfig() {
 
 #ifdef UART_ON
   for (int i = 0; i < NUM_UART_KEYS; i++){
+    if (!json[jconfig_uart_key[i]]){
+      saveConfig(jconfig_uart_key[i], jconfig_uart_value[i]);
+    }
     const char* val = json[jconfig_uart_key[i]];
     jconfig_uart_value[i] = String(val);
     #ifdef DEBUG_JSON_CONFIG
@@ -109,6 +142,20 @@ bool JsonConf::loadConfig() {
     #endif
   }
 #endif
+
+  for (int i = 0; i < NUM_GREEN_KEYS; i++){
+    if (!json[jconfig_green[i][JSON_KEY]]){
+      saveConfig(jconfig_green[i][JSON_KEY], jconfig_green[i][JSON_VALUE]);
+    }
+    const char* val = json[jconfig_green[i][JSON_KEY]];
+    jconfig_green[i][JSON_VALUE] = String(val);
+    #ifdef DEBUG_JSON_CONFIG
+      Serial.print(F("Json Save Key: ")); Serial.print(jconfig_green[i][JSON_KEY]); 
+      Serial.print(F(" = Value: ")); Serial.println(jconfig_green[i][JSON_VALUE]);
+    #endif
+  }
+
+
 
   return true;
 }
