@@ -16,7 +16,7 @@
 //#define SHT21_ON
 
 #if defined(UART_ON)
-#include "ESP_UART.h"
+#include "MY_ESP_UART.h"
 Espuart Uart;
 #endif
 
