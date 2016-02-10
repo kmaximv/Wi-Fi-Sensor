@@ -17,14 +17,6 @@
 #define MY_ESP_UART_H
 
 #include <Arduino.h>
-#include "uart.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
-#include "Arduino.h"
-#include "HardwareSerial.h"
-
 
 
 #define DEBUG_ESP_UART
