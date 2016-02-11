@@ -1,68 +1,95 @@
 #include "json_config.h"
 
 
-bool JsonConf::saveConfig(String conf_key, String conf_value) {
-  StaticJsonBuffer<256> jsonBuffer;
-  #ifdef DEBUG_JSON_CONFIG
-    Serial.print(F("saveConfig()"));  Serial.println();
-  #endif
+const char* JsonConf::GetDataCommon(const size_t i) {
 
-  JsonObject& json = jsonBuffer.createObject();
+  if (i < NUM_COMMON_KEYS){
+    char** data_set = jconfig_common[i];
+    const char* val = data_set[JSON_VALUE];
+    return val;
+  } else {
+    const char* err = "none";
+    return err;
+  }
+}
 
-  json[conf_key] = conf_value;
-  #ifdef DEBUG_JSON_CONFIG
-    Serial.print(F("Json Save Key: ")); Serial.print(conf_key); 
-    Serial.print(F(" = Value: ")); Serial.println(conf_value);
-  #endif
 
-  File configFile = SPIFFS.open("/config.json", "w");
-  if (!configFile) {
-    #ifdef DEBUG_JSON_CONFIG
-      Serial.println(F("Failed to open config file for writing"));
-    #endif
+const char* JsonConf::GetDataCommon(const size_t i, const size_t j) {
+
+  char** data_set = jconfig_common[i];
+
+  if (j == JSON_KEY){
+    const char* key = data_set[JSON_KEY];
+    return key;
+  } else if (j == JSON_VALUE){
+    const char* val = data_set[JSON_VALUE];
+    return val;
+  } else {
+    const char* err = "none";
+    return err;
+  }
+}
+
+
+bool JsonConf::SetDataCommon(const size_t i, String str) {
+  
+  if (i < NUM_COMMON_KEYS){
+    char** data_set = jconfig_common[i];
+    char val[sizeof(str)];
+    str.toCharArray(val, sizeof(val));
+    data_set[JSON_VALUE] = val;
+    return true;
+  } else {
     return false;
   }
-
-  json.printTo(configFile);
-  return true;
 }
+
+bool JsonConf::SetDataCommon(const size_t i, char* str) {
+  
+  if (i < NUM_COMMON_KEYS){
+    char** data_set = jconfig_common[i];
+    data_set[JSON_VALUE] = str;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+bool JsonConf::SetDataGreen(const size_t i, String str) {
+  
+  if (i < NUM_GREEN_KEYS){
+    char** data_set = jconfig_green[i];
+    char val[sizeof(str)];
+    str.toCharArray(val, sizeof(val));
+    data_set[JSON_VALUE] = val;
+    return true;
+  } else {
+    return false;
+  }
+}
+
 
 
 bool JsonConf::saveConfig() {
-  StaticJsonBuffer<1000> jsonBuffer;
+  StaticJsonBuffer<200> jsonBuffer;
   #ifdef DEBUG_JSON_CONFIG
     Serial.print(F("saveConfig()"));  Serial.println();
   #endif
 
   JsonObject& json = jsonBuffer.createObject();
 
-  for (int i = 0; i < NUM_COMMON_KEYS; i++){
-    json[jconfig_common_key[i]] = jconfig_common_value[i];
+  for (size_t i = 0; i < sizeof(jconfig_common) / sizeof(jconfig_common[0]); i++)
+  {
+    char** data_set = jconfig_common[i];
+    const char* key = data_set[JSON_KEY];
+    const char* val = data_set[JSON_VALUE];
+    json[key] = val;
     #ifdef DEBUG_JSON_CONFIG
-      Serial.print(F("Json Save Key: ")); Serial.print(jconfig_common_key[i]); 
-      Serial.print(F(" = Value: ")); Serial.println(jconfig_common_value[i]);
+      Serial.print(F("Json Save Key: ")); Serial.print(key); 
+      Serial.print(F(" = Value: ")); Serial.println(val);
     #endif
   }
-
-#ifdef UART_ON
-  for (int i = 0; i < NUM_UART_KEYS; i++){
-    json[jconfig_uart_key[i]] = jconfig_uart_value[i];
-    #ifdef DEBUG_JSON_CONFIG
-      Serial.print(F("Json Save Key: ")); Serial.print(jconfig_uart_key[i]); 
-      Serial.print(F(" = Value: ")); Serial.println(jconfig_uart_value[i]);
-    #endif
-  }
-#endif
-
-
-  for (int i = 0; i < NUM_GREEN_KEYS; i++){
-    json[jconfig_green[i][JSON_KEY]] = jconfig_green[i][JSON_VALUE];
-    #ifdef DEBUG_JSON_CONFIG
-      Serial.print(F("Json Save Key: ")); Serial.print(jconfig_green[i][JSON_KEY]); 
-      Serial.print(F(" = Value: ")); Serial.println(jconfig_green[i][JSON_VALUE]);
-    #endif
-  }
-
 
   File configFile = SPIFFS.open("/config.json", "w");
   if (!configFile) {
@@ -76,6 +103,38 @@ bool JsonConf::saveConfig() {
   return true;
 }
 
+
+bool JsonConf::saveConfig(size_t i) {
+  StaticJsonBuffer<200> jsonBuffer;
+  #ifdef DEBUG_JSON_CONFIG
+    Serial.print(F("saveConfig()"));  Serial.println();
+  #endif
+
+  JsonObject& json = jsonBuffer.createObject();
+
+
+  char** data_set = jconfig_common[i];
+
+  const char* key = data_set[JSON_KEY];
+  const char* val = data_set[JSON_VALUE];
+
+  json[key] = val;
+  #ifdef DEBUG_JSON_CONFIG
+    Serial.print(F("Json Save Key: ")); Serial.print(key); 
+    Serial.print(F(" = Value: ")); Serial.println(val);
+  #endif
+
+  File configFile = SPIFFS.open("/config.json", "w");
+  if (!configFile) {
+    #ifdef DEBUG_JSON_CONFIG
+      Serial.println(F("Failed to open config file for writing"));
+    #endif
+    return false;
+  }
+
+  json.printTo(configFile);
+  return true;
+}
 
 
 bool JsonConf::loadConfig() {
@@ -107,7 +166,7 @@ bool JsonConf::loadConfig() {
   // use configFile.readString instead.
   configFile.readBytes(buf.get(), size);
 
-  StaticJsonBuffer<1000> jsonBuffer;
+  StaticJsonBuffer<200> jsonBuffer;
   JsonObject& json = jsonBuffer.parseObject(buf.get());
 
   if (!json.success()) {
@@ -117,45 +176,29 @@ bool JsonConf::loadConfig() {
     return false;
   }
 
-  for (int i = 0; i < NUM_COMMON_KEYS; i++){
-    if (!json[jconfig_common_key[i]]){
-      saveConfig(jconfig_common_key[i], jconfig_common_value[i]);
-    }
-    const char* val = json[jconfig_common_key[i]];
-    jconfig_common_value[i] = String(val);
+
+  for (size_t i = 0; i < sizeof(jconfig_common) / sizeof(jconfig_common[0]); i++)
+  {
+    char** data_set = jconfig_common[i];
+    char* key = data_set[JSON_KEY];
+    SetDataCommon(i, json[key]);
     #ifdef DEBUG_JSON_CONFIG
-      Serial.print(F("Json Load Key: ")); Serial.print(jconfig_common_key[i]); 
-      Serial.print(F(" = Value: ")); Serial.println(jconfig_common_value[i]);
+      Serial.print(F("Json Load Key: ")); Serial.println(key); 
     #endif
   }
-
-#ifdef UART_ON
-  for (int i = 0; i < NUM_UART_KEYS; i++){
-    if (!json[jconfig_uart_key[i]]){
-      saveConfig(jconfig_uart_key[i], jconfig_uart_value[i]);
-    }
-    const char* val = json[jconfig_uart_key[i]];
-    jconfig_uart_value[i] = String(val);
-    #ifdef DEBUG_JSON_CONFIG
-      Serial.print(F("Json Load Key: ")); Serial.print(jconfig_uart_key[i]); 
-      Serial.print(F(" = Value: ")); Serial.println(jconfig_uart_value[i]);
-    #endif
-  }
-#endif
-
-  for (int i = 0; i < NUM_GREEN_KEYS; i++){
-    if (!json[jconfig_green[i][JSON_KEY]]){
-      saveConfig(jconfig_green[i][JSON_KEY], jconfig_green[i][JSON_VALUE]);
-    }
-    const char* val = json[jconfig_green[i][JSON_KEY]];
-    jconfig_green[i][JSON_VALUE] = String(val);
-    #ifdef DEBUG_JSON_CONFIG
-      Serial.print(F("Json Save Key: ")); Serial.print(jconfig_green[i][JSON_KEY]); 
-      Serial.print(F(" = Value: ")); Serial.println(jconfig_green[i][JSON_VALUE]);
-    #endif
-  }
-
-
 
   return true;
 }
+
+
+/*
+for (size_t i = 0; i < sizeof(jconfig_common) / sizeof(jconfig_common[0]); i++)
+{
+    const char** data_set = jconfig_common[i];
+    printf("data_set[%u]\n", i);
+    for (size_t j = 0; data_set[j]; j++)
+    {
+        printf("  [%s]\n", data_set[j]);
+    }
+}
+*/
