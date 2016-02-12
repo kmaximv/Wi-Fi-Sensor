@@ -777,7 +777,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       #ifdef DEBUG
         Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
       #endif
-      JConf.SetDataCommon(LIGHTOFF_DELAY, value_buff);
+      JConf.SetDataCommonChar(LIGHTOFF_DELAY, value_buff);
       JConf.saveConfig();
     }
 
@@ -786,7 +786,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       #ifdef DEBUG
         Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
       #endif
-      JConf.SetDataCommon(LIGHT2OFF_DELAY, value_buff);
+      JConf.SetDataCommonChar(LIGHT2OFF_DELAY, value_buff);
       JConf.saveConfig();
     }
 
@@ -1470,9 +1470,9 @@ void WebEspConf(void) {
     }
 
     if (mode_ip != 3) {
-      JConf.SetDataCommon(STATIC_IP, "none");
-      JConf.SetDataCommon(STATIC_GATEWAY, "none");
-      JConf.SetDataCommon(STATIC_SUBNET, "none");
+      JConf.SetDataCommon(STATIC_IP, String("none"));
+      JConf.SetDataCommon(STATIC_GATEWAY, String("none"));
+      JConf.SetDataCommon(STATIC_SUBNET, String("none"));
     }
     JConf.SetDataCommon(STATIC_IP_MODE, String(mode_ip));
 
@@ -2088,7 +2088,7 @@ void setup() {
   #endif
   // Setup console
   #ifdef DEBUG
-    Serial.begin(57600);
+    Serial.begin(115200);
     delay(10);
     Serial.println();
   #endif
@@ -2106,6 +2106,7 @@ void setup() {
     Serial.println("Config saved");
   }
 */
+  JConf.PrintConfigFile();
   if (!JConf.loadConfig()) {
     #ifdef DEBUG
     Serial.println(F("Failed to load config"));
@@ -2115,6 +2116,8 @@ void setup() {
     Serial.println(F("Config loaded"));
     #endif
   }
+
+  JConf.PrintConfigFile();
 
   pinMode(atoi(JConf.GetDataCommon(LIGHT_PIN)), OUTPUT);
   pinMode(atoi(JConf.GetDataCommon(LIGHT_PIN2)), OUTPUT);
@@ -2219,6 +2222,7 @@ void loop() {
 
   if (millis() - getDataTimer >= atoi(JConf.GetDataCommon(GET_DATA_DELAY)) * 1000){
     getDataTimer = millis();
+    JConf.PrintConfigFile();
     timeClient.update();
     ntpTimeString = timeClient.getFormattedTime();
     int voltage = ESP.getVcc();

@@ -72,12 +72,13 @@ class JsonConf
     const char* GetDataCommon(const size_t i);
     const char* GetDataCommon(const size_t i, const size_t j);
     bool SetDataCommon(const size_t i, String str);
-    bool SetDataCommon(const size_t i, char* str);
+    bool SetDataCommonChar(const size_t i, const char* str);
     bool SetDataGreen(const size_t i, String str);
+    bool PrintConfigFile();
 
 
 
-    char* jconfig_common[NUM_COMMON_KEYS][2] =
+    const char * jconfig_common[NUM_COMMON_KEYS][2] =
     {
         { "module_id",         "ESP8266"             },
         { "sta_ssid",          "HomeNET"             },
@@ -110,7 +111,7 @@ class JsonConf
     };
 
 
-    char* jconfig_green[NUM_GREEN_KEYS][2] =
+    const char * jconfig_green[NUM_GREEN_KEYS][2] =
     {
         { "green_light_on",                "8:00"  },
         { "green_light_off",               "22:00" },
