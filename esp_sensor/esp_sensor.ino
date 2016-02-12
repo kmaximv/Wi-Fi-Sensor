@@ -25,7 +25,7 @@ JsonConf JConf;
 #if defined(DHT_ON)
 #include "DHT.h"
 #define DHTTYPE DHT22
-DHT dht(atoi(JConf.GetDataCommon(DHT_PIN)), DHTTYPE);
+DHT dht(atoi(JConf.conf[DHT_PIN]), DHTTYPE);
 int errorDHTdata = 0;  // количество ошибок чтения датчика DHT
 #endif
 
@@ -97,7 +97,7 @@ unsigned long getDataTimer = 0;
 unsigned long publishTimer = 2000;
 unsigned long motionTimer = 4000;
 unsigned long rebootTimer = 6000;
-unsigned long subscribeTimer = (atoi(JConf.GetDataCommon(SUBSCRIBE_DELAY)) *1000UL) - 5000UL;
+unsigned long subscribeTimer = (atoi(JConf.conf[SUBSCRIBE_DELAY]) *1000UL) - 5000UL;
 unsigned long lightOffTimer = 0;
 unsigned long lightOffTimer2 = 0;
 
@@ -106,7 +106,7 @@ bool motionDetect = false;
 
 WiFiClient espClient;
 
-NTPClient timeClient(JConf.GetDataCommon(NTP_SERVER), atoi(JConf.GetDataCommon(TIME_ZONE)) * 60 * 60, 60000);
+NTPClient timeClient(JConf.conf[NTP_SERVER], atoi(JConf.conf[TIME_ZONE]) * 60 * 60, 60000);
 
 char topic_buff[120];
 char value_buff[120];
@@ -444,28 +444,28 @@ void LightControl(){
   String OFF;        OFF += FPSTR(OFFP);
 
   if (lightState == ON){
-    digitalWrite(atoi(JConf.GetDataCommon(LIGHT_PIN)), HIGH);
+    digitalWrite(atoi(JConf.conf[LIGHT_PIN]), HIGH);
   } else if (lightState == OFF){
-    digitalWrite(atoi(JConf.GetDataCommon(LIGHT_PIN)), LOW);
+    digitalWrite(atoi(JConf.conf[LIGHT_PIN]), LOW);
   } else if (lightState == AUTO && motionDetect == true ){
-      digitalWrite(atoi(JConf.GetDataCommon(LIGHT_PIN)), HIGH);
+      digitalWrite(atoi(JConf.conf[LIGHT_PIN]), HIGH);
       lightOffTimer = millis();
-  } else if (lightState == AUTO && motionDetect == false && digitalRead(atoi(JConf.GetDataCommon(LIGHT_PIN))) == HIGH){
-    if (millis() - lightOffTimer >= atoi(JConf.GetDataCommon(LIGHTOFF_DELAY)) * 60UL * 1000UL){
-      digitalWrite(atoi(JConf.GetDataCommon(LIGHT_PIN)), LOW);
+  } else if (lightState == AUTO && motionDetect == false && digitalRead(atoi(JConf.conf[LIGHT_PIN])) == HIGH){
+    if (millis() - lightOffTimer >= atoi(JConf.conf[LIGHTOFF_DELAY]) * 60UL * 1000UL){
+      digitalWrite(atoi(JConf.conf[LIGHT_PIN]), LOW);
     }
   }
 
   if (lightState2 == ON){
-    digitalWrite(atoi(JConf.GetDataCommon(LIGHT_PIN2)), HIGH);
+    digitalWrite(atoi(JConf.conf[LIGHT_PIN2]), HIGH);
   } else if (lightState2 == OFF){
-    digitalWrite(atoi(JConf.GetDataCommon(LIGHT_PIN2)), LOW);
+    digitalWrite(atoi(JConf.conf[LIGHT_PIN2]), LOW);
   } else if (lightState2 == AUTO && motionDetect == true ){
-      digitalWrite(atoi(JConf.GetDataCommon(LIGHT_PIN2)), HIGH);
+      digitalWrite(atoi(JConf.conf[LIGHT_PIN2]), HIGH);
       lightOffTimer2 = millis();
-  } else if (lightState2 == AUTO && motionDetect == false && digitalRead(atoi(JConf.GetDataCommon(LIGHT_PIN2))) == HIGH){
-    if (millis() - lightOffTimer2 >= atoi(JConf.GetDataCommon(LIGHT2OFF_DELAY)) * 60 * 1000){
-      digitalWrite(atoi(JConf.GetDataCommon(LIGHT_PIN2)), LOW);
+  } else if (lightState2 == AUTO && motionDetect == false && digitalRead(atoi(JConf.conf[LIGHT_PIN2])) == HIGH){
+    if (millis() - lightOffTimer2 >= atoi(JConf.conf[LIGHT2OFF_DELAY]) * 60 * 1000){
+      digitalWrite(atoi(JConf.conf[LIGHT_PIN2]), LOW);
     }
   }
 
@@ -589,7 +589,7 @@ void GetBmeSensorData()
     Serial.println("m");
   #endif
   float altitudeData = bmeSensor.readFloatAltitudeMeters();
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  altitude, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC),  altitude, JConf.conf[MQTT_NAME));
   client.publish(topic_buff, floatToChar(altitudeData));
 */
 }
@@ -652,10 +652,10 @@ void DHT22Sensor()
       Serial.print(F("Failed to read from DHT. Number errors: "));  Serial.println(errorDHTdata);
     #endif
   } else if (client.connected()) {
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  temperature, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  temperature, JConf.conf[MQTT_NAME]);
     client.publish(topic_buff, floatToChar(temperatureData));
     
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  humidity, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  humidity, JConf.conf[MQTT_NAME]);
     client.publish(topic_buff, floatToChar(humidityData));
   }
 }
@@ -664,14 +664,14 @@ void DHT22Sensor()
 
 
 void MotionDetect(){
-  if (digitalRead(atoi(JConf.GetDataCommon(MOTION_PIN))) == HIGH) {
+  if (digitalRead(atoi(JConf.conf[MOTION_PIN])) == HIGH) {
     #ifdef DEBUG
       Serial.println(F("MotionSensor moove detected"));
     #endif
     motionDetect = true;
     LightControl();
     if (client.connected()) {
-      sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  motionSensor, JConf.GetDataCommon(MQTT_NAME));
+      sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  motionSensor, JConf.conf[MQTT_NAME]);
       client.publish(topic_buff, "ON");
     }
   }
@@ -718,7 +718,7 @@ void RebootESP()
     Serial.print(F("RebootESP()"));  Serial.println();
   #endif
 
-  if (millis() - rebootTimer >= atoi(JConf.GetDataCommon(REBOOT_DELAY)) * 1000){
+  if (millis() - rebootTimer >= atoi(JConf.conf[REBOOT_DELAY]) * 1000){
   ESP.restart();
   }
 }
@@ -746,7 +746,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   #endif
 
   // Обрабатываем данные о состоянии светодиодной ленты (AUTO, ON, OFF)
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(COMMAND_PUB_TOPIC), lightType, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[COMMAND_PUB_TOPIC], lightType, JConf.conf[MQTT_NAME]);
   if (strcmp (topic,topic_buff) == 0){
 
     String AUTO;       AUTO += FPSTR(AUTOP);
@@ -772,27 +772,27 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(COMMAND_PUB_TOPIC), motionsensortimer, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[COMMAND_PUB_TOPIC], motionsensortimer, JConf.conf[MQTT_NAME]);
     if (strcmp (topic,topic_buff) == 0){
       #ifdef DEBUG
         Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
       #endif
-      JConf.SetDataCommonChar(LIGHTOFF_DELAY, value_buff);
+      JConf.setStr(LIGHTOFF_DELAY, value_buff);
       JConf.saveConfig();
     }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(COMMAND_PUB_TOPIC), motionsensortimer2, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[COMMAND_PUB_TOPIC], motionsensortimer2, JConf.conf[MQTT_NAME]);
     if (strcmp (topic,topic_buff) == 0){
       #ifdef DEBUG
         Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
       #endif
-      JConf.SetDataCommonChar(LIGHT2OFF_DELAY, value_buff);
+      JConf.setStr(LIGHT2OFF_DELAY, value_buff);
       JConf.saveConfig();
     }
 
 
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(SUBSCRIBE_TOPIC), version, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[SUBSCRIBE_TOPIC], version, JConf.conf[MQTT_NAME]);
   if (strcmp (topic,topic_buff) == 0){
     if (strncmp (value_buff, ver, 4) == 0){
       ver_send = true;
@@ -830,7 +830,7 @@ bool MqttPubLightState(){
   String ON;         ON += FPSTR(ONP);
   String OFF;        OFF += FPSTR(OFFP);
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  lightType, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  lightType, JConf.conf[MQTT_NAME]);
   String lightStateNum;
   if (lightState == ON){
     lightStateNum = String(F("1"));
@@ -841,7 +841,7 @@ bool MqttPubLightState(){
   }
   client.publish(topic_buff, lightStateNum.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  lightType2, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  lightType2, JConf.conf[MQTT_NAME]);
   if (lightState2 == ON){
     lightStateNum = String(F("1"));
   } else if (lightState2 == OFF){
@@ -864,11 +864,11 @@ bool MqttPubLightOffDelay() {
     return false;
   }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  motionsensortimer, JConf.GetDataCommon(MQTT_NAME));
-  client.publish(topic_buff, JConf.GetDataCommon(LIGHTOFF_DELAY));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  motionsensortimer, JConf.conf[MQTT_NAME]);
+  client.publish(topic_buff, JConf.conf[LIGHTOFF_DELAY]);
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  motionsensortimer2, JConf.GetDataCommon(MQTT_NAME));
-  client.publish(topic_buff, JConf.GetDataCommon(LIGHT2OFF_DELAY));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  motionsensortimer2, JConf.conf[MQTT_NAME]);
+  client.publish(topic_buff, JConf.conf[LIGHT2OFF_DELAY]);
 
   return true;
 }
@@ -889,42 +889,42 @@ bool MqttPubData()
     return false;
   }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  lux, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  lux, JConf.conf[MQTT_NAME]);
   client.publish(topic_buff, luxString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC), temperature, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC], temperature, JConf.conf[MQTT_NAME]);
   client.publish(topic_buff, temperatureString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC), pressure, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC], pressure, JConf.conf[MQTT_NAME]);
   client.publish(topic_buff, pressureString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  humidity, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  humidity, JConf.conf[MQTT_NAME]);
   client.publish(topic_buff, humidityString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  freeMemory, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  freeMemory, JConf.conf[MQTT_NAME]);
   client.publish(topic_buff, freeMemoryString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC), uptime, JConf.GetDataCommon(MQTT_NAME));
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC], uptime, JConf.conf[MQTT_NAME]);
   client.publish(topic_buff, uptimeString.c_str());
 
 
   if (ver_send == false){
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  version, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  version, JConf.conf[MQTT_NAME]);
     client.publish(topic_buff, ver);
   }
   
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  ip, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  ip, JConf.conf[MQTT_NAME]);
     client.publish(topic_buff, ipString.c_str());
 
   
   if (mac_send == false){  
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  mac, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  mac, JConf.conf[MQTT_NAME]);
     client.publish(topic_buff, macString.c_str());
   }
 
  
   #ifdef DHT_ON
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(PUBLISH_TOPIC),  errorsDHT, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC],  errorsDHT, JConf.conf[MQTT_NAME]);
     sprintf_P(value_buff, (const char *)F("%d"), errorDHTdata);  
     client.publish(topic_buff, value_buff);
   #endif
@@ -972,22 +972,22 @@ bool MqttSubscribe(){
     return false;
   }
 
-  if (millis() - subscribeTimer >= atoi(JConf.GetDataCommon(SUBSCRIBE_DELAY)) * 1000) {
+  if (millis() - subscribeTimer >= atoi(JConf.conf[SUBSCRIBE_DELAY]) * 1000) {
     subscribeTimer = millis();
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(COMMAND_PUB_TOPIC), motionsensortimer, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[COMMAND_PUB_TOPIC], motionsensortimer, JConf.conf[MQTT_NAME]);
     MqttSubscribePrint(topic_buff);
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(COMMAND_PUB_TOPIC), lightType, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[COMMAND_PUB_TOPIC], lightType, JConf.conf[MQTT_NAME]);
     MqttSubscribePrint(topic_buff);
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(COMMAND_PUB_TOPIC), lightType2, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[COMMAND_PUB_TOPIC], lightType2, JConf.conf[MQTT_NAME]);
     MqttSubscribePrint(topic_buff);
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(SUBSCRIBE_TOPIC), uptime, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[SUBSCRIBE_TOPIC], uptime, JConf.conf[MQTT_NAME]);
     MqttSubscribePrint(topic_buff);
 
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.GetDataCommon(SUBSCRIBE_TOPIC), version, JConf.GetDataCommon(MQTT_NAME));
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[SUBSCRIBE_TOPIC], version, JConf.conf[MQTT_NAME]);
     MqttSubscribePrint(topic_buff);
   }
 
@@ -1247,10 +1247,10 @@ void WebRoot(void) {
     String Lux          = panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket   + panelBodyEnd;
     
     String title2       = panelHeaderName + String(F("Settings"))  + panelHeaderEnd;
-    String ssid         = panelBodySymbol + String(F("signal"))        + panelBodyName + String(F("Wi-Fi SSID"))  + panelBodyValue + closingAngleBracket + JConf.GetDataCommon(STA_SSID)                         + panelBodyEnd;
+    String ssid         = panelBodySymbol + String(F("signal"))        + panelBodyName + String(F("Wi-Fi SSID"))  + panelBodyValue + closingAngleBracket + JConf.conf[STA_SSID]                         + panelBodyEnd;
     String IPAddClient  = panelBodySymbol + String(F("globe"))         + panelBodyName + String(F("IP Address"))  + panelBodyValue + closingAngleBracket + ipString              + panelBodyEnd;
     String MacAddr      = panelBodySymbol + String(F("scale"))         + panelBodyName + String(F("MAC Address")) + panelBodyValue + closingAngleBracket + macString             + panelBodyEnd;
-    String MqttPrefix   = panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + JConf.GetDataCommon(MQTT_NAME)              + panelBodyEnd;
+    String MqttPrefix   = panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + JConf.conf[MQTT_NAME]              + panelBodyEnd;
 
     String title3       = panelHeaderName + String(F("Device"))  + panelHeaderEnd;
     String Uptime       = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("Uptime"))      + panelBodyValue + String(F(" id='uptimeId'"))     + closingAngleBracket  + panelBodyEnd;
@@ -1440,102 +1440,102 @@ void WebEspConf(void) {
 
     String payload=server.arg("sta_ssid");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(STA_SSID, payload);
+      JConf.setStr(STA_SSID, payload);
     }
-    data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.GetDataCommon(STA_SSID) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.conf[STA_SSID] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("sta_pwd");
     if (payload.length() > 7 &&  payload != String(F("********"))) {
-      JConf.SetDataCommon(STA_PWD, payload);
+      JConf.setStr(STA_PWD, payload);
     }
     data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
     int mode_ip = 0;
     payload=server.arg("staticIP");
     if (payload.length() > 6 ) {
-      JConf.SetDataCommon(STATIC_IP, payload);
+      JConf.setStr(STATIC_IP, payload);
       mode_ip = 1;
     }
 
     payload=server.arg("staticGateway");
     if (payload.length() > 6 ) {
-      JConf.SetDataCommon(STATIC_GATEWAY, payload);
+      JConf.setStr(STATIC_GATEWAY, payload);
       mode_ip += 1;
     }
 
     payload=server.arg("staticSubnet");
     if (payload.length() > 6 ) {
-      JConf.SetDataCommon(STATIC_SUBNET, payload);
+      JConf.setStr(STATIC_SUBNET, payload);
       mode_ip += 1;
     }
 
     if (mode_ip != 3) {
-      JConf.SetDataCommon(STATIC_IP, String("none"));
-      JConf.SetDataCommon(STATIC_GATEWAY, String("none"));
-      JConf.SetDataCommon(STATIC_SUBNET, String("none"));
+      JConf.setStr(STATIC_IP, String("none"));
+      JConf.setStr(STATIC_GATEWAY, String("none"));
+      JConf.setStr(STATIC_SUBNET, String("none"));
     }
-    JConf.SetDataCommon(STATIC_IP_MODE, String(mode_ip));
+    JConf.setStr(STATIC_IP_MODE, String(mode_ip));
 
-    data += inputBodyName + String(F("Static IP"))      + inputBodyPOST + String(F("staticIP"))      + inputPlaceHolder + JConf.GetDataCommon(STATIC_IP)      + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("staticGateway")) + inputPlaceHolder + JConf.GetDataCommon(STATIC_GATEWAY) + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Static Subnet"))  + inputBodyPOST + String(F("staticSubnet"))  + inputPlaceHolder + JConf.GetDataCommon(STATIC_SUBNET)  + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Static IP"))      + inputBodyPOST + String(F("staticIP"))      + inputPlaceHolder + JConf.conf[STATIC_IP]      + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("staticGateway")) + inputPlaceHolder + JConf.conf[STATIC_GATEWAY] + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Static Subnet"))  + inputBodyPOST + String(F("staticSubnet"))  + inputPlaceHolder + JConf.conf[STATIC_SUBNET]  + inputBodyClose + inputBodyCloseDiv;
 
 
     payload=server.arg("light_pin");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(LIGHT_PIN, payload);
+      JConf.setStr(LIGHT_PIN, payload);
     }
-    data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.GetDataCommon(LIGHT_PIN) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.conf[LIGHT_PIN] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("lightOff_delay");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(LIGHTOFF_DELAY, payload);
+      JConf.setStr(LIGHTOFF_DELAY, payload);
       MqttPubLightOffDelay();
     }
-    data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightOff_delay")) + inputPlaceHolder + JConf.GetDataCommon(LIGHTOFF_DELAY) + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightOff_delay")) + inputPlaceHolder + JConf.conf[LIGHTOFF_DELAY] + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("light_pin2");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(LIGHT_PIN2, payload);
+      JConf.setStr(LIGHT_PIN2, payload);
     }
-    data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light_pin2")) + inputPlaceHolder + JConf.GetDataCommon(LIGHT_PIN2) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light_pin2")) + inputPlaceHolder + JConf.conf[LIGHT_PIN2] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("light2Off_delay");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(LIGHT2OFF_DELAY, payload);
+      JConf.setStr(LIGHT2OFF_DELAY, payload);
       MqttPubLightOffDelay();
     }
-    data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2Off_delay")) + inputPlaceHolder + JConf.GetDataCommon(LIGHT2OFF_DELAY) + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2Off_delay")) + inputPlaceHolder + JConf.conf[LIGHT2OFF_DELAY] + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("motion_pin");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(MOTION_PIN, payload);
+      JConf.setStr(MOTION_PIN, payload);
     }
-    data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + JConf.GetDataCommon(MOTION_PIN) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + JConf.conf[MOTION_PIN] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("dht_pin");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(DHT_PIN, payload);
+      JConf.setStr(DHT_PIN, payload);
     }
-    data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + JConf.GetDataCommon(DHT_PIN) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + JConf.conf[DHT_PIN] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("get_data_delay");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(GET_DATA_DELAY, payload);
+      JConf.setStr(GET_DATA_DELAY, payload);
     }
-    data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + JConf.GetDataCommon(GET_DATA_DELAY) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + JConf.conf[GET_DATA_DELAY] + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("motion_read_delay");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(MOTION_READ_DELAY, payload);
+      JConf.setStr(MOTION_READ_DELAY, payload);
     }
-    data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + JConf.GetDataCommon(MOTION_READ_DELAY) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + JConf.conf[MOTION_READ_DELAY] + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("reboot_delay");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(REBOOT_DELAY, payload);
+      JConf.setStr(REBOOT_DELAY, payload);
     }
-    data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + JConf.GetDataCommon(REBOOT_DELAY) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + JConf.conf[REBOOT_DELAY] + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
 
     data += inputBodyEnd;
@@ -1595,59 +1595,59 @@ void WebMqttConf(void) {
 
     String payload=server.arg("mqtt_ip");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(MQTT_SERVER, payload);
+      JConf.setStr(MQTT_SERVER, payload);
     }
-    data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_ip")) + inputPlaceHolder + JConf.GetDataCommon(MQTT_SERVER) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_ip")) + inputPlaceHolder + JConf.conf[MQTT_SERVER] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqttPort");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(MQTT_PORT, payload);
+      JConf.setStr(MQTT_PORT, payload);
     }
-    data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqttPort")) + inputPlaceHolder + JConf.GetDataCommon(MQTT_PORT) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqttPort")) + inputPlaceHolder + JConf.conf[MQTT_PORT] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqttUser");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(MQTT_USER, payload);
+      JConf.setStr(MQTT_USER, payload);
     } 
-    data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqttUser")) + inputPlaceHolder + JConf.GetDataCommon(MQTT_USER) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqttUser")) + inputPlaceHolder + JConf.conf[MQTT_USER] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqttPwd");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(MQTT_PWD, payload);
+      JConf.setStr(MQTT_PWD, payload);
     } 
-    data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqttPwd")) + inputPlaceHolder + JConf.GetDataCommon(MQTT_PWD) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqttPwd")) + inputPlaceHolder + JConf.conf[MQTT_PWD] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqtt_name");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(MQTT_NAME, payload);
+      JConf.setStr(MQTT_NAME, payload);
     }
-    data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.GetDataCommon(MQTT_NAME) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.conf[MQTT_NAME] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("publish_topic");
     if (payload.length() > 0 ) {
       payload.replace("%2F", String(F("/")));
-      JConf.SetDataCommon(PUBLISH_TOPIC, payload);
+      JConf.setStr(PUBLISH_TOPIC, payload);
     }
-    data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + JConf.GetDataCommon(PUBLISH_TOPIC) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + JConf.conf[PUBLISH_TOPIC] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("subscribe_topic");
     if (payload.length() > 0 ) {
       payload.replace("%2F", String(F("/")));
-      JConf.SetDataCommon(SUBSCRIBE_TOPIC, payload);
+      JConf.setStr(SUBSCRIBE_TOPIC, payload);
     }
-    data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + JConf.GetDataCommon(SUBSCRIBE_TOPIC) + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + JConf.conf[SUBSCRIBE_TOPIC] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("publish_delay");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(PUBLISH_DELAY, payload);
+      JConf.setStr(PUBLISH_DELAY, payload);
     }
-    data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + JConf.GetDataCommon(PUBLISH_DELAY) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + JConf.conf[PUBLISH_DELAY] + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("subscribe_delay");
     if (payload.length() > 0 ) {
-      JConf.SetDataCommon(SUBSCRIBE_DELAY, payload);
+      JConf.setStr(SUBSCRIBE_DELAY, payload);
     }
-    data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + JConf.GetDataCommon(SUBSCRIBE_DELAY) + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + JConf.conf[SUBSCRIBE_DELAY] + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
 
     data += inputBodyEnd;
@@ -1674,8 +1674,8 @@ void handleControl(){
   if (server.args() > 0 ) {
     for ( size_t i = 0; i < server.args(); i++ ) {
       if (server.argName(i) == "1" && server.arg(i) == "1") {
-        digitalWrite(atoi(JConf.GetDataCommon(LIGHT_PIN)), !digitalRead(atoi(JConf.GetDataCommon(LIGHT_PIN))));
-        if (digitalRead(atoi(JConf.GetDataCommon(LIGHT_PIN))) == HIGH){
+        digitalWrite(atoi(JConf.conf[LIGHT_PIN]), !digitalRead(atoi(JConf.conf[LIGHT_PIN])));
+        if (digitalRead(atoi(JConf.conf[LIGHT_PIN])) == HIGH){
           lightState = ON;
         } else {
           lightState = OFF;
@@ -1686,8 +1686,8 @@ void handleControl(){
       }
 
       if (server.argName(i) == "2" && server.arg(i) == "1") {
-        digitalWrite(atoi(JConf.GetDataCommon(LIGHT_PIN2)), !digitalRead(atoi(JConf.GetDataCommon(LIGHT_PIN2))));
-        if (digitalRead(atoi(JConf.GetDataCommon(LIGHT_PIN2))) == HIGH){
+        digitalWrite(atoi(JConf.conf[LIGHT_PIN2]), !digitalRead(atoi(JConf.conf[LIGHT_PIN2])));
+        if (digitalRead(atoi(JConf.conf[LIGHT_PIN2])) == HIGH){
           lightState2 = ON;
         } else {
           lightState2 = OFF;
@@ -1764,13 +1764,13 @@ void WebControl(void) {
     String OFF;             OFF += FPSTR(OFFP);
 
 
-    if (digitalRead(atoi(JConf.GetDataCommon(LIGHT_PIN))) == HIGH){
+    if (digitalRead(atoi(JConf.conf[LIGHT_PIN])) == HIGH){
       pinState = true;
     } else {
       pinState = false;
     }
 
-    if (digitalRead(atoi(JConf.GetDataCommon(LIGHT_PIN2))) == HIGH){
+    if (digitalRead(atoi(JConf.conf[LIGHT_PIN2])) == HIGH){
       pinState2 = true;
     } else {
       pinState2 = false;
@@ -1797,14 +1797,14 @@ void WebControl(void) {
 
 
     unsigned long timeOff = 0;
-    if (millis() - lightOffTimer < atoi(JConf.GetDataCommon(LIGHTOFF_DELAY)) * 60 * 1000){
-      timeOff = atoi(JConf.GetDataCommon(LIGHTOFF_DELAY)) * 60 * 1000 - (millis() - lightOffTimer);
+    if (millis() - lightOffTimer < atoi(JConf.conf[LIGHTOFF_DELAY]) * 60 * 1000){
+      timeOff = atoi(JConf.conf[LIGHTOFF_DELAY]) * 60 * 1000 - (millis() - lightOffTimer);
       timeOff = timeOff/1000;
     }
 
     unsigned long timeOff2 = 0;
-    if (millis() - lightOffTimer2 < atoi(JConf.GetDataCommon(LIGHT2OFF_DELAY)) * 60 * 1000){
-      timeOff2 = atoi(JConf.GetDataCommon(LIGHT2OFF_DELAY)) * 60 * 1000 - (millis() - lightOffTimer2);
+    if (millis() - lightOffTimer2 < atoi(JConf.conf[LIGHT2OFF_DELAY]) * 60 * 1000){
+      timeOff2 = atoi(JConf.conf[LIGHT2OFF_DELAY]) * 60 * 1000 - (millis() - lightOffTimer2);
       timeOff2 = timeOff2/1000;
     }
 
@@ -1908,12 +1908,12 @@ void WebAnalogUart(void) {
     
     String title2 = panelHeaderName + String(F("Analog Pins delay"))  + panelHeaderEnd;
 
-    String ApinDelay = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN0 + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN1 + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN2 + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN3 + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN4 + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + UART_DELAY_ANALOG_PIN5 + panelBodyEnd;
+    String ApinDelay = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + JConf.conf[UART_DELAY_ANALOG_PIN0] + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + JConf.conf[UART_DELAY_ANALOG_PIN1] + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + JConf.conf[UART_DELAY_ANALOG_PIN2] + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + JConf.conf[UART_DELAY_ANALOG_PIN3] + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + JConf.conf[UART_DELAY_ANALOG_PIN4] + panelBodyEnd;
+    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + JConf.conf[UART_DELAY_ANALOG_PIN5] + panelBodyEnd;
     
     server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + title1 + ApinValue + panelEnd + title2 + ApinDelay + panelEnd + containerEnd + siteEnd);
   });
@@ -1967,21 +1967,21 @@ void WebGreenhouse(void) {
 
     String payload=server.arg("greenLightOn");
     if (payload.length() > 0 ) {
-      JConf.SetDataGreen(GREEN_LIGHT_ON, payload);
+      JConf.setStr(GREEN_LIGHT_ON, payload);
     }
-    data += inputBodyName + String(F("Время включения")) + inputBodyPOST + String(F("greenLightOn")) + inputPlaceHolder + GREEN_LIGHT_ON + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Время включения")) + inputBodyPOST + String(F("greenLightOn")) + inputPlaceHolder + JConf.conf[GREEN_LIGHT_ON] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("greenLightOff");
     if (payload.length() > 0 ) {
-      JConf.SetDataGreen(GREEN_LIGHT_OFF, payload);
+      JConf.setStr(GREEN_LIGHT_OFF, payload);
     }
-    data += inputBodyName + String(F("Время выключения")) + inputBodyPOST + String(F("greenLightOff")) + inputPlaceHolder + GREEN_LIGHT_OFF + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Время выключения")) + inputBodyPOST + String(F("greenLightOff")) + inputPlaceHolder + JConf.conf[GREEN_LIGHT_OFF] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("greenLightPin");
     if (payload.length() > 0 ) {
-      JConf.SetDataGreen(GREEN_LIGHT_PIN, payload);
+      JConf.setStr(GREEN_LIGHT_PIN, payload);
     }
-    data += inputBodyName + String(F("Пин лампы")) + inputBodyPOST + String(F("greenLightPin")) + inputPlaceHolder + GREEN_LIGHT_PIN + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Пин лампы")) + inputBodyPOST + String(F("greenLightPin")) + inputPlaceHolder + JConf.conf[GREEN_LIGHT_PIN] + inputBodyClose + inputBodyCloseDiv;
 
     data += inputBodyEnd;
 
@@ -1992,27 +1992,27 @@ void WebGreenhouse(void) {
 
     payload=server.arg("greenHumidityThresholdUp");
     if (payload.length() > 0 ) {
-      JConf.SetDataGreen(GREEN_HUMIDITY_THRESHOLD_UP, payload);
+      JConf.setStr(GREEN_HUMIDITY_THRESHOLD_UP, payload);
     }
-    data += inputBodyName + String(F("Верхний порог")) + inputBodyPOST + String(F("greenHumidityThresholdUp")) + inputPlaceHolder + GREEN_HUMIDITY_THRESHOLD_UP + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Верхний порог")) + inputBodyPOST + String(F("greenHumidityThresholdUp")) + inputPlaceHolder + JConf.conf[GREEN_HUMIDITY_THRESHOLD_UP] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("greenHumidityThresholdDown");
     if (payload.length() > 0 ) {
-      JConf.SetDataGreen(GREEN_HUMIDITY_THRESHOLD_DOWN, payload);
+      JConf.setStr(GREEN_HUMIDITY_THRESHOLD_DOWN, payload);
     }
-    data += inputBodyName + String(F("Нижний порог")) + inputBodyPOST + String(F("greenHumidityThresholdDown")) + inputPlaceHolder + GREEN_HUMIDITY_THRESHOLD_DOWN + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Нижний порог")) + inputBodyPOST + String(F("greenHumidityThresholdDown")) + inputPlaceHolder + JConf.conf[GREEN_HUMIDITY_THRESHOLD_DOWN] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("greenHumiditySensorPin");
     if (payload.length() > 0 ) {
-      JConf.SetDataGreen(GREEN_HUMIDITY_SENSOR_PIN, payload);
+      JConf.setStr(GREEN_HUMIDITY_SENSOR_PIN, payload);
     }
-    data += inputBodyName + String(F("Пин датчика")) + inputBodyPOST + String(F("greenHumiditySensorPin")) + inputPlaceHolder + GREEN_HUMIDITY_SENSOR_PIN + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Пин датчика")) + inputBodyPOST + String(F("greenHumiditySensorPin")) + inputPlaceHolder + JConf.conf[GREEN_HUMIDITY_SENSOR_PIN] + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("greenPumpPin");
     if (payload.length() > 0 ) {
-      JConf.SetDataGreen(GREEN_PUMP_PIN, payload);
+      JConf.setStr(GREEN_PUMP_PIN, payload);
     }
-    data += inputBodyName + String(F("Пин насоса")) + inputBodyPOST + String(F("greenPumpPin")) + inputPlaceHolder + GREEN_PUMP_PIN + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Пин насоса")) + inputBodyPOST + String(F("greenPumpPin")) + inputPlaceHolder + JConf.conf[GREEN_PUMP_PIN] + inputBodyClose + inputBodyCloseDiv;
 
     data += inputBodyEnd;
 
@@ -2079,6 +2079,13 @@ void handleXML(){
 
 void setup() {
 
+  pinMode(atoi(JConf.conf[LIGHT_PIN]), OUTPUT);
+  pinMode(atoi(JConf.conf[LIGHT_PIN2]), OUTPUT);
+  pinMode(atoi(JConf.conf[MOTION_PIN]), INPUT);           // set pin to input
+
+  digitalWrite(atoi(JConf.conf[LIGHT_PIN]), LOW);
+  digitalWrite(atoi(JConf.conf[LIGHT_PIN2]), LOW);
+
   #ifdef SHT21_ON
     myHTU21D.begin();
   #endif
@@ -2092,6 +2099,8 @@ void setup() {
     delay(10);
     Serial.println();
   #endif
+  
+  JConf.begin();
 
   if (!SPIFFS.begin()) {
     #ifdef DEBUG
@@ -2106,7 +2115,6 @@ void setup() {
     Serial.println("Config saved");
   }
 */
-  JConf.PrintConfigFile();
   if (!JConf.loadConfig()) {
     #ifdef DEBUG
     Serial.println(F("Failed to load config"));
@@ -2117,17 +2125,12 @@ void setup() {
     #endif
   }
 
-  JConf.PrintConfigFile();
-
-  pinMode(atoi(JConf.GetDataCommon(LIGHT_PIN)), OUTPUT);
-  pinMode(atoi(JConf.GetDataCommon(LIGHT_PIN2)), OUTPUT);
-  pinMode(atoi(JConf.GetDataCommon(MOTION_PIN)), INPUT);           // set pin to input
 
 
   client.setClient(espClient);
 
-  const char* mqtt_server = JConf.GetDataCommon(MQTT_SERVER);
-  uint16_t mqtt_port = atoi(JConf.GetDataCommon(MQTT_PORT));
+  const char* mqtt_server = JConf.conf[MQTT_SERVER];
+  uint16_t mqtt_port = atoi(JConf.conf[MQTT_PORT]);
   if (isIPValid(mqtt_server)){
     IPAddress mqtt_ip = stringToIp(mqtt_server);
     client.setServer(mqtt_ip, mqtt_port);
@@ -2158,17 +2161,17 @@ void setup() {
 
   // start WiFi
   WiFi.mode(WIFI_AP_STA);
-  if (atoi(JConf.GetDataCommon(STATIC_IP_MODE)) == 3) {
-    IPAddress staticIP = stringToIp(JConf.GetDataCommon(STATIC_IP));
-    IPAddress staticGateway = stringToIp(JConf.GetDataCommon(STATIC_GATEWAY));
-    IPAddress staticSubnet = stringToIp(JConf.GetDataCommon(STATIC_SUBNET));
+  if (atoi(JConf.conf[STATIC_IP_MODE]) == 3) {
+    IPAddress staticIP = stringToIp(JConf.conf[STATIC_IP]);
+    IPAddress staticGateway = stringToIp(JConf.conf[STATIC_GATEWAY]);
+    IPAddress staticSubnet = stringToIp(JConf.conf[STATIC_SUBNET]);
     WiFi.config(staticIP, staticGateway, staticSubnet);
   }
-  WiFi.begin(JConf.GetDataCommon(STA_SSID), JConf.GetDataCommon(STA_PWD));
+  WiFi.begin(JConf.conf[STA_SSID], JConf.conf[STA_PWD]);
 
   waitConnected();
 
-  const char* mod = JConf.GetDataCommon(MODULE_ID);
+  const char* mod = JConf.conf[MODULE_ID];
   if (WiFi.status() == WL_CONNECTED) {
     WiFi.softAP(mod);
   } else {
@@ -2197,7 +2200,7 @@ void setup() {
   Serial.println();  Serial.println(F("Server started"));
   #endif
   // start mDNS responder
-  if (!MDNS.begin(JConf.GetDataCommon(MODULE_ID))) {
+  if (!MDNS.begin(JConf.conf[MODULE_ID])) {
     #ifdef DEBUG
     Serial.println();  Serial.println(F("Error setting up MDNS responder!"));
     #endif
@@ -2220,9 +2223,8 @@ void loop() {
   // handle web server
   server.handleClient();
 
-  if (millis() - getDataTimer >= atoi(JConf.GetDataCommon(GET_DATA_DELAY)) * 1000){
+  if (millis() - getDataTimer >= atoi(JConf.conf[GET_DATA_DELAY]) * 1000){
     getDataTimer = millis();
-    JConf.PrintConfigFile();
     timeClient.update();
     ntpTimeString = timeClient.getFormattedTime();
     int voltage = ESP.getVcc();
@@ -2257,10 +2259,9 @@ void loop() {
     for (int i = 0; i < ANALOG_PINS; i++){
       if (millis() - Uart.timerAnalogPin[i] >= 60000){
         Uart.valueAnalogPin[i] = 0;
-        JConf.jconfig_uart[i][JSON_KEY] = String(0);
         Uart.SetAnalogReadCycle(i, 10, "s");
       } else {
-        JConf.jconfig_uart[i][JSON_KEY] = String(10);
+
       }
     }
     #endif
@@ -2271,7 +2272,7 @@ void loop() {
     MotionDetect();
   }  
 
-  if (millis() - motionTimer >= atoi(JConf.GetDataCommon(MOTION_READ_DELAY)) * 1000){
+  if (millis() - motionTimer >= atoi(JConf.conf[MOTION_READ_DELAY]) * 1000){
     motionTimer = millis();
     motionDetect = false;
     MotionDetect();
@@ -2286,11 +2287,11 @@ void loop() {
   if (WiFi.status() != WL_CONNECTED) {
     #ifdef DEBUG
     Serial.print(F("Connecting to "));
-    Serial.print(JConf.GetDataCommon(STA_SSID));
+    Serial.print(JConf.conf[STA_SSID]);
     Serial.println(F("..."));
     #endif
     WiFi.mode(WIFI_AP_STA);
-    WiFi.begin(JConf.GetDataCommon(STA_SSID), JConf.GetDataCommon(STA_PWD));
+    WiFi.begin(JConf.conf[STA_SSID], JConf.conf[STA_PWD]);
     delay(100);
 
     if (WiFi.waitForConnectResult() != WL_CONNECTED)
@@ -2304,18 +2305,18 @@ void loop() {
   if (WiFi.status() == WL_CONNECTED) {
 
     if (!client.connected()) {
-      if (JConf.GetDataCommon(MQTT_USER) != "none" && JConf.GetDataCommon(MQTT_PWD) != "none"){
-        client.connect(JConf.GetDataCommon(MQTT_NAME), JConf.GetDataCommon(MQTT_USER), JConf.GetDataCommon(MQTT_PWD));
+      if (JConf.conf[MQTT_USER] != "none" && JConf.conf[MQTT_PWD] != "none"){
+        client.connect(JConf.conf[MQTT_NAME], JConf.conf[MQTT_USER], JConf.conf[MQTT_PWD]);
       } else {
 
-        client.connect(JConf.GetDataCommon(MQTT_NAME));
+        client.connect(JConf.conf[MQTT_NAME]);
       }
     } else {
       client.loop();
       MqttSubscribe();
     }
 
-    if (millis() - publishTimer >= atoi(JConf.GetDataCommon(PUBLISH_DELAY)) * 1000){
+    if (millis() - publishTimer >= atoi(JConf.conf[PUBLISH_DELAY]) * 1000){
       publishTimer = millis();
       MqttPubData();
     }

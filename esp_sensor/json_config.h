@@ -8,15 +8,6 @@
 
 #define DEBUG_JSON_CONFIG
 
-#define NUM_COMMON_KEYS 28
-#define NUM_UART_KEYS    6
-#define NUM_GREEN_KEYS   7
-
-
-#define JSON_KEY   0
-#define JSON_VALUE 1
-
-
 #define MODULE_ID          0
 #define STA_SSID           1
 #define STA_PWD            2
@@ -46,96 +37,36 @@
 #define MOTION_READ_DELAY  26
 #define REBOOT_DELAY       27
 
-#define UART_DELAY_ANALOG_PIN0  JConf.jconfig_uart[0][JSON_KEY]
-#define UART_DELAY_ANALOG_PIN1  JConf.jconfig_uart[1][JSON_KEY]
-#define UART_DELAY_ANALOG_PIN2  JConf.jconfig_uart[2][JSON_KEY]
-#define UART_DELAY_ANALOG_PIN3  JConf.jconfig_uart[3][JSON_KEY]
-#define UART_DELAY_ANALOG_PIN4  JConf.jconfig_uart[4][JSON_KEY]
-#define UART_DELAY_ANALOG_PIN5  JConf.jconfig_uart[5][JSON_KEY]
+#define UART_DELAY_ANALOG_PIN0  28
+#define UART_DELAY_ANALOG_PIN1  29
+#define UART_DELAY_ANALOG_PIN2  30
+#define UART_DELAY_ANALOG_PIN3  31
+#define UART_DELAY_ANALOG_PIN4  32
+#define UART_DELAY_ANALOG_PIN5  33
 
-#define GREEN_LIGHT_ON                 0
-#define GREEN_LIGHT_OFF                1
-#define GREEN_LIGHT_PIN                2
-#define GREEN_HUMIDITY_THRESHOLD_UP    3
-#define GREEN_HUMIDITY_THRESHOLD_DOWN  4
-#define GREEN_HUMIDITY_SENSOR_PIN      5
-#define GREEN_PUMP_PIN                 6
+#define GREEN_LIGHT_ON                 34
+#define GREEN_LIGHT_OFF                35
+#define GREEN_LIGHT_PIN                36
+#define GREEN_HUMIDITY_THRESHOLD_UP    37
+#define GREEN_HUMIDITY_THRESHOLD_DOWN  38
+#define GREEN_HUMIDITY_SENSOR_PIN      39
+#define GREEN_PUMP_PIN                 40
+
 
 
 
 class JsonConf
 {
   public:
+    void begin();
+    void set(int size, char *str);
+    void setStr(int size, String str);
     bool saveConfig();
-    bool saveConfig(size_t i);
     bool loadConfig();
-    const char* GetDataCommon(const size_t i);
-    const char* GetDataCommon(const size_t i, const size_t j);
-    bool SetDataCommon(const size_t i, String str);
-    bool SetDataCommonChar(const size_t i, const char* str);
-    bool SetDataGreen(const size_t i, String str);
-    bool PrintConfigFile();
-
-
-
-    const char * jconfig_common[NUM_COMMON_KEYS][2] =
-    {
-        { "module_id",         "ESP8266"             },
-        { "sta_ssid",          "HomeNET"             },
-        { "sta_pwd",           "Asdf1234"            },
-        { "static_ip_mode",    "0"                   },
-        { "static_ip",         "192.168.1.220"       },
-        { "static_gateway",    "192.168.1.1"         },
-        { "static_subnet",     "255.255.255.0"       },
-        { "ntp_server",        "europe.pool.ntp.org" },
-        { "time_zone",         "+6"                  },
-        { "mqtt_server",       "192.168.1.200"       },
-        { "mqtt_port",         "1883"                },
-        { "mqtt_user",         "none"                },
-        { "mqtt_pwd",          "none"                },
-        { "mqtt_name",         "_BedM"               },
-        { "publish_topic",     "/stateSub/"          },
-        { "subscribe_topic",   "/statePub/"          },
-        { "command_pub_topic", "/commandPub/"        },
-        { "light_pin",         "13"                  },
-        { "lightOff_delay",    "5"                   },
-        { "light_pin2",        "12"                  },
-        { "light2Off_delay",   "5"                   },
-        { "motion_pin",        "2"                   },
-        { "dht_pin",           "14"                  },
-        { "get_data_delay",    "10"                  },
-        { "publish_delay",     "10"                  },
-        { "subscribe_delay",   "60"                  },
-        { "motion_read_delay", "10"                  },
-        { "reboot_delay",      "1800"                }
-    };
-
-
-    const char * jconfig_green[NUM_GREEN_KEYS][2] =
-    {
-        { "green_light_on",                "8:00"  },
-        { "green_light_off",               "22:00" },
-        { "green_light_pin",               "12"    },
-        { "green_humidity_threshold_up",   "800"   },
-        { "green_humidity_threshold_down", "250"   },
-        { "green_humidity_sensor_pin",     "20"    },
-        { "green_pump_pin",                "33"    }
-    };
-
-
-
-
-    String jconfig_uart[NUM_UART_KEYS][2] = 
-    {
-        {"uart_delay_analog_pin0", "none"},
-        {"uart_delay_analog_pin1", "none"},
-        {"uart_delay_analog_pin2", "none"},
-        {"uart_delay_analog_pin3", "none"},
-        {"uart_delay_analog_pin4", "none"},
-        {"uart_delay_analog_pin5", "none"}
-    };
-
+    char **conf = 0;
   private:
+    char **AddPtr (char **conf, int size, char *str);
+    int conf_size = 0;
 };
 
 #endif
