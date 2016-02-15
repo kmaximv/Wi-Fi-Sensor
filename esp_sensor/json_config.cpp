@@ -1,89 +1,6 @@
 #include "json_config.h"
 
 
-void JsonConf::begin() {
-conf_size = 0;
-conf = AddPtr( conf, MODULE_ID        ,  "ESP8266"             );
-conf = AddPtr( conf, STA_SSID         ,  "HomeNET"             );
-conf = AddPtr( conf, STA_PWD          ,  "Asdf1234"            );
-conf = AddPtr( conf, STATIC_IP_MODE   ,  "0"                   );
-conf = AddPtr( conf, STATIC_IP        ,  "192.168.1.220"       );
-conf = AddPtr( conf, STATIC_GATEWAY   ,  "192.168.1.1"         );
-conf = AddPtr( conf, STATIC_SUBNET    ,  "255.255.255.0"       );
-conf = AddPtr( conf, NTP_SERVER       ,  "europe.pool.ntp.org" );
-conf = AddPtr( conf, TIME_ZONE        ,  "+6"                  );
-conf = AddPtr( conf, MQTT_SERVER      ,  "192.168.1.200"       );
-conf = AddPtr( conf, MQTT_PORT        ,  "1883"                );
-conf = AddPtr( conf, MQTT_USER        ,  "none"                );
-conf = AddPtr( conf, MQTT_PWD         ,  "none"                );
-conf = AddPtr( conf, MQTT_NAME        ,  "_BedM"               );
-conf = AddPtr( conf, PUBLISH_TOPIC    ,  "/stateSub/"          );
-conf = AddPtr( conf, SUBSCRIBE_TOPIC  ,  "/statePub/"          );
-conf = AddPtr( conf, COMMAND_PUB_TOPIC,  "/commandPub/"        );
-conf = AddPtr( conf, LIGHT_PIN        ,  "13"                  );
-conf = AddPtr( conf, LIGHTOFF_DELAY   ,  "5"                   );
-conf = AddPtr( conf, LIGHT_PIN2       ,  "12"                  );
-conf = AddPtr( conf, LIGHT2OFF_DELAY  ,  "5"                   );
-conf = AddPtr( conf, MOTION_PIN       ,  "2"                   );
-conf = AddPtr( conf, DHT_PIN          ,  "14"                  );
-conf = AddPtr( conf, GET_DATA_DELAY   ,  "10"                  );
-conf = AddPtr( conf, PUBLISH_DELAY    ,  "10"                  );
-conf = AddPtr( conf, SUBSCRIBE_DELAY  ,  "60"                  );
-conf = AddPtr( conf, MOTION_READ_DELAY,  "10"                  );
-conf = AddPtr( conf, REBOOT_DELAY     ,  "1800"                );
-conf = AddPtr( conf, UART_DELAY_ANALOG_PIN0       ,  "none"    );    
-conf = AddPtr( conf, UART_DELAY_ANALOG_PIN1       ,  "none"    );    
-conf = AddPtr( conf, UART_DELAY_ANALOG_PIN2       ,  "none"    );    
-conf = AddPtr( conf, UART_DELAY_ANALOG_PIN3       ,  "none"    );    
-conf = AddPtr( conf, UART_DELAY_ANALOG_PIN4       ,  "none"    );    
-conf = AddPtr( conf, UART_DELAY_ANALOG_PIN5       ,  "none"    );    
-conf = AddPtr( conf, GREEN_LIGHT_ON               ,  "8:00"    );            
-conf = AddPtr( conf, GREEN_LIGHT_OFF              ,  "22:00"   );            
-conf = AddPtr( conf, GREEN_LIGHT_PIN              ,  "12"      );            
-conf = AddPtr( conf, GREEN_HUMIDITY_THRESHOLD_UP  ,  "800"     );            
-conf = AddPtr( conf, GREEN_HUMIDITY_THRESHOLD_DOWN,  "250"     );            
-conf = AddPtr( conf, GREEN_HUMIDITY_SENSOR_PIN    ,  "20"      );            
-conf = AddPtr( conf, GREEN_PUMP_PIN               ,  "33"      );            
-}
-
-
-void JsonConf::setStr(int size, String str){
-  if (size <= conf_size){
-    char charBufVar[50];
-    str.toCharArray(charBufVar, 50);
-
-    strcpy(conf[size], charBufVar);
-  }
-}
-
-void JsonConf::set(int size, char *str){
-  if (size <= conf_size)
-    strcpy(conf[size], str);
-}
-
-
-char **JsonConf::AddPtr (char **conf, int size, char *str)
-{
-    if(size == 0){
-        conf = new char *[size+1];
-    }
-    else{                      
-        char **copy = new char* [size+1];
-        for(int i = 0; i < size; i++)
-        {
-            copy[i] = conf[i];
-        }  
- 
-        delete [] conf;      
-        conf = copy;     
-    }
-    conf[size] = new char [strlen(str) + 1];
-    strcpy(conf[size], str);
-    conf_size++;
-    return conf;
-}
-
-
 bool JsonConf::saveConfig() {
   StaticJsonBuffer<1024> jsonBuffer;
 #ifdef DEBUG_JSON_CONFIG
@@ -92,15 +9,49 @@ bool JsonConf::saveConfig() {
 
   JsonObject& json = jsonBuffer.createObject();
 
-  for (size_t i = 0; i < conf_size; i++)
-  {
-    const char* key = (const char*)i;
-    json.set(key, conf[i]);
-#ifdef DEBUG_JSON_CONFIG
-    Serial.print(F("Json Save Key: ")); Serial.print(i); 
-    Serial.print(F(" = Value: ")); Serial.println(conf[i]);
-#endif
-  }
+
+  json["module_id"]                     = module_id                    ;                           
+  json["sta_ssid"]                      = sta_ssid                     ;                         
+  json["sta_pwd"]                       = sta_pwd                      ;                       
+  json["static_ip_mode"]                = static_ip_mode               ;                                     
+  json["static_ip"]                     = static_ip                    ;                           
+  json["static_gateway"]                = static_gateway               ;                                     
+  json["static_subnet"]                 = static_subnet                ;                                   
+  json["ntp_server"]                    = ntp_server                   ;                             
+  json["time_zone"]                     = time_zone                    ;                           
+  json["mqtt_server"]                   = mqtt_server                  ;                               
+  json["mqtt_port"]                     = mqtt_port                    ;                           
+  json["mqtt_user"]                     = mqtt_user                    ;                           
+  json["mqtt_pwd"]                      = mqtt_pwd                     ;                         
+  json["mqtt_name"]                     = mqtt_name                    ;                           
+  json["publish_topic"]                 = publish_topic                ;                                   
+  json["subscribe_topic"]               = subscribe_topic              ;                                       
+  json["command_pub_topic"]             = command_pub_topic            ;                                           
+  json["light_pin"]                     = light_pin                    ;                           
+  json["lightoff_delay"]                = lightoff_delay               ;                                     
+  json["light_pin2"]                    = light_pin2                   ;                             
+  json["light2off_delay"]               = light2off_delay              ;                                       
+  json["motion_pin"]                    = motion_pin                   ;                             
+  json["dht_pin"]                       = dht_pin                      ;                       
+  json["get_data_delay"]                = get_data_delay               ;                                     
+  json["publish_delay"]                 = publish_delay                ;                                   
+  json["subscribe_delay"]               = subscribe_delay              ;                                       
+  json["motion_read_delay"]             = motion_read_delay            ;                                           
+  json["reboot_delay"]                  = reboot_delay                 ;                                 
+  json["uart_delay_analog_pin0"]        = uart_delay_analog_pin0       ;                                                     
+  json["uart_delay_analog_pin1"]        = uart_delay_analog_pin1       ;                                                     
+  json["uart_delay_analog_pin2"]        = uart_delay_analog_pin2       ;                                                     
+  json["uart_delay_analog_pin3"]        = uart_delay_analog_pin3       ;                                                     
+  json["uart_delay_analog_pin4"]        = uart_delay_analog_pin4       ;                                                     
+  json["uart_delay_analog_pin5"]        = uart_delay_analog_pin5       ;                                                     
+  json["green_light_on"]                = green_light_on               ;                                     
+  json["green_light_off"]               = green_light_off              ;                                       
+  json["green_light_pin"]               = green_light_pin              ;                                       
+  json["green_humidity_threshold_up"]   = green_humidity_threshold_up  ;                                                               
+  json["green_humidity_threshold_down"] = green_humidity_threshold_down;                                                                   
+  json["green_humidity_sensor_pin"]     = green_humidity_sensor_pin    ;                                                           
+  json["green_pump_pin"]                = green_pump_pin               ;                                     
+
 
   File configFile = SPIFFS.open("/config.json", "w");
   if (!configFile) {
@@ -160,36 +111,51 @@ bool JsonConf::loadConfig() {
   }
 
 
-  for (size_t i = 0; i < conf_size; i++)
-  {
-    const char* key = (const char*)i;
-    if (json.get(key)){
-      const char* val = json.get(key);
-      char* newVal = strdup(val);
-      set(i, newVal);
-#ifdef DEBUG_JSON_CONFIG
-      Serial.print(F("Json Load Key: ")); Serial.println(i); 
-      Serial.print(F("Json Load Value: ")); Serial.println(val); 
-#endif
-    } else {
-      configFile.close();
-      saveConfig();
-      return false;
-    }
-  }
+  const char* module_id_char                     = json["module_id"];                        sprintf_P(module_id,                     ("%s"), module_id_char                    );
+  const char* sta_ssid_char                      = json["sta_ssid"];                         sprintf_P(sta_ssid,                      ("%s"), sta_ssid_char                     );
+  const char* sta_pwd_char                       = json["sta_pwd"];                          sprintf_P(sta_pwd,                       ("%s"), sta_pwd_char                      );
+  const char* static_ip_mode_char                = json["static_ip_mode"];                   sprintf_P(static_ip_mode,                ("%s"), static_ip_mode_char               );
+  const char* static_ip_char                     = json["static_ip"];                        sprintf_P(static_ip,                     ("%s"), static_ip_char                    );
+  const char* static_gateway_char                = json["static_gateway"];                   sprintf_P(static_gateway,                ("%s"), static_gateway_char               );
+  const char* static_subnet_char                 = json["static_subnet"];                    sprintf_P(static_subnet,                 ("%s"), static_subnet_char                );
+  const char* ntp_server_char                    = json["ntp_server"];                       sprintf_P(ntp_server,                    ("%s"), ntp_server_char                   );
+  const char* time_zone_char                     = json["time_zone"];                        sprintf_P(time_zone,                     ("%s"), time_zone_char                    );
+  const char* mqtt_server_char                   = json["mqtt_server"];                      sprintf_P(mqtt_server,                   ("%s"), mqtt_server_char                  );
+  const char* mqtt_port_char                     = json["mqtt_port"];                        sprintf_P(mqtt_port,                     ("%s"), mqtt_port_char                    );
+  const char* mqtt_user_char                     = json["mqtt_user"];                        sprintf_P(mqtt_user,                     ("%s"), mqtt_user_char                    );
+  const char* mqtt_pwd_char                      = json["mqtt_pwd"];                         sprintf_P(mqtt_pwd,                      ("%s"), mqtt_pwd_char                     );
+  const char* mqtt_name_char                     = json["mqtt_name"];                        sprintf_P(mqtt_name,                     ("%s"), mqtt_name_char                    );
+  const char* publish_topic_char                 = json["publish_topic"];                    sprintf_P(publish_topic,                 ("%s"), publish_topic_char                );
+  const char* subscribe_topic_char               = json["subscribe_topic"];                  sprintf_P(subscribe_topic,               ("%s"), subscribe_topic_char              );
+  const char* command_pub_topic_char             = json["command_pub_topic"];                sprintf_P(command_pub_topic,             ("%s"), command_pub_topic_char            );
+  const char* light_pin_char                     = json["light_pin"];                        sprintf_P(light_pin,                     ("%s"), light_pin_char                    );
+  const char* lightoff_delay_char                = json["lightoff_delay"];                   sprintf_P(lightoff_delay,                ("%s"), lightoff_delay_char               );
+  const char* light_pin2_char                    = json["light_pin2"];                       sprintf_P(light_pin2,                    ("%s"), light_pin2_char                   );
+  const char* light2off_delay_char               = json["light2off_delay"];                  sprintf_P(light2off_delay,               ("%s"), light2off_delay_char              );
+  const char* motion_pin_char                    = json["motion_pin"];                       sprintf_P(motion_pin,                    ("%s"), motion_pin_char                   );
+  const char* dht_pin_char                       = json["dht_pin"];                          sprintf_P(dht_pin,                       ("%s"), dht_pin_char                      );
+  const char* get_data_delay_char                = json["get_data_delay"];                   sprintf_P(get_data_delay,                ("%s"), get_data_delay_char               );
+  const char* publish_delay_char                 = json["publish_delay"];                    sprintf_P(publish_delay,                 ("%s"), publish_delay_char                );
+  const char* subscribe_delay_char               = json["subscribe_delay"];                  sprintf_P(subscribe_delay,               ("%s"), subscribe_delay_char              );
+  const char* motion_read_delay_char             = json["motion_read_delay"];                sprintf_P(motion_read_delay,             ("%s"), motion_read_delay_char            );
+  const char* reboot_delay_char                  = json["reboot_delay"];                     sprintf_P(reboot_delay,                  ("%s"), reboot_delay_char                 );
+  const char* uart_delay_analog_pin0_char        = json["uart_delay_analog_pin0"];           sprintf_P(uart_delay_analog_pin0,        ("%s"), uart_delay_analog_pin0_char       );
+  const char* uart_delay_analog_pin1_char        = json["uart_delay_analog_pin1"];           sprintf_P(uart_delay_analog_pin1,        ("%s"), uart_delay_analog_pin1_char       );
+  const char* uart_delay_analog_pin2_char        = json["uart_delay_analog_pin2"];           sprintf_P(uart_delay_analog_pin2,        ("%s"), uart_delay_analog_pin2_char       );
+  const char* uart_delay_analog_pin3_char        = json["uart_delay_analog_pin3"];           sprintf_P(uart_delay_analog_pin3,        ("%s"), uart_delay_analog_pin3_char       );
+  const char* uart_delay_analog_pin4_char        = json["uart_delay_analog_pin4"];           sprintf_P(uart_delay_analog_pin4,        ("%s"), uart_delay_analog_pin4_char       );
+  const char* uart_delay_analog_pin5_char        = json["uart_delay_analog_pin5"];           sprintf_P(uart_delay_analog_pin5,        ("%s"), uart_delay_analog_pin5_char       );
+  const char* green_light_on_char                = json["green_light_on"];                   sprintf_P(green_light_on,                ("%s"), green_light_on_char               );
+  const char* green_light_off_char               = json["green_light_off"];                  sprintf_P(green_light_off,               ("%s"), green_light_off_char              );
+  const char* green_light_pin_char               = json["green_light_pin"];                  sprintf_P(green_light_pin,               ("%s"), green_light_pin_char              );
+  const char* green_humidity_threshold_up_char   = json["green_humidity_threshold_up"];      sprintf_P(green_humidity_threshold_up,   ("%s"), green_humidity_threshold_up_char  );
+  const char* green_humidity_threshold_down_char = json["green_humidity_threshold_down"];    sprintf_P(green_humidity_threshold_down, ("%s"), green_humidity_threshold_down_char);
+  const char* green_humidity_sensor_pin_char     = json["green_humidity_sensor_pin"];        sprintf_P(green_humidity_sensor_pin,     ("%s"), green_humidity_sensor_pin_char    );
+  const char* green_pump_pin_char                = json["green_pump_pin"];                   sprintf_P(green_pump_pin,                ("%s"), green_pump_pin_char               );
+
+
   configFile.close();
   return true;
 }
 
 
-/*
-for (size_t i = 0; i < sizeof(jconfig_common) / sizeof(jconfig_common[0]); i++)
-{
-    const char** data_set = jconfig_common[i];
-    printf("data_set[%u]\n", i);
-    for (size_t j = 0; data_set[j]; j++)
-    {
-        printf("  [%s]\n", data_set[j]);
-    }
-}
-*/

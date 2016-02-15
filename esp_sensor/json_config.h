@@ -8,49 +8,90 @@
 
 #define DEBUG_JSON_CONFIG
 
-#define MODULE_ID          0
-#define STA_SSID           1
-#define STA_PWD            2
-#define STATIC_IP_MODE     3
-#define STATIC_IP          4
-#define STATIC_GATEWAY     5
-#define STATIC_SUBNET      6
-#define NTP_SERVER         7
-#define TIME_ZONE          8
-#define MQTT_SERVER        9
-#define MQTT_PORT          10
-#define MQTT_USER          11
-#define MQTT_PWD           12
-#define MQTT_NAME          13
-#define PUBLISH_TOPIC      14
-#define SUBSCRIBE_TOPIC    15
-#define COMMAND_PUB_TOPIC  16
-#define LIGHT_PIN          17
-#define LIGHTOFF_DELAY     18
-#define LIGHT_PIN2         19
-#define LIGHT2OFF_DELAY    20
-#define MOTION_PIN         21
-#define DHT_PIN            22
-#define GET_DATA_DELAY     23
-#define PUBLISH_DELAY      24
-#define SUBSCRIBE_DELAY    25
-#define MOTION_READ_DELAY  26
-#define REBOOT_DELAY       27
+const char def_module_id                    [] = "ESP8266"            ;
+const char def_sta_ssid                     [] = "HomeNET"            ;
+const char def_sta_pwd                      [] = "Asdf1234"           ;
+const char def_static_ip_mode               [] = "0"                  ;
+const char def_static_ip                    [] = "192.168.1.220"      ;
+const char def_static_gateway               [] = "192.168.1.1"        ;
+const char def_static_subnet                [] = "255.255.255.0"      ;
+const char def_ntp_server                   [] = "europe.pool.ntp.org";
+const char def_time_zone                    [] = "+6"                 ;
+const char def_mqtt_server                  [] = "192.168.1.200"      ;
+const char def_mqtt_port                    [] = "1883"               ;
+const char def_mqtt_user                    [] = "none"               ;
+const char def_mqtt_pwd                     [] = "none"               ;
+const char def_mqtt_name                    [] = "_BedM"              ;
+const char def_publish_topic                [] = "/stateSub/"         ;
+const char def_subscribe_topic              [] = "/statePub/"         ;
+const char def_command_pub_topic            [] = "/commandPub/"       ;
+const char def_light_pin                    [] = "13"                 ;
+const char def_lightoff_delay               [] = "5"                  ;
+const char def_light_pin2                   [] = "12"                 ;
+const char def_light2off_delay              [] = "5"                  ;
+const char def_motion_pin                   [] = "2"                  ;
+const char def_dht_pin                      [] = "14"                 ;
+const char def_get_data_delay               [] = "10"                 ;
+const char def_publish_delay                [] = "10"                 ;
+const char def_subscribe_delay              [] = "60"                 ;
+const char def_motion_read_delay            [] = "10"                 ;
+const char def_reboot_delay                 [] = "1800"               ;
+const char def_uart_delay_analog_pin0       [] = "none"               ;
+const char def_uart_delay_analog_pin1       [] = "none"               ;
+const char def_uart_delay_analog_pin2       [] = "none"               ;
+const char def_uart_delay_analog_pin3       [] = "none"               ;
+const char def_uart_delay_analog_pin4       [] = "none"               ;
+const char def_uart_delay_analog_pin5       [] = "none"               ;
+const char def_green_light_on               [] = "8:00"               ;
+const char def_green_light_off              [] = "22:00"              ;
+const char def_green_light_pin              [] = "12"                 ;
+const char def_green_humidity_threshold_up  [] = "800"                ;
+const char def_green_humidity_threshold_down[] = "250"                ;
+const char def_green_humidity_sensor_pin    [] = "20"                 ;
+const char def_green_pump_pin               [] = "33"                 ;
 
-#define UART_DELAY_ANALOG_PIN0  28
-#define UART_DELAY_ANALOG_PIN1  29
-#define UART_DELAY_ANALOG_PIN2  30
-#define UART_DELAY_ANALOG_PIN3  31
-#define UART_DELAY_ANALOG_PIN4  32
-#define UART_DELAY_ANALOG_PIN5  33
 
-#define GREEN_LIGHT_ON                 34
-#define GREEN_LIGHT_OFF                35
-#define GREEN_LIGHT_PIN                36
-#define GREEN_HUMIDITY_THRESHOLD_UP    37
-#define GREEN_HUMIDITY_THRESHOLD_DOWN  38
-#define GREEN_HUMIDITY_SENSOR_PIN      39
-#define GREEN_PUMP_PIN                 40
+char module_id                    [] = "ESP8266"            ;
+char sta_ssid                     [] = "HomeNET"            ;
+char sta_pwd                      [] = "Asdf1234"           ;
+char static_ip_mode               [] = "0"                  ;
+char static_ip                    [] = "192.168.1.220"      ;
+char static_gateway               [] = "192.168.1.1"        ;
+char static_subnet                [] = "255.255.255.0"      ;
+char ntp_server                   [] = "europe.pool.ntp.org";
+char time_zone                    [] = "+6"                 ;
+char mqtt_server                  [] = "192.168.1.200"      ;
+char mqtt_port                    [] = "1883"               ;
+char mqtt_user                    [] = "none"               ;
+char mqtt_pwd                     [] = "none"               ;
+char mqtt_name                    [] = "_BedM"              ;
+char publish_topic                [] = "/stateSub/"         ;
+char subscribe_topic              [] = "/statePub/"         ;
+char command_pub_topic            [] = "/commandPub/"       ;
+char light_pin                    [] = "13"                 ;
+char lightoff_delay               [] = "5"                  ;
+char light_pin2                   [] = "12"                 ;
+char light2off_delay              [] = "5"                  ;
+char motion_pin                   [] = "2"                  ;
+char dht_pin                      [] = "14"                 ;
+char get_data_delay               [] = "10"                 ;
+char publish_delay                [] = "10"                 ;
+char subscribe_delay              [] = "60"                 ;
+char motion_read_delay            [] = "10"                 ;
+char reboot_delay                 [] = "1800"               ;
+char uart_delay_analog_pin0       [] = "none"               ;
+char uart_delay_analog_pin1       [] = "none"               ;
+char uart_delay_analog_pin2       [] = "none"               ;
+char uart_delay_analog_pin3       [] = "none"               ;
+char uart_delay_analog_pin4       [] = "none"               ;
+char uart_delay_analog_pin5       [] = "none"               ;
+char green_light_on               [] = "8:00"               ;
+char green_light_off              [] = "22:00"              ;
+char green_light_pin              [] = "12"                 ;
+char green_humidity_threshold_up  [] = "800"                ;
+char green_humidity_threshold_down[] = "250"                ;
+char green_humidity_sensor_pin    [] = "20"                 ;
+char green_pump_pin               [] = "33"                 ;
 
 
 
@@ -58,15 +99,9 @@
 class JsonConf
 {
   public:
-    void begin();
-    void set(int size, char *str);
-    void setStr(int size, String str);
     bool saveConfig();
     bool loadConfig();
-    char **conf = 0;
   private:
-    char **AddPtr (char **conf, int size, char *str);
-    int conf_size = 0;
 };
 
 #endif
