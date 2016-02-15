@@ -18,7 +18,7 @@ bool JsonConf::saveConfig() {
   json["static_gateway"]                = static_gateway               ;                                     
   json["static_subnet"]                 = static_subnet                ;                                   
   json["ntp_server"]                    = ntp_server                   ;                             
-  json["time_zone"]                     = time_zone                    ;                           
+  json["my_time_zone"]                  = my_time_zone                 ;                           
   json["mqtt_server"]                   = mqtt_server                  ;                               
   json["mqtt_port"]                     = mqtt_port                    ;                           
   json["mqtt_user"]                     = mqtt_user                    ;                           
@@ -119,7 +119,7 @@ bool JsonConf::loadConfig() {
   const char* static_gateway_char                = json["static_gateway"];                   sprintf_P(static_gateway,                ("%s"), static_gateway_char               );
   const char* static_subnet_char                 = json["static_subnet"];                    sprintf_P(static_subnet,                 ("%s"), static_subnet_char                );
   const char* ntp_server_char                    = json["ntp_server"];                       sprintf_P(ntp_server,                    ("%s"), ntp_server_char                   );
-  const char* time_zone_char                     = json["time_zone"];                        sprintf_P(time_zone,                     ("%s"), time_zone_char                    );
+  const char* my_time_zone_char                  = json["my_time_zone"];                     sprintf_P(my_time_zone,                  ("%s"), my_time_zone_char                 );
   const char* mqtt_server_char                   = json["mqtt_server"];                      sprintf_P(mqtt_server,                   ("%s"), mqtt_server_char                  );
   const char* mqtt_port_char                     = json["mqtt_port"];                        sprintf_P(mqtt_port,                     ("%s"), mqtt_port_char                    );
   const char* mqtt_user_char                     = json["mqtt_user"];                        sprintf_P(mqtt_user,                     ("%s"), mqtt_user_char                    );
@@ -157,5 +157,3 @@ bool JsonConf::loadConfig() {
   configFile.close();
   return true;
 }
-
-
