@@ -6,52 +6,25 @@
 #include "FS.h"
 
 
+//#define DHT_ON
+#define BME280_ON
+//#define SHT21_ON
+
+#define DEBUG
 #define DEBUG_JSON_CONFIG
 
-const char def_module_id                    [] PROGMEM = "ESP8266"            ;
-const char def_sta_ssid                     [] PROGMEM = "HomeNET"            ;
-const char def_sta_pwd                      [] PROGMEM = "Asdf1234"           ;
-const char def_static_ip_mode               [] PROGMEM = "0"                  ;
-const char def_static_ip                    [] PROGMEM = "192.168.1.220"      ;
-const char def_static_gateway               [] PROGMEM = "192.168.1.1"        ;
-const char def_static_subnet                [] PROGMEM = "255.255.255.0"      ;
-const char def_ntp_server                   [] PROGMEM = "europe.pool.ntp.org";
-const char def_my_time_zone                 [] PROGMEM = "+6"                 ;
-const char def_mqtt_server                  [] PROGMEM = "192.168.1.200"      ;
-const char def_mqtt_port                    [] PROGMEM = "1883"               ;
-const char def_mqtt_user                    [] PROGMEM = "none"               ;
-const char def_mqtt_pwd                     [] PROGMEM = "none"               ;
-const char def_mqtt_name                    [] PROGMEM = "_BedM"              ;
-const char def_publish_topic                [] PROGMEM = "/stateSub/"         ;
-const char def_subscribe_topic              [] PROGMEM = "/statePub/"         ;
-const char def_command_pub_topic            [] PROGMEM = "/commandPub/"       ;
-const char def_light_pin                    [] PROGMEM = "13"                 ;
-const char def_lightoff_delay               [] PROGMEM = "5"                  ;
-const char def_light_pin2                   [] PROGMEM = "12"                 ;
-const char def_light2off_delay              [] PROGMEM = "5"                  ;
-const char def_motion_pin                   [] PROGMEM = "2"                  ;
-const char def_dht_pin                      [] PROGMEM = "14"                 ;
-const char def_get_data_delay               [] PROGMEM = "10"                 ;
-const char def_publish_delay                [] PROGMEM = "10"                 ;
-const char def_subscribe_delay              [] PROGMEM = "60"                 ;
-const char def_motion_read_delay            [] PROGMEM = "10"                 ;
-const char def_reboot_delay                 [] PROGMEM = "1800"               ;
-const char def_uart_delay_analog_pin0       [] PROGMEM = "none"               ;
-const char def_uart_delay_analog_pin1       [] PROGMEM = "none"               ;
-const char def_uart_delay_analog_pin2       [] PROGMEM = "none"               ;
-const char def_uart_delay_analog_pin3       [] PROGMEM = "none"               ;
-const char def_uart_delay_analog_pin4       [] PROGMEM = "none"               ;
-const char def_uart_delay_analog_pin5       [] PROGMEM = "none"               ;
-const char def_green_light_on               [] PROGMEM = "8:00"               ;
-const char def_green_light_off              [] PROGMEM = "22:00"              ;
-const char def_green_light_pin              [] PROGMEM = "12"                 ;
-const char def_green_humidity_threshold_up  [] PROGMEM = "800"                ;
-const char def_green_humidity_threshold_down[] PROGMEM = "250"                ;
-const char def_green_humidity_sensor_pin    [] PROGMEM = "20"                 ;
-const char def_green_pump_pin               [] PROGMEM = "33"                 ;
 
+//UART Settings    ------------------------------------------------------------
+//#define UART_ON
 
+#define DEBUG_ESP_UART
+#define CRC_ENABLE
 
+#define DIGITAL_PINS 14   //Кол-во цифровых входов/выходов
+#define ANALOG_PINS 6     //Кол-во цифровых входов/выходов
+#define PARSE_CELLS 4     //Кол-во ячеек в массиве принимаемых данных
+#define DATA_LENGTH 10    //Максимальный размер пакета данных без маркеров и CRC
+//------------------------------------------------------------------------------
 
 class JsonConf
 {

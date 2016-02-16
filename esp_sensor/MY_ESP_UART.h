@@ -17,15 +17,7 @@
 #define MY_ESP_UART_H
 
 #include <Arduino.h>
-
-
-#define DEBUG_ESP_UART
-#define CRC_ENABLE
-
-#define DIGITAL_PINS 14   //Кол-во цифровых входов/выходов
-#define ANALOG_PINS 6     //Кол-во цифровых входов/выходов
-#define PARSE_CELLS 4     //Кол-во ячеек в массиве принимаемых данных
-#define DATA_LENGTH 10    //Максимальный размер пакета данных без маркеров и CRC
+#include "json_config.h"
 
 
 class Espuart
