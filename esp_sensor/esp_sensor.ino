@@ -99,7 +99,6 @@ unsigned long lightOffTimer2 = 0;
 
 bool motionDetect = false;
 
-int mode_ip;
 
 WiFiClient espClient;
 
@@ -1235,29 +1234,26 @@ void WebRoot(void) {
     String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
 
     String title1       = panelHeaderName + String(F("Sensor Data"))   + panelHeaderEnd;
-    String Humidity     = panelBodySymbol + String(F("tint"))          + panelBodyName + String(F("Humidity"))    + panelBodyValue + String(F(" id='humidityId'")) + closingAngleBracket      + panelBodyEnd;
-    String Temperature  = panelBodySymbol + String(F("fire"))          + panelBodyName + String(F("Temperature")) + panelBodyValue + String(F(" id='temperatureId'")) + closingAngleBracket   + panelBodyEnd;
-    String Pressure;
+    title1             += panelBodySymbol + String(F("tint"))          + panelBodyName + String(F("Humidity"))    + panelBodyValue + String(F(" id='humidityId'")) + closingAngleBracket      + panelBodyEnd;
+    title1             += panelBodySymbol + String(F("fire"))          + panelBodyName + String(F("Temperature")) + panelBodyValue + String(F(" id='temperatureId'")) + closingAngleBracket   + panelBodyEnd;
     #ifdef BME280_ON
-      Pressure          = panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + String(F(" id='pressureId'")) + closingAngleBracket      + panelBodyEnd;
+      title1           += panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + String(F(" id='pressureId'")) + closingAngleBracket      + panelBodyEnd;
     #endif
-    String Lux          = panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket   + panelBodyEnd;
+    title1             += panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket   + panelBodyEnd;
     
     String title2       = panelHeaderName + String(F("Settings"))      + panelHeaderEnd;
-    String ssid         = panelBodySymbol + String(F("signal"))        + panelBodyName + String(F("Wi-Fi SSID"))  + panelBodyValue + closingAngleBracket + JConf.sta_ssid    + panelBodyEnd;
-    String IPAddClient  = panelBodySymbol + String(F("globe"))         + panelBodyName + String(F("IP Address"))  + panelBodyValue + closingAngleBracket + ipString          + panelBodyEnd;
-    String MacAddr      = panelBodySymbol + String(F("scale"))         + panelBodyName + String(F("MAC Address")) + panelBodyValue + closingAngleBracket + macString         + panelBodyEnd;
-    String MqttPrefix   = panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + JConf.mqtt_name   + panelBodyEnd;
-/*
-    String title3       = panelHeaderName + String(F("Device"))        + panelHeaderEnd;
-    String Uptime       = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("Uptime"))      + panelBodyValue + String(F(" id='uptimeId'"))     + closingAngleBracket  + panelBodyEnd;
-    String ntpTime      = panelBodySymbol + String(F("time"))          + panelBodyName + String(F("NTP time"))    + panelBodyValue + String(F(" id='ntpTimeId'"))    + closingAngleBracket  + panelBodyEnd;
-    String vcc          = panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Voltage"))     + panelBodyValue + String(F(" id='vccId'"))        + closingAngleBracket  + panelBodyEnd;
-    String FreeMem      = panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
-    String Ver          = panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + String(ver)                      + panelBodyEnd;
-title3 + Uptime + ntpTime + vcc + FreeMem + Ver + panelEnd +
-*/    
-    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript3 + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + Temperature + Humidity + Pressure + Lux + panelEnd + title2 + ssid + IPAddClient + MacAddr + MqttPrefix + panelEnd +  containerEnd + siteEnd);
+    //title2             += panelBodySymbol + String(F("signal"))        + panelBodyName + String(F("Wi-Fi SSID"))  + panelBodyValue + closingAngleBracket + JConf.sta_ssid    + panelBodyEnd;
+    title2             += panelBodySymbol + String(F("globe"))         + panelBodyName + String(F("IP Address"))  + panelBodyValue + closingAngleBracket + ipString          + panelBodyEnd;
+    //title2             += panelBodySymbol + String(F("scale"))         + panelBodyName + String(F("MAC Address")) + panelBodyValue + closingAngleBracket + macString         + panelBodyEnd;
+    //title2             += panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + JConf.mqtt_name   + panelBodyEnd;
+
+    title2             += panelBodySymbol + String(F("time"))          + panelBodyName + String(F("Uptime"))      + panelBodyValue + String(F(" id='uptimeId'"))     + closingAngleBracket  + panelBodyEnd;
+    title2             += panelBodySymbol + String(F("time"))          + panelBodyName + String(F("NTP time"))    + panelBodyValue + String(F(" id='ntpTimeId'"))    + closingAngleBracket  + panelBodyEnd;
+    title2             += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Voltage"))     + panelBodyValue + String(F(" id='vccId'"))        + closingAngleBracket  + panelBodyEnd;
+    title2             += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
+    //title2             += panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + String(ver)                      + panelBodyEnd;
+
+    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript3 + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + panelEnd + title2 + panelEnd +  containerEnd + siteEnd);
   });
 }
 
@@ -1447,33 +1443,30 @@ void WebEspConf(void) {
     }
     data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
-    
+
+    payload=server.arg("static_ip_mode");
+    if (payload.toInt() == 1) {
+      payload.toCharArray(JConf.static_ip_mode, sizeof(JConf.static_ip_mode));
+    } else {
+      String data = "0";
+      data.toCharArray(JConf.static_ip_mode, sizeof(JConf.static_ip_mode));
+    }
+    data += String(F("<div class='checkbox'><label><input type='checkbox' id='static_ip_mode' value='1'>Static IP Mode</label></div>"));
+
     payload=server.arg("static_ip");
     if (payload.length() > 6 ) {
       payload.toCharArray(JConf.static_ip, sizeof(JConf.static_ip));
-      mode_ip = 1;
     }
 
     payload=server.arg("static_gateway");
     if (payload.length() > 6 ) {
       payload.toCharArray(JConf.static_gateway, sizeof(JConf.static_gateway));
-      mode_ip += 1;
     }
 
     payload=server.arg("static_subnet");
     if (payload.length() > 6 ) {
       payload.toCharArray(JConf.static_subnet, sizeof(JConf.static_subnet));
-      mode_ip += 1;
     }
-
-    if (mode_ip != 3) {
-      sprintf_P(JConf.static_ip, (const char *)F("%s"), "none");
-      sprintf_P(JConf.static_gateway, (const char *)F("%s"), "none");
-      sprintf_P(JConf.static_subnet, (const char *)F("%s"), "none");
-      mode_ip = 0;
-    }
-
-    sprintf_P(JConf.static_ip_mode, (const char *)F("%d"), mode_ip);
 
     data += inputBodyName + String(F("Static IP"))      + inputBodyPOST + String(F("static_ip"))      + inputPlaceHolder + JConf.static_ip      + inputBodyClose + inputBodyCloseDiv;
     data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("static_gateway")) + inputPlaceHolder + JConf.static_gateway + inputBodyClose + inputBodyCloseDiv;
@@ -2123,7 +2116,6 @@ void setup() {
   }
   JConf.printConfig();
 
-  mode_ip = atoi(JConf.static_ip_mode);
 
   client.setClient(espClient);
 
@@ -2158,7 +2150,7 @@ void setup() {
   // start WiFi
 
   WiFi.mode(WIFI_AP_STA);
-  if (atoi(JConf.static_ip_mode) == 3) {
+  if (atoi(JConf.static_ip_mode) == 1) {
     IPAddress staticIP = stringToIp(JConf.static_ip);
     IPAddress staticGateway = stringToIp(JConf.static_gateway);
     IPAddress staticSubnet = stringToIp(JConf.static_subnet);
