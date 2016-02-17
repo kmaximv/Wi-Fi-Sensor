@@ -1451,7 +1451,7 @@ void WebEspConf(void) {
       String data = "0";
       data.toCharArray(JConf.static_ip_mode, sizeof(JConf.static_ip_mode));
     }
-    data += String(F("<div class='checkbox'><label><input type='checkbox' id='static_ip_mode' value='1'>Static IP Mode</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1' aria-describedby='basic-addon1'>Static IP Mode</label></div>"));
 
     payload=server.arg("static_ip");
     if (payload.length() > 6 ) {
@@ -2117,17 +2117,6 @@ void setup() {
   JConf.printConfig();
 
 
-  client.setClient(espClient);
-
-  if (isIPValid(JConf.mqtt_server)){
-    IPAddress mqtt_ip = stringToIp(JConf.mqtt_server);
-    client.setServer(mqtt_ip, atoi(JConf.mqtt_port));
-  } else {
-    client.setServer(JConf.mqtt_server, atoi(JConf.mqtt_port));
-  }
-  
-  
-  client.setCallback (callback);
 
   #ifdef BME280_ON
     bmeSensor.settings.commInterface = I2C_MODE;
@@ -2166,6 +2155,20 @@ void setup() {
     WiFi.mode(WIFI_AP);
     WiFi.softAP(JConf.module_id);
   }
+
+
+  client.setClient(espClient);
+
+  if (isIPValid(JConf.mqtt_server)){
+    IPAddress mqtt_ip = stringToIp(JConf.mqtt_server);
+    client.setServer(mqtt_ip, atoi(JConf.mqtt_port));
+  } else {
+    client.setServer(JConf.mqtt_server, atoi(JConf.mqtt_port));
+  }
+  
+  
+  client.setCallback (callback);
+
 
 
   WebUpdate();
