@@ -80,14 +80,17 @@ bool JsonConf::loadConfig() {
   if (!configFile) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to open config file"));
+    saveConfig();
 #endif
     return false;
   }
 
   size_t size = configFile.size();
-  if (size > 1024) {
+  if (size > 2048) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Config file size is too large"));
+    SPIFFS.remove("/config.json");
+    saveConfig();
 #endif
     return false;
   }
@@ -106,54 +109,102 @@ bool JsonConf::loadConfig() {
   if (!json.success()) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to parse config file"));
+    SPIFFS.remove("/config.json");
+    saveConfig();
 #endif
     return false;
   }
 
 
-  const char* module_id_char                     = json["module_id"];                        sprintf_P(module_id,                     ("%s"), module_id_char                    );
-  const char* sta_ssid_char                      = json["sta_ssid"];                         sprintf_P(sta_ssid,                      ("%s"), sta_ssid_char                     );
-  const char* sta_pwd_char                       = json["sta_pwd"];                          sprintf_P(sta_pwd,                       ("%s"), sta_pwd_char                      );
-  const char* static_ip_mode_char                = json["static_ip_mode"];                   sprintf_P(static_ip_mode,                ("%s"), static_ip_mode_char               );
-  const char* static_ip_char                     = json["static_ip"];                        sprintf_P(static_ip,                     ("%s"), static_ip_char                    );
-  const char* static_gateway_char                = json["static_gateway"];                   sprintf_P(static_gateway,                ("%s"), static_gateway_char               );
-  const char* static_subnet_char                 = json["static_subnet"];                    sprintf_P(static_subnet,                 ("%s"), static_subnet_char                );
-  const char* ntp_server_char                    = json["ntp_server"];                       sprintf_P(ntp_server,                    ("%s"), ntp_server_char                   );
-  const char* my_time_zone_char                  = json["my_time_zone"];                     sprintf_P(my_time_zone,                  ("%s"), my_time_zone_char                 );
-  const char* mqtt_server_char                   = json["mqtt_server"];                      sprintf_P(mqtt_server,                   ("%s"), mqtt_server_char                  );
-  const char* mqtt_port_char                     = json["mqtt_port"];                        sprintf_P(mqtt_port,                     ("%s"), mqtt_port_char                    );
-  const char* mqtt_user_char                     = json["mqtt_user"];                        sprintf_P(mqtt_user,                     ("%s"), mqtt_user_char                    );
-  const char* mqtt_pwd_char                      = json["mqtt_pwd"];                         sprintf_P(mqtt_pwd,                      ("%s"), mqtt_pwd_char                     );
-  const char* mqtt_name_char                     = json["mqtt_name"];                        sprintf_P(mqtt_name,                     ("%s"), mqtt_name_char                    );
-  const char* publish_topic_char                 = json["publish_topic"];                    sprintf_P(publish_topic,                 ("%s"), publish_topic_char                );
-  const char* subscribe_topic_char               = json["subscribe_topic"];                  sprintf_P(subscribe_topic,               ("%s"), subscribe_topic_char              );
-  const char* command_pub_topic_char             = json["command_pub_topic"];                sprintf_P(command_pub_topic,             ("%s"), command_pub_topic_char            );
-  const char* light_pin_char                     = json["light_pin"];                        sprintf_P(light_pin,                     ("%s"), light_pin_char                    );
-  const char* lightoff_delay_char                = json["lightoff_delay"];                   sprintf_P(lightoff_delay,                ("%s"), lightoff_delay_char               );
-  const char* light_pin2_char                    = json["light_pin2"];                       sprintf_P(light_pin2,                    ("%s"), light_pin2_char                   );
-  const char* light2off_delay_char               = json["light2off_delay"];                  sprintf_P(light2off_delay,               ("%s"), light2off_delay_char              );
-  const char* motion_pin_char                    = json["motion_pin"];                       sprintf_P(motion_pin,                    ("%s"), motion_pin_char                   );
-  const char* dht_pin_char                       = json["dht_pin"];                          sprintf_P(dht_pin,                       ("%s"), dht_pin_char                      );
-  const char* get_data_delay_char                = json["get_data_delay"];                   sprintf_P(get_data_delay,                ("%s"), get_data_delay_char               );
-  const char* publish_delay_char                 = json["publish_delay"];                    sprintf_P(publish_delay,                 ("%s"), publish_delay_char                );
-  const char* subscribe_delay_char               = json["subscribe_delay"];                  sprintf_P(subscribe_delay,               ("%s"), subscribe_delay_char              );
-  const char* motion_read_delay_char             = json["motion_read_delay"];                sprintf_P(motion_read_delay,             ("%s"), motion_read_delay_char            );
-  const char* reboot_delay_char                  = json["reboot_delay"];                     sprintf_P(reboot_delay,                  ("%s"), reboot_delay_char                 );
-  const char* uart_delay_analog_pin0_char        = json["uart_delay_analog_pin0"];           sprintf_P(uart_delay_analog_pin0,        ("%s"), uart_delay_analog_pin0_char       );
-  const char* uart_delay_analog_pin1_char        = json["uart_delay_analog_pin1"];           sprintf_P(uart_delay_analog_pin1,        ("%s"), uart_delay_analog_pin1_char       );
-  const char* uart_delay_analog_pin2_char        = json["uart_delay_analog_pin2"];           sprintf_P(uart_delay_analog_pin2,        ("%s"), uart_delay_analog_pin2_char       );
-  const char* uart_delay_analog_pin3_char        = json["uart_delay_analog_pin3"];           sprintf_P(uart_delay_analog_pin3,        ("%s"), uart_delay_analog_pin3_char       );
-  const char* uart_delay_analog_pin4_char        = json["uart_delay_analog_pin4"];           sprintf_P(uart_delay_analog_pin4,        ("%s"), uart_delay_analog_pin4_char       );
-  const char* uart_delay_analog_pin5_char        = json["uart_delay_analog_pin5"];           sprintf_P(uart_delay_analog_pin5,        ("%s"), uart_delay_analog_pin5_char       );
-  const char* green_light_on_char                = json["green_light_on"];                   sprintf_P(green_light_on,                ("%s"), green_light_on_char               );
-  const char* green_light_off_char               = json["green_light_off"];                  sprintf_P(green_light_off,               ("%s"), green_light_off_char              );
-  const char* green_light_pin_char               = json["green_light_pin"];                  sprintf_P(green_light_pin,               ("%s"), green_light_pin_char              );
-  const char* green_humidity_threshold_up_char   = json["green_humidity_threshold_up"];      sprintf_P(green_humidity_threshold_up,   ("%s"), green_humidity_threshold_up_char  );
-  const char* green_humidity_threshold_down_char = json["green_humidity_threshold_down"];    sprintf_P(green_humidity_threshold_down, ("%s"), green_humidity_threshold_down_char);
-  const char* green_humidity_sensor_pin_char     = json["green_humidity_sensor_pin"];        sprintf_P(green_humidity_sensor_pin,     ("%s"), green_humidity_sensor_pin_char    );
-  const char* green_pump_pin_char                = json["green_pump_pin"];                   sprintf_P(green_pump_pin,                ("%s"), green_pump_pin_char               );
-
+  const char* module_id_char                     = json["module_id"];                     sprintf_P(module_id,                     ("%s"), module_id_char                    );
+  const char* sta_ssid_char                      = json["sta_ssid"];                      sprintf_P(sta_ssid,                      ("%s"), sta_ssid_char                     );
+  const char* sta_pwd_char                       = json["sta_pwd"];                       sprintf_P(sta_pwd,                       ("%s"), sta_pwd_char                      );
+  const char* static_ip_mode_char                = json["static_ip_mode"];                sprintf_P(static_ip_mode,                ("%s"), static_ip_mode_char               );
+  const char* static_ip_char                     = json["static_ip"];                     sprintf_P(static_ip,                     ("%s"), static_ip_char                    );
+  const char* static_gateway_char                = json["static_gateway"];                sprintf_P(static_gateway,                ("%s"), static_gateway_char               );
+  const char* static_subnet_char                 = json["static_subnet"];                 sprintf_P(static_subnet,                 ("%s"), static_subnet_char                );
+  const char* ntp_server_char                    = json["ntp_server"];                    sprintf_P(ntp_server,                    ("%s"), ntp_server_char                   );
+  const char* my_time_zone_char                  = json["my_time_zone"];                  sprintf_P(my_time_zone,                  ("%s"), my_time_zone_char                 );
+  const char* mqtt_server_char                   = json["mqtt_server"];                   sprintf_P(mqtt_server,                   ("%s"), mqtt_server_char                  );
+  const char* mqtt_port_char                     = json["mqtt_port"];                     sprintf_P(mqtt_port,                     ("%s"), mqtt_port_char                    );
+  const char* mqtt_user_char                     = json["mqtt_user"];                     sprintf_P(mqtt_user,                     ("%s"), mqtt_user_char                    );
+  const char* mqtt_pwd_char                      = json["mqtt_pwd"];                      sprintf_P(mqtt_pwd,                      ("%s"), mqtt_pwd_char                     );
+  const char* mqtt_name_char                     = json["mqtt_name"];                     sprintf_P(mqtt_name,                     ("%s"), mqtt_name_char                    );
+  const char* publish_topic_char                 = json["publish_topic"];                 sprintf_P(publish_topic,                 ("%s"), publish_topic_char                );
+  const char* subscribe_topic_char               = json["subscribe_topic"];               sprintf_P(subscribe_topic,               ("%s"), subscribe_topic_char              );
+  const char* command_pub_topic_char             = json["command_pub_topic"];             sprintf_P(command_pub_topic,             ("%s"), command_pub_topic_char            );
+  const char* light_pin_char                     = json["light_pin"];                     sprintf_P(light_pin,                     ("%s"), light_pin_char                    );
+  const char* lightoff_delay_char                = json["lightoff_delay"];                sprintf_P(lightoff_delay,                ("%s"), lightoff_delay_char               );
+  const char* light_pin2_char                    = json["light_pin2"];                    sprintf_P(light_pin2,                    ("%s"), light_pin2_char                   );
+  const char* light2off_delay_char               = json["light2off_delay"];               sprintf_P(light2off_delay,               ("%s"), light2off_delay_char              );
+  const char* motion_pin_char                    = json["motion_pin"];                    sprintf_P(motion_pin,                    ("%s"), motion_pin_char                   );
+  const char* dht_pin_char                       = json["dht_pin"];                       sprintf_P(dht_pin,                       ("%s"), dht_pin_char                      );
+  const char* get_data_delay_char                = json["get_data_delay"];                sprintf_P(get_data_delay,                ("%s"), get_data_delay_char               );
+  const char* publish_delay_char                 = json["publish_delay"];                 sprintf_P(publish_delay,                 ("%s"), publish_delay_char                );
+  const char* subscribe_delay_char               = json["subscribe_delay"];               sprintf_P(subscribe_delay,               ("%s"), subscribe_delay_char              );
+  const char* motion_read_delay_char             = json["motion_read_delay"];             sprintf_P(motion_read_delay,             ("%s"), motion_read_delay_char            );
+  const char* reboot_delay_char                  = json["reboot_delay"];                  sprintf_P(reboot_delay,                  ("%s"), reboot_delay_char                 );
+  const char* uart_delay_analog_pin0_char        = json["uart_delay_analog_pin0"];        sprintf_P(uart_delay_analog_pin0,        ("%s"), uart_delay_analog_pin0_char       );
+  const char* uart_delay_analog_pin1_char        = json["uart_delay_analog_pin1"];        sprintf_P(uart_delay_analog_pin1,        ("%s"), uart_delay_analog_pin1_char       );
+  const char* uart_delay_analog_pin2_char        = json["uart_delay_analog_pin2"];        sprintf_P(uart_delay_analog_pin2,        ("%s"), uart_delay_analog_pin2_char       );
+  const char* uart_delay_analog_pin3_char        = json["uart_delay_analog_pin3"];        sprintf_P(uart_delay_analog_pin3,        ("%s"), uart_delay_analog_pin3_char       );
+  const char* uart_delay_analog_pin4_char        = json["uart_delay_analog_pin4"];        sprintf_P(uart_delay_analog_pin4,        ("%s"), uart_delay_analog_pin4_char       );
+  const char* uart_delay_analog_pin5_char        = json["uart_delay_analog_pin5"];        sprintf_P(uart_delay_analog_pin5,        ("%s"), uart_delay_analog_pin5_char       );
+  const char* green_light_on_char                = json["green_light_on"];                sprintf_P(green_light_on,                ("%s"), green_light_on_char               );
+  const char* green_light_off_char               = json["green_light_off"];               sprintf_P(green_light_off,               ("%s"), green_light_off_char              );
+  const char* green_light_pin_char               = json["green_light_pin"];               sprintf_P(green_light_pin,               ("%s"), green_light_pin_char              );
+  const char* green_humidity_threshold_up_char   = json["green_humidity_threshold_up"];   sprintf_P(green_humidity_threshold_up,   ("%s"), green_humidity_threshold_up_char  );
+  const char* green_humidity_threshold_down_char = json["green_humidity_threshold_down"]; sprintf_P(green_humidity_threshold_down, ("%s"), green_humidity_threshold_down_char);
+  const char* green_humidity_sensor_pin_char     = json["green_humidity_sensor_pin"];     sprintf_P(green_humidity_sensor_pin,     ("%s"), green_humidity_sensor_pin_char    );
+  const char* green_pump_pin_char                = json["green_pump_pin"];                sprintf_P(green_pump_pin,                ("%s"), green_pump_pin_char               );
 
   configFile.close();
   return true;
+}
+
+
+
+bool JsonConf::printConfig() {
+
+  Serial.print(F("module_id                    : "));   Serial.println(module_id                    );
+  Serial.print(F("sta_ssid                     : "));   Serial.println(sta_ssid                     );
+  Serial.print(F("sta_pwd                      : "));   Serial.println(sta_pwd                      );
+  Serial.print(F("static_ip_mode               : "));   Serial.println(static_ip_mode               );
+  Serial.print(F("static_ip                    : "));   Serial.println(static_ip                    );
+  Serial.print(F("static_gateway               : "));   Serial.println(static_gateway               );
+  Serial.print(F("static_subnet                : "));   Serial.println(static_subnet                );
+  Serial.print(F("ntp_server                   : "));   Serial.println(ntp_server                   );
+  Serial.print(F("my_time_zone                 : "));   Serial.println(my_time_zone                 );
+  Serial.print(F("mqtt_server                  : "));   Serial.println(mqtt_server                  );
+  Serial.print(F("mqtt_port                    : "));   Serial.println(mqtt_port                    );
+  Serial.print(F("mqtt_user                    : "));   Serial.println(mqtt_user                    );
+  Serial.print(F("mqtt_pwd                     : "));   Serial.println(mqtt_pwd                     );
+  Serial.print(F("mqtt_name                    : "));   Serial.println(mqtt_name                    );
+  Serial.print(F("publish_topic                : "));   Serial.println(publish_topic                );
+  Serial.print(F("subscribe_topic              : "));   Serial.println(subscribe_topic              );
+  Serial.print(F("command_pub_topic            : "));   Serial.println(command_pub_topic            );
+  Serial.print(F("light_pin                    : "));   Serial.println(light_pin                    );
+  Serial.print(F("lightoff_delay               : "));   Serial.println(lightoff_delay               );
+  Serial.print(F("light_pin2                   : "));   Serial.println(light_pin2                   );
+  Serial.print(F("light2off_delay              : "));   Serial.println(light2off_delay              );
+  Serial.print(F("motion_pin                   : "));   Serial.println(motion_pin                   );
+  Serial.print(F("dht_pin                      : "));   Serial.println(dht_pin                      );
+  Serial.print(F("get_data_delay               : "));   Serial.println(get_data_delay               );
+  Serial.print(F("publish_delay                : "));   Serial.println(publish_delay                );
+  Serial.print(F("subscribe_delay              : "));   Serial.println(subscribe_delay              );
+  Serial.print(F("motion_read_delay            : "));   Serial.println(motion_read_delay            );
+  Serial.print(F("reboot_delay                 : "));   Serial.println(reboot_delay                 );
+  Serial.print(F("uart_delay_analog_pin0       : "));   Serial.println(uart_delay_analog_pin0       );
+  Serial.print(F("uart_delay_analog_pin1       : "));   Serial.println(uart_delay_analog_pin1       );
+  Serial.print(F("uart_delay_analog_pin2       : "));   Serial.println(uart_delay_analog_pin2       );
+  Serial.print(F("uart_delay_analog_pin3       : "));   Serial.println(uart_delay_analog_pin3       );
+  Serial.print(F("uart_delay_analog_pin4       : "));   Serial.println(uart_delay_analog_pin4       );
+  Serial.print(F("uart_delay_analog_pin5       : "));   Serial.println(uart_delay_analog_pin5       );
+  Serial.print(F("green_light_on               : "));   Serial.println(green_light_on               );
+  Serial.print(F("green_light_off              : "));   Serial.println(green_light_off              );
+  Serial.print(F("green_light_pin              : "));   Serial.println(green_light_pin              );
+  Serial.print(F("green_humidity_threshold_up  : "));   Serial.println(green_humidity_threshold_up  );
+  Serial.print(F("green_humidity_threshold_down: "));   Serial.println(green_humidity_threshold_down);
+  Serial.print(F("green_humidity_sensor_pin    : "));   Serial.println(green_humidity_sensor_pin    );
+  Serial.print(F("green_pump_pin               : "));   Serial.println(green_pump_pin               );
 }
