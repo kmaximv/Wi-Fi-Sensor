@@ -1451,7 +1451,12 @@ void WebEspConf(void) {
       String data = "0";
       data.toCharArray(JConf.static_ip_mode, sizeof(JConf.static_ip_mode));
     }
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1' aria-describedby='basic-addon1'>Static IP Mode</label></div>"));
+    if (atoi(JConf.static_ip_mode) == 1){
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1' checked='true'>Static IP Mode</label></div>"));
+    } else {
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1'>Static IP Mode</label></div>"));
+    }
+
 
     payload=server.arg("static_ip");
     if (payload.length() > 6 ) {
@@ -2078,6 +2083,7 @@ void setup() {
   digitalWrite(atoi(JConf.light_pin), LOW);
   digitalWrite(atoi(JConf.light_pin2), LOW);
 
+
   #ifdef SHT21_ON
     myHTU21D.begin();
   #endif
@@ -2138,14 +2144,17 @@ void setup() {
 
   // start WiFi
 
+  WiFi.disconnect();
+  delay(1000);
+
   WiFi.mode(WIFI_AP_STA);
+  WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
   if (atoi(JConf.static_ip_mode) == 1) {
     IPAddress staticIP = stringToIp(JConf.static_ip);
     IPAddress staticGateway = stringToIp(JConf.static_gateway);
     IPAddress staticSubnet = stringToIp(JConf.static_subnet);
     WiFi.config(staticIP, staticGateway, staticSubnet);
   }
-  WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
 
   waitConnected();
 
