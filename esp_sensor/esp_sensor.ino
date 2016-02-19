@@ -1430,28 +1430,30 @@ void WebEspConf(void) {
     String title1 = panelHeaderName + String(F("ESP Configuration")) + panelHeaderEnd;
     String data = title1 + network_html + inputBodyStart;
 
-
+    bool config_changed = false;
     String payload=server.arg("sta_ssid");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.sta_ssid, sizeof(JConf.sta_ssid));
+      config_changed = true;
     }
     data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.sta_ssid + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("sta_pwd");
     if (payload.length() > 7 &&  payload != String(F("********"))) {
       payload.toCharArray(JConf.sta_pwd, sizeof(JConf.sta_pwd));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
 
     payload=server.arg("static_ip_mode");
-    if (payload.toInt() == 1) {
+    if (payload.length() > 0) {
       payload.toCharArray(JConf.static_ip_mode, sizeof(JConf.static_ip_mode));
-    } else {
-      String data = "0";
-      data.toCharArray(JConf.static_ip_mode, sizeof(JConf.static_ip_mode));
-    }
+      config_changed = true;
+    } 
+
     if (atoi(JConf.static_ip_mode) == 1){
+      data += String(F("<div><input type='hidden' name='static_ip_mode' value='0'></div>"));
       data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1' checked='true'>Static IP Mode</label></div>"));
     } else {
       data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1'>Static IP Mode</label></div>"));
@@ -1461,16 +1463,19 @@ void WebEspConf(void) {
     payload=server.arg("static_ip");
     if (payload.length() > 6 ) {
       payload.toCharArray(JConf.static_ip, sizeof(JConf.static_ip));
+      config_changed = true;
     }
 
     payload=server.arg("static_gateway");
     if (payload.length() > 6 ) {
       payload.toCharArray(JConf.static_gateway, sizeof(JConf.static_gateway));
+      config_changed = true;
     }
 
     payload=server.arg("static_subnet");
     if (payload.length() > 6 ) {
       payload.toCharArray(JConf.static_subnet, sizeof(JConf.static_subnet));
+      config_changed = true;
     }
 
     data += inputBodyName + String(F("Static IP"))      + inputBodyPOST + String(F("static_ip"))      + inputPlaceHolder + JConf.static_ip      + inputBodyClose + inputBodyCloseDiv;
@@ -1481,6 +1486,7 @@ void WebEspConf(void) {
     payload=server.arg("light_pin");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.light_pin, sizeof(JConf.light_pin));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.light_pin + inputBodyClose + inputBodyCloseDiv;
 
@@ -1488,12 +1494,14 @@ void WebEspConf(void) {
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.lightoff_delay, sizeof(JConf.lightoff_delay));
       MqttPubLightOffDelay();
+      config_changed = true;
     }
     data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightoff_delay")) + inputPlaceHolder + JConf.lightoff_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("light_pin2");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.light_pin2, sizeof(JConf.light_pin2));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light_pin2")) + inputPlaceHolder + JConf.light_pin2 + inputBodyClose + inputBodyCloseDiv;
 
@@ -1501,44 +1509,51 @@ void WebEspConf(void) {
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.light2off_delay, sizeof(JConf.light2off_delay));
       MqttPubLightOffDelay();
+      config_changed = true;
     }
     data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2off_delay")) + inputPlaceHolder + JConf.light2off_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("motion_pin");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.motion_pin, sizeof(JConf.motion_pin));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + JConf.motion_pin + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("dht_pin");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.dht_pin, sizeof(JConf.dht_pin));
+      config_changed = true;
     }
     data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + JConf.dht_pin + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("get_data_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.get_data_delay, sizeof(JConf.get_data_delay));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + JConf.get_data_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("motion_read_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.motion_read_delay, sizeof(JConf.motion_read_delay));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + JConf.motion_read_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("reboot_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.reboot_delay, sizeof(JConf.reboot_delay));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + JConf.reboot_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
 
     data += inputBodyEnd;
 
-
-    JConf.saveConfig();
+    if (config_changed){
+      JConf.saveConfig();
+    }
 
     server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
   });
@@ -1590,33 +1605,59 @@ void WebMqttConf(void) {
     data += panelHeaderEnd;
     data += inputBodyStart;
 
+    bool config_changed = false;
+
     String payload=server.arg("mqtt_server");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.mqtt_server, sizeof(JConf.mqtt_server));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_server")) + inputPlaceHolder + JConf.mqtt_server + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqtt_port");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.mqtt_port, sizeof(JConf.mqtt_port));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqtt_port")) + inputPlaceHolder + JConf.mqtt_port + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqtt_user");
     if (payload.length() > 0 ) {
-      payload.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+      if (payload == "0"){
+        String data = "";
+        data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+        data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+      } else {
+        payload.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+      }
+      config_changed = true;
+    }
+    if (strlen(JConf.mqtt_user) != 0){
+      data += String(F("<div><input type='hidden' name='mqtt_user' value='0'></div>"));
     } 
     data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqtt_user")) + inputPlaceHolder + JConf.mqtt_user + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqtt_pwd");
     if (payload.length() > 0 ) {
-      payload.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+      if (payload == "0"){
+        String data = "";
+        data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+        data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+      } else {
+        payload.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+      }
+      config_changed = true;
+    } 
+    if (strlen(JConf.mqtt_pwd) != 0){
+      Serial.print(F("JConf.mqtt_pwd[0]"));  Serial.println(JConf.mqtt_pwd[0]);
+      data += String(F("<div><input type='hidden' name='mqtt_pwd' value='0'></div>"));
     } 
     data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqtt_pwd")) + inputPlaceHolder + JConf.mqtt_pwd + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("mqtt_name");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.mqtt_name, sizeof(JConf.mqtt_name));
+      config_changed = true;
     }
     data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.mqtt_name + inputBodyClose + inputBodyCloseDiv;
 
@@ -1624,6 +1665,7 @@ void WebMqttConf(void) {
     if (payload.length() > 0 ) {
       payload.replace("%2F", String(F("/")));
       payload.toCharArray(JConf.publish_topic, sizeof(JConf.publish_topic));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + JConf.publish_topic + inputBodyClose + inputBodyCloseDiv;
 
@@ -1631,24 +1673,30 @@ void WebMqttConf(void) {
     if (payload.length() > 0 ) {
       payload.replace("%2F", String(F("/")));
       payload.toCharArray(JConf.subscribe_topic, sizeof(JConf.subscribe_topic));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + JConf.subscribe_topic + inputBodyClose + inputBodyCloseDiv;
 
     payload=server.arg("publish_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.publish_delay, sizeof(JConf.publish_delay));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + JConf.publish_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     payload=server.arg("subscribe_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.subscribe_delay, sizeof(JConf.subscribe_delay));
+      config_changed = true;
     }
     data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + JConf.subscribe_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
 
     data += inputBodyEnd;
-    JConf.saveConfig();
+
+    if (config_changed){
+      JConf.saveConfig();
+    }
 
     server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
   });
@@ -1667,6 +1715,9 @@ void handleControl(){
   String AUTO;       AUTO += FPSTR(AUTOP);
   String ON;         ON += FPSTR(ONP);
   String OFF;        OFF += FPSTR(OFFP);
+
+  String last_light_state = lightState;
+  String last_light_state2 = lightState2;
 
   if (server.args() > 0 ) {
     for ( size_t i = 0; i < server.args(); i++ ) {
@@ -1697,8 +1748,10 @@ void handleControl(){
       Serial.println(server.argName(i));
       Serial.println(server.arg(i));
       #endif
-      LightControl();
-      MqttPubLightState();
+      if (last_light_state != lightState || last_light_state2 != lightState2){
+        LightControl();
+        MqttPubLightState();
+      }
     }
   }
 
@@ -1747,7 +1800,7 @@ void WebControl(void) {
     server.sendHeader("Access-Control-Allow-Origin", "*");
 
     LightControl();
-    MqttPubLightState();
+    //MqttPubLightState();
 
     bool pinState;
     bool pinState2;
@@ -2144,7 +2197,7 @@ void setup() {
 
   // start WiFi
 
-  WiFi.disconnect();
+  //WiFi.disconnect();
   delay(1000);
 
   WiFi.mode(WIFI_AP_STA);
@@ -2165,7 +2218,6 @@ void setup() {
     WiFi.softAP(JConf.module_id);
   }
 
-
   client.setClient(espClient);
 
   if (isIPValid(JConf.mqtt_server)){
@@ -2175,10 +2227,7 @@ void setup() {
     client.setServer(JConf.mqtt_server, atoi(JConf.mqtt_port));
   }
   
-  
   client.setCallback (callback);
-
-
 
   WebUpdate();
   WebReboot();
@@ -2194,7 +2243,6 @@ void setup() {
 
   // start Web Server
   server.begin();
-
 
   #ifdef DEBUG
   Serial.println();  Serial.println(F("Server started"));
