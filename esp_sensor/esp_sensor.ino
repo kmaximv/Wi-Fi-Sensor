@@ -109,7 +109,7 @@ char value_buff[120];
 
 String network_html;          // Список доступных Wi-Fi точек
 
-ESP8266WebServer server(80);
+ESP8266WebServer WebServer(80);
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
@@ -162,6 +162,7 @@ String OFF;        OFF += FPSTR(OFFP);
 
 
 */
+
 
 
 const char headerStartP[] PROGMEM = "<html lang='en'><head><title>ESP8266</title><meta charset='utf-8'>";
@@ -408,6 +409,8 @@ const char sketchUploadFormP[] PROGMEM  =
 <p><input type='file' class='btn btn-primary' name='sketch'></p>\
 <h3><small>Выберите файл формата *.bin</small></h3>\
 <p><input type='submit' value='Upload' class='btn btn-danger'></p></form></div>";
+
+
 
 
 const char ClassInfoP[] PROGMEM  = "info";
@@ -1192,19 +1195,56 @@ void TestSystemPrint()
 
 
 
+
+
+
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////   WEB PAGES  Start  //////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+void WebServerInit()
+{
+  // Prepare webserver pages
+  WebServer.on("/", WebRoot);
+  WebServer.on("/reboot", WebReboot);
+  WebServer.on("/update", WebUpdate);
+  WebServer.onFileUpload(WebFileUpload);
+  WebServer.on("/upload_sketch", HTTP_POST, WebUploadSketch);
+
+  WebServer.on("/espconf", WebEspConf);
+  WebServer.on("/mqttconf", WebMqttConf);
+
+  WebServer.on("/control", handleControl);
+
+  WebServer.on("/pincontrol", WebPinControl);
+  WebServer.on("/controlstatus", WebPinControlStatus);
+
+#ifdef UART_ON
+  WebServer.on("/analog", WebAnalogUart);
+#endif
+
+  WebServer.on("/greenhouse", WebGreenhouse);
+
+  WebServer.on("/xml",handleXML);
+
+/*
+  WebServer.on("/upload", HTTP_GET, handle_upload);
+  WebServer.on("/upload", HTTP_POST, handle_upload_post, handleFileUpload);
+  WebServer.onNotFound(handleNotFound);
+
+  if (ESP.getFlashChipRealSize() > 524288)
+    httpUpdater.setup(&WebServer);
+*/
+  WebServer.begin();
+}
+
+
 
 void WebRoot(void) {
   #ifdef DEBUG
     Serial.print(F("WebRoot()"));  Serial.println();
   #endif
-
-  server.on("/", []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
 
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerEnd;             headerEnd += FPSTR(headerEndP);
@@ -1253,8 +1293,7 @@ void WebRoot(void) {
     title2             += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
     //title2             += panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + String(ver)                      + panelBodyEnd;
 
-    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript3 + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + panelEnd + title2 + panelEnd +  containerEnd + siteEnd);
-  });
+    WebServer.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript3 + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + panelEnd + title2 + panelEnd +  containerEnd + siteEnd);
 }
 
 
@@ -1264,10 +1303,6 @@ void WebReboot(void) {
     Serial.print(F("WebReboot()"));  Serial.println();
   #endif
 
-  server.on("/reboot", []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
 
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerRefreshStatus;   headerRefreshStatus += FPSTR(headerRefreshStatusP);
@@ -1287,10 +1322,9 @@ void WebReboot(void) {
     String siteEnd;               siteEnd += FPSTR(siteEndP);
 
     String data = String(F("<div class='col-md-4'><div class='page-header'><h1>Reboot ESP</h1></div><div class='alert alert-info' role='alert'><a href='#' class='alert-link'>Rebooting...</a></div></div>"));
-    server.send ( 200, "text/html", headerStart + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+    WebServer.send ( 200, "text/html", headerStart + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
     ESP.restart();
 
-  });
 }
 
 
@@ -1299,11 +1333,6 @@ void WebUpdate(void) {
   #ifdef DEBUG
     Serial.print(F("WebUpdate()"));  Serial.println();
   #endif
-
-  server.on("/update", HTTP_GET, []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
 
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerEnd;             headerEnd += FPSTR(headerEndP);
@@ -1322,11 +1351,14 @@ void WebUpdate(void) {
     String siteEnd;               siteEnd += FPSTR(siteEndP);
     String sketchUploadForm;      sketchUploadForm += FPSTR(sketchUploadFormP);
 
-    server.send(200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + sketchUploadForm + containerEnd + siteEnd);
-  });
-  server.onFileUpload([]() {
-    if (server.uri() != "/upload_sketch") return;
-    HTTPUpload& upload = server.upload();
+    WebServer.send(200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + sketchUploadForm + containerEnd + siteEnd);
+}
+
+
+void WebFileUpload(void) {
+
+    if (WebServer.uri() != "/upload_sketch") return;
+    HTTPUpload& upload = WebServer.upload();
     if (upload.status == UPLOAD_FILE_START) {
       Serial.setDebugOutput(true);
       WiFiUDP::stopAll();
@@ -1352,11 +1384,11 @@ void WebUpdate(void) {
       Serial.setDebugOutput(false);
     }
     yield();
-  });
-  server.on("/upload_sketch", HTTP_POST, []() {
+}
 
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
+
+
+void WebUploadSketch(void) {
 
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerRefreshStatus;   headerRefreshStatus += FPSTR(headerRefreshStatusP);
@@ -1378,22 +1410,15 @@ void WebUpdate(void) {
     String varDataString = String(F("<div class='col-md-4'><div class='page-header'><h1>Update Frimware</h1></div><div class='alert alert-success'>")) + ((Update.hasError()) ? String(F("FAIL")) : String(F("Update Frimware: OK"))) + String(F("</div></div>"));
 
 
-    server.send(200, "text/html", headerStart + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + varDataString + containerEnd + siteEnd);
+    WebServer.send(200, "text/html", headerStart + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + varDataString + containerEnd + siteEnd);
     ESP.restart();
-  });
 }
-
 
 
 void WebEspConf(void) {
   #ifdef DEBUG
     Serial.print(F("WebEspConf()"));  Serial.println();
   #endif
-
-  server.on("/espconf", []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
 
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerEnd;             headerEnd += FPSTR(headerEndP);
@@ -1432,7 +1457,7 @@ void WebEspConf(void) {
 
     bool config_changed = false;
 
-    String payload=server.arg("module_id");
+    String payload=WebServer.arg("module_id");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.module_id, sizeof(JConf.module_id));
       config_changed = true;
@@ -1440,14 +1465,14 @@ void WebEspConf(void) {
     data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
 
 
-    payload=server.arg("sta_ssid");
+    payload=WebServer.arg("sta_ssid");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.sta_ssid, sizeof(JConf.sta_ssid));
       config_changed = true;
     }
     data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.sta_ssid + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("sta_pwd");
+    payload=WebServer.arg("sta_pwd");
     if (payload.length() > 7 &&  payload != String(F("********"))) {
       payload.toCharArray(JConf.sta_pwd, sizeof(JConf.sta_pwd));
       config_changed = true;
@@ -1455,7 +1480,7 @@ void WebEspConf(void) {
     data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
 
-    payload=server.arg("static_ip_mode");
+    payload=WebServer.arg("static_ip_mode");
     if (payload.length() > 0) {
       payload.toCharArray(JConf.static_ip_mode, sizeof(JConf.static_ip_mode));
       config_changed = true;
@@ -1469,19 +1494,19 @@ void WebEspConf(void) {
     }
 
 
-    payload=server.arg("static_ip");
+    payload=WebServer.arg("static_ip");
     if (payload.length() > 6 ) {
       payload.toCharArray(JConf.static_ip, sizeof(JConf.static_ip));
       config_changed = true;
     }
 
-    payload=server.arg("static_gateway");
+    payload=WebServer.arg("static_gateway");
     if (payload.length() > 6 ) {
       payload.toCharArray(JConf.static_gateway, sizeof(JConf.static_gateway));
       config_changed = true;
     }
 
-    payload=server.arg("static_subnet");
+    payload=WebServer.arg("static_subnet");
     if (payload.length() > 6 ) {
       payload.toCharArray(JConf.static_subnet, sizeof(JConf.static_subnet));
       config_changed = true;
@@ -1492,14 +1517,14 @@ void WebEspConf(void) {
     data += inputBodyName + String(F("Static Subnet"))  + inputBodyPOST + String(F("static_subnet"))  + inputPlaceHolder + JConf.static_subnet  + inputBodyClose + inputBodyCloseDiv;
 
 
-    payload=server.arg("light_pin");
+    payload=WebServer.arg("light_pin");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.light_pin, sizeof(JConf.light_pin));
       config_changed = true;
     }
     data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.light_pin + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("lightoff_delay");
+    payload=WebServer.arg("lightoff_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.lightoff_delay, sizeof(JConf.lightoff_delay));
       MqttPubLightOffDelay();
@@ -1507,14 +1532,14 @@ void WebEspConf(void) {
     }
     data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightoff_delay")) + inputPlaceHolder + JConf.lightoff_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
-    payload=server.arg("light_pin2");
+    payload=WebServer.arg("light_pin2");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.light_pin2, sizeof(JConf.light_pin2));
       config_changed = true;
     }
     data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light_pin2")) + inputPlaceHolder + JConf.light_pin2 + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("light2off_delay");
+    payload=WebServer.arg("light2off_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.light2off_delay, sizeof(JConf.light2off_delay));
       MqttPubLightOffDelay();
@@ -1522,35 +1547,35 @@ void WebEspConf(void) {
     }
     data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2off_delay")) + inputPlaceHolder + JConf.light2off_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
-    payload=server.arg("motion_pin");
+    payload=WebServer.arg("motion_pin");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.motion_pin, sizeof(JConf.motion_pin));
       config_changed = true;
     }
     data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + JConf.motion_pin + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("dht_pin");
+    payload=WebServer.arg("dht_pin");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.dht_pin, sizeof(JConf.dht_pin));
       config_changed = true;
     }
     data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + JConf.dht_pin + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("get_data_delay");
+    payload=WebServer.arg("get_data_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.get_data_delay, sizeof(JConf.get_data_delay));
       config_changed = true;
     }
     data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + JConf.get_data_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
-    payload=server.arg("motion_read_delay");
+    payload=WebServer.arg("motion_read_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.motion_read_delay, sizeof(JConf.motion_read_delay));
       config_changed = true;
     }
     data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + JConf.motion_read_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
-    payload=server.arg("reboot_delay");
+    payload=WebServer.arg("reboot_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.reboot_delay, sizeof(JConf.reboot_delay));
       config_changed = true;
@@ -1564,8 +1589,7 @@ void WebEspConf(void) {
       JConf.saveConfig();
     }
 
-    server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
-  });
+    WebServer.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
 
 
@@ -1574,11 +1598,6 @@ void WebMqttConf(void) {
   #ifdef DEBUG
     Serial.print(F("WebMqttConf()"));  Serial.println();
   #endif
-
-  server.on("/mqttconf", []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
 
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerEnd;             headerEnd += FPSTR(headerEndP);
@@ -1616,21 +1635,21 @@ void WebMqttConf(void) {
 
     bool config_changed = false;
 
-    String payload=server.arg("mqtt_server");
+    String payload=WebServer.arg("mqtt_server");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.mqtt_server, sizeof(JConf.mqtt_server));
       config_changed = true;
     }
     data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_server")) + inputPlaceHolder + JConf.mqtt_server + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("mqtt_port");
+    payload=WebServer.arg("mqtt_port");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.mqtt_port, sizeof(JConf.mqtt_port));
       config_changed = true;
     }
     data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqtt_port")) + inputPlaceHolder + JConf.mqtt_port + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("mqtt_user");
+    payload=WebServer.arg("mqtt_user");
     if (payload.length() > 0 ) {
       if (payload == "0"){
         String data = "";
@@ -1646,7 +1665,7 @@ void WebMqttConf(void) {
     } 
     data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqtt_user")) + inputPlaceHolder + JConf.mqtt_user + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("mqtt_pwd");
+    payload=WebServer.arg("mqtt_pwd");
     if (payload.length() > 0 ) {
       if (payload == "0"){
         String data = "";
@@ -1663,14 +1682,14 @@ void WebMqttConf(void) {
     } 
     data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqtt_pwd")) + inputPlaceHolder + JConf.mqtt_pwd + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("mqtt_name");
+    payload=WebServer.arg("mqtt_name");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.mqtt_name, sizeof(JConf.mqtt_name));
       config_changed = true;
     }
     data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.mqtt_name + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("publish_topic");
+    payload=WebServer.arg("publish_topic");
     if (payload.length() > 0 ) {
       payload.replace("%2F", String(F("/")));
       payload.toCharArray(JConf.publish_topic, sizeof(JConf.publish_topic));
@@ -1678,7 +1697,7 @@ void WebMqttConf(void) {
     }
     data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + JConf.publish_topic + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("subscribe_topic");
+    payload=WebServer.arg("subscribe_topic");
     if (payload.length() > 0 ) {
       payload.replace("%2F", String(F("/")));
       payload.toCharArray(JConf.subscribe_topic, sizeof(JConf.subscribe_topic));
@@ -1686,14 +1705,14 @@ void WebMqttConf(void) {
     }
     data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + JConf.subscribe_topic + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("publish_delay");
+    payload=WebServer.arg("publish_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.publish_delay, sizeof(JConf.publish_delay));
       config_changed = true;
     }
     data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + JConf.publish_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
-    payload=server.arg("subscribe_delay");
+    payload=WebServer.arg("subscribe_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.subscribe_delay, sizeof(JConf.subscribe_delay));
       config_changed = true;
@@ -1707,8 +1726,7 @@ void WebMqttConf(void) {
       JConf.saveConfig();
     }
 
-    server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
-  });
+    WebServer.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
 
 
@@ -1718,8 +1736,6 @@ void handleControl(){
     Serial.print(F("handleControl()"));  Serial.println();
   #endif
 
-  server.sendHeader("Connection", "close");
-  server.sendHeader("Access-Control-Allow-Origin", "*");
 
   String AUTO;       AUTO += FPSTR(AUTOP);
   String ON;         ON += FPSTR(ONP);
@@ -1728,9 +1744,9 @@ void handleControl(){
   String last_light_state = lightState;
   String last_light_state2 = lightState2;
 
-  if (server.args() > 0 ) {
-    for ( size_t i = 0; i < server.args(); i++ ) {
-      if (server.argName(i) == "1" && server.arg(i) == "1") {
+  if (WebServer.args() > 0 ) {
+    for ( size_t i = 0; i < WebServer.args(); i++ ) {
+      if (WebServer.argName(i) == "1" && WebServer.arg(i) == "1") {
         digitalWrite(atoi(JConf.light_pin), !digitalRead(atoi(JConf.light_pin)));
         if (digitalRead(atoi(JConf.light_pin)) == HIGH){
           lightState = ON;
@@ -1738,11 +1754,11 @@ void handleControl(){
           lightState = OFF;
         }
       }
-      if (server.argName(i) == "1" && server.arg(i) == "2") {
+      if (WebServer.argName(i) == "1" && WebServer.arg(i) == "2") {
         lightState = AUTO;
       }
 
-      if (server.argName(i) == "2" && server.arg(i) == "1") {
+      if (WebServer.argName(i) == "2" && WebServer.arg(i) == "1") {
         digitalWrite(atoi(JConf.light_pin2), !digitalRead(atoi(JConf.light_pin2)));
         if (digitalRead(atoi(JConf.light_pin2)) == HIGH){
           lightState2 = ON;
@@ -1750,12 +1766,12 @@ void handleControl(){
           lightState2 = OFF;
         }
       }
-      if (server.argName(i) == "2" && server.arg(i) == "2") {
+      if (WebServer.argName(i) == "2" && WebServer.arg(i) == "2") {
         lightState2 = AUTO;
       }
       #ifdef DEBUG
-      Serial.println(server.argName(i));
-      Serial.println(server.arg(i));
+      Serial.println(WebServer.argName(i));
+      Serial.println(WebServer.arg(i));
       #endif
       if (last_light_state != lightState || last_light_state2 != lightState2){
         LightControl();
@@ -1764,20 +1780,16 @@ void handleControl(){
     }
   }
 
-  server.send ( 200, "text/html", "OK");
+  WebServer.send ( 200, "text/html", "OK");
 }
 
 
 
-void WebControl(void) {
+void WebPinControl(void) {
   #ifdef DEBUG
     Serial.print(F("WebControl()"));  Serial.println();
   #endif
 
-  server.on("/pincontrol", []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
 
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerEnd;             headerEnd += FPSTR(headerEndP);
@@ -1799,14 +1811,11 @@ void WebControl(void) {
 
     String pinControl = headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + javaScriptPinControl + containerEnd + siteEnd;
 
-    server.send ( 200, "text/html", pinControl);
-  });
+    WebServer.send ( 200, "text/html", pinControl);
+}
 
 
-  server.on("/controlstatus", []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
+void WebPinControlStatus(void) {
 
     LightControl();
     //MqttPubLightState();
@@ -1912,12 +1921,9 @@ void WebControl(void) {
     data+=String(F("</tbody></table></div>"));
 
 
-    server.send ( 200, "text/html", data);
-  });
-
-
-  server.on("/control", handleControl);
+    WebServer.send ( 200, "text/html", data);
 }
+
 
 
 #if defined(UART_ON)
@@ -1925,11 +1931,6 @@ void WebAnalogUart(void) {
   #ifdef DEBUG
     Serial.print(F("WebAnalogUart()"));  Serial.println();
   #endif
-
-  server.on("/analog", []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
 
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerEnd;             headerEnd += FPSTR(headerEndP);
@@ -1974,8 +1975,7 @@ void WebAnalogUart(void) {
     ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin4 + panelBodyEnd;
     ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin5 + panelBodyEnd;
     
-    server.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + title1 + ApinValue + panelEnd + title2 + ApinDelay + panelEnd + containerEnd + siteEnd);
-  });
+    WebServer.send ( 200, "text/html", headerStart + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + title1 + ApinValue + panelEnd + title2 + ApinDelay + panelEnd + containerEnd + siteEnd);
 }
 #endif
 
@@ -1984,11 +1984,6 @@ void WebGreenhouse(void) {
   #ifdef DEBUG
     Serial.print(F("WebGreenhouse()"));  Serial.println();
   #endif
-
-  server.on("/greenhouse", []() {
-
-    server.sendHeader("Connection", "close");
-    server.sendHeader("Access-Control-Allow-Origin", "*");
 
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerEnd;             headerEnd += FPSTR(headerEndP);
@@ -2024,19 +2019,19 @@ void WebGreenhouse(void) {
     data += panelHeaderEnd;
     data += inputBodyStart;
 
-    String payload=server.arg("green_light_on");
+    String payload=WebServer.arg("green_light_on");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.green_light_on, sizeof(JConf.green_light_on));
     }
     data += inputBodyName + String(F("Время включения")) + inputBodyPOST + String(F("green_light_on")) + inputPlaceHolder + JConf.green_light_on + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("green_light_off");
+    payload=WebServer.arg("green_light_off");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.green_light_off, sizeof(JConf.green_light_off));
     }
     data += inputBodyName + String(F("Время выключения")) + inputBodyPOST + String(F("green_light_off")) + inputPlaceHolder + JConf.green_light_off + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("green_light_pin");
+    payload=WebServer.arg("green_light_pin");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.green_light_pin, sizeof(JConf.green_light_pin));
     }
@@ -2049,25 +2044,25 @@ void WebGreenhouse(void) {
     data += panelHeaderEnd;
     data += inputBodyStart;
 
-    payload=server.arg("green_humidity_threshold_up");
+    payload=WebServer.arg("green_humidity_threshold_up");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.green_humidity_threshold_up, sizeof(JConf.green_humidity_threshold_up));
     }
     data += inputBodyName + String(F("Верхний порог")) + inputBodyPOST + String(F("green_humidity_threshold_up")) + inputPlaceHolder + JConf.green_humidity_threshold_up + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("green_humidity_threshold_down");
+    payload=WebServer.arg("green_humidity_threshold_down");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.green_humidity_threshold_down, sizeof(JConf.green_humidity_threshold_down));
     }
     data += inputBodyName + String(F("Нижний порог")) + inputBodyPOST + String(F("green_humidity_threshold_down")) + inputPlaceHolder + JConf.green_humidity_threshold_down + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("green_humidity_sensor_pin");
+    payload=WebServer.arg("green_humidity_sensor_pin");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.green_humidity_sensor_pin, sizeof(JConf.green_humidity_sensor_pin));
     }
     data += inputBodyName + String(F("Пин датчика")) + inputBodyPOST + String(F("green_humidity_sensor_pin")) + inputPlaceHolder + JConf.green_humidity_sensor_pin + inputBodyClose + inputBodyCloseDiv;
 
-    payload=server.arg("green_pump_pin");
+    payload=WebServer.arg("green_pump_pin");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.green_pump_pin, sizeof(JConf.green_pump_pin));
     }
@@ -2078,8 +2073,7 @@ void WebGreenhouse(void) {
 
     JConf.saveConfig();
 
-    server.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
-  });
+    WebServer.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
 ///////////////////////////////////   WEB PAGES  End  //////////////////////////////////////////////
 
@@ -2132,8 +2126,10 @@ void handleXML(){
 
   XML+=String(F("</Donnees>")); 
 
-  server.send(200,"text/xml",XML);
+  WebServer.send(200,"text/xml",XML);
 }
+
+
 
 
 void setup() {
@@ -2238,20 +2234,9 @@ void setup() {
   
   client.setCallback (callback);
 
-  WebUpdate();
-  WebReboot();
-  WebRoot();
-  WebEspConf();
-  WebMqttConf();
-  WebControl();
-  #ifdef UART_ON
-  WebAnalogUart();
-  #endif
-  WebGreenhouse();
-  server.on("/xml",handleXML);
 
-  // start Web Server
-  server.begin();
+  WebServerInit();
+
 
   #ifdef DEBUG
   Serial.println();  Serial.println(F("Server started"));
@@ -2278,7 +2263,7 @@ void setup() {
 
 void loop() {
   // handle web server
-  server.handleClient();
+  WebServer.handleClient();
 
   if (millis() - getDataTimer >= atoi(JConf.get_data_delay) * 1000){
     getDataTimer = millis();
