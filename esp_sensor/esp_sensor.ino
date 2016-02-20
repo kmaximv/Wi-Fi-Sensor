@@ -1431,7 +1431,16 @@ void WebEspConf(void) {
     String data = title1 + network_html + inputBodyStart;
 
     bool config_changed = false;
-    String payload=server.arg("sta_ssid");
+
+    String payload=server.arg("module_id");
+    if (payload.length() > 0 ) {
+      payload.toCharArray(JConf.module_id, sizeof(JConf.module_id));
+      config_changed = true;
+    }
+    data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
+
+
+    payload=server.arg("sta_ssid");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.sta_ssid, sizeof(JConf.sta_ssid));
       config_changed = true;
