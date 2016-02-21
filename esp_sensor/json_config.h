@@ -10,7 +10,7 @@
 #define BME280_ON
 //#define SHT21_ON
 
-#define DEBUG
+//#define DEBUG
 #define DEBUG_JSON_CONFIG
 
 
@@ -36,15 +36,15 @@ class JsonConf
     bool printConfig();
 
     char module_id                    [32] = "ESP8266"            ;
-    char sta_ssid                     [32] = "HomeNET"            ;
-    char sta_pwd                      [32] = "Asdf1234"           ;
+    char sta_ssid                     [32] = "IoT"                ;
+    char sta_pwd                      [32] = "Poiu0987"           ;
     char static_ip_mode               [32] = "0"                  ;
-    char static_ip                    [32] = "192.168.1.220"      ;
-    char static_gateway               [32] = "192.168.1.1"        ;
+    char static_ip                    [32] = "192.168.2.220"      ;
+    char static_gateway               [32] = "192.168.2.1"        ;
     char static_subnet                [32] = "255.255.255.0"      ;
     char ntp_server                   [32] = "europe.pool.ntp.org";
     char my_time_zone                 [32] = "+6"                 ;
-    char mqtt_server                  [32] = "192.168.1.200"      ;
+    char mqtt_server                  [32] = "192.168.2.205"      ;
     char mqtt_port                    [32] = "1883"               ;
     char mqtt_user                    [32] = "none"               ;
     char mqtt_pwd                     [32] = "none"               ;

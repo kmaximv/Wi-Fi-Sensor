@@ -7,7 +7,7 @@
 #include <BH1750.h>
 #include <NTPClient.h>
 #include "json_config.h"
-
+#include <ArduinoJson.h>
 
 
 #if defined(UART_ON)
@@ -40,7 +40,7 @@ ADC_MODE(ADC_VCC);
 float voltage_float;
 
 
-const char *ver                = "1.07"              ;         
+const char *ver                = "1.08"              ;         
 
 const char *lux                = "Lux"               ;        
 const char *lightType          = "LightType"         ;              
@@ -360,8 +360,9 @@ const char navbarUartP[] PROGMEM =
 const char navbarEndP[] PROGMEM =
 "<li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'>\
 <span class='glyphicon glyphicon-cog'></span> Configure<span class='caret'></span></a><ul class='dropdown-menu'>\
-<li><a href='/espconf'>Configure ESP</a></li>\
-<li><a href='/mqttconf'>Configure MQTT</a></li>\
+<li><a href='/wificonf'>Wi-Fi</a></li>\
+<li><a href='/espconf'>ESP</a></li>\
+<li><a href='/mqttconf'>MQTT</a></li>\
 <li><a href='/update'>Update frimware</a></li>\
 <li><a href='/reboot'>Reboot ESP</a></li>\
 </ul></li></ul></div></div></nav>"; 
@@ -881,12 +882,14 @@ bool MqttPubData()
     Serial.print(F("MqttPubData()"));  Serial.println();
   #endif
 
-  if (!client.connected()){
+  if (client.state() != 0){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
     #endif
     return false;
   }
+
+  Serial.print(F("MQTT data send"));  Serial.println();
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  lux, JConf.mqtt_name);
   client.publish(topic_buff, luxString.c_str());
@@ -1203,41 +1206,6 @@ void TestSystemPrint()
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////   WEB PAGES  Start  //////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-void WebServerInit()
-{
-  // Prepare webserver pages
-  WebServer.on("/", WebRoot);
-  WebServer.on("/reboot", WebReboot);
-  WebServer.on("/update", WebUpdate);
-  WebServer.onFileUpload(WebFileUpload);
-  WebServer.on("/upload_sketch", HTTP_POST, WebUploadSketch);
-
-  WebServer.on("/espconf", WebEspConf);
-  WebServer.on("/mqttconf", WebMqttConf);
-
-  WebServer.on("/control", handleControl);
-
-  WebServer.on("/pincontrol", WebPinControl);
-  WebServer.on("/controlstatus", WebPinControlStatus);
-
-#ifdef UART_ON
-  WebServer.on("/analog", WebAnalogUart);
-#endif
-
-  WebServer.on("/greenhouse", WebGreenhouse);
-
-  WebServer.on("/xml",handleXML);
-
-/*
-  WebServer.on("/upload", HTTP_GET, handle_upload);
-  WebServer.on("/upload", HTTP_POST, handle_upload_post, handleFileUpload);
-  WebServer.onNotFound(handleNotFound);
-
-  if (ESP.getFlashChipRealSize() > 524288)
-    httpUpdater.setup(&WebServer);
-*/
-  WebServer.begin();
-}
 
 
 
@@ -1274,8 +1242,8 @@ void WebRoot(void) {
     String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
 
     String title1       = panelHeaderName + String(F("Sensor Data"))   + panelHeaderEnd;
-    title1             += panelBodySymbol + String(F("tint"))          + panelBodyName + String(F("Humidity"))    + panelBodyValue + String(F(" id='humidityId'")) + closingAngleBracket      + panelBodyEnd;
     title1             += panelBodySymbol + String(F("fire"))          + panelBodyName + String(F("Temperature")) + panelBodyValue + String(F(" id='temperatureId'")) + closingAngleBracket   + panelBodyEnd;
+    title1             += panelBodySymbol + String(F("tint"))          + panelBodyName + String(F("Humidity"))    + panelBodyValue + String(F(" id='humidityId'")) + closingAngleBracket      + panelBodyEnd;
     #ifdef BME280_ON
       title1           += panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + String(F(" id='pressureId'")) + closingAngleBracket      + panelBodyEnd;
     #endif
@@ -1415,7 +1383,7 @@ void WebUploadSketch(void) {
 }
 
 
-void WebEspConf(void) {
+void WebWiFiConf(void) {
   #ifdef DEBUG
     Serial.print(F("WebEspConf()"));  Serial.println();
   #endif
@@ -1517,7 +1485,64 @@ void WebEspConf(void) {
     data += inputBodyName + String(F("Static Subnet"))  + inputBodyPOST + String(F("static_subnet"))  + inputPlaceHolder + JConf.static_subnet  + inputBodyClose + inputBodyCloseDiv;
 
 
-    payload=WebServer.arg("light_pin");
+    data += inputBodyEnd;
+
+    if (config_changed){
+      JConf.saveConfig();
+    }
+
+    WebServer.send ( 200, "text/html", headerStart + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+}
+
+
+
+
+
+void WebEspConf(void) {
+  #ifdef DEBUG
+    Serial.print(F("WebEspConf()"));  Serial.println();
+  #endif
+
+    String headerStart;           headerStart += FPSTR(headerStartP);
+    String headerEnd;             headerEnd += FPSTR(headerEndP);
+    String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
+    String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarNonActive += FPSTR(navbarUartP);
+    #endif
+
+    String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
+    String containerStart;        containerStart += FPSTR(containerStartP);
+    String containerEnd;          containerEnd += FPSTR(containerEndP);
+    String siteEnd;               siteEnd += FPSTR(siteEndP);
+    String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
+    String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
+    String panelEnd;              panelEnd += FPSTR(panelEndP);
+    String panelBodySymbol;       panelBodySymbol += FPSTR(panelBodySymbolP);
+    String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
+    String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
+    String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
+    String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
+    String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
+    String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
+    String inputPlaceHolder;      inputPlaceHolder += FPSTR(inputPlaceHolderP);
+    String inputBodyClose;        inputBodyClose += FPSTR(inputBodyCloseP);
+    String inputBodyCloseDiv;     inputBodyCloseDiv += FPSTR(inputBodyCloseDivP);
+    String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
+    String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
+    String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
+
+    String title1 = panelHeaderName + String(F("ESP Configuration")) + panelHeaderEnd;
+    String data = title1 + inputBodyStart;
+
+    bool config_changed = false;
+
+
+
+    String payload=WebServer.arg("light_pin");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.light_pin, sizeof(JConf.light_pin));
       config_changed = true;
@@ -2129,6 +2154,46 @@ void handleXML(){
   WebServer.send(200,"text/xml",XML);
 }
 
+
+void WebServerInit()
+{
+  // Prepare webserver pages
+  WebServer.on("/", WebRoot);
+  WebServer.on("/reboot", WebReboot);
+  WebServer.on("/update", WebUpdate);
+  WebServer.onFileUpload(WebFileUpload);
+  WebServer.on("/upload_sketch", WebUploadSketch);
+  //WebServer.on("/upload_sketch", HTTP_POST, WebFileUpload);
+
+
+  WebServer.on("/wificonf", WebWiFiConf);
+
+  WebServer.on("/espconf", WebEspConf);
+  WebServer.on("/mqttconf", WebMqttConf);
+
+  WebServer.on("/control", handleControl);
+
+  WebServer.on("/pincontrol", WebPinControl);
+  WebServer.on("/controlstatus", WebPinControlStatus);
+
+#ifdef UART_ON
+  WebServer.on("/analog", WebAnalogUart);
+#endif
+
+  WebServer.on("/greenhouse", WebGreenhouse);
+
+  WebServer.on("/xml",handleXML);
+
+/*
+  WebServer.on("/upload", HTTP_GET, handle_upload);
+  WebServer.on("/upload", HTTP_POST, handle_upload_post, handleFileUpload);
+  WebServer.onNotFound(handleNotFound);
+
+  if (ESP.getFlashChipRealSize() > 524288)
+    httpUpdater.setup(&WebServer);
+*/
+  WebServer.begin();
+}
 
 
 
