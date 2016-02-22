@@ -573,7 +573,7 @@ void GetBmeSensorData()
     Serial.print(F("Temperature: "));  Serial.print(temperatureString);  Serial.println(F(" C"));
   #endif
 
-  pressureString = String(bmeSensor.readFloatPressure()/133.3);
+  pressureString = String(bmeSensor.readFloatPressure()/133.3F);
   #ifdef DEBUG
     Serial.print(F("Pressure: "));  Serial.print(pressureString);  Serial.println(F(" mm"));
   #endif
