@@ -43,6 +43,7 @@ class JsonConf
     char static_ip                    [32] = "192.168.2.220"      ;
     char static_gateway               [32] = "192.168.2.1"        ;
     char static_subnet                [32] = "255.255.255.0"      ;
+    char ntp_enable                   [32] = "1"                  ;
     char ntp_server                   [32] = "europe.pool.ntp.org";
     char my_time_zone                 [32] = "+6"                 ;
     char mqtt_enable                  [32] = "1"                  ;

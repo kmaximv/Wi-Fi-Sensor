@@ -366,6 +366,7 @@ const char navbarEndP[] PROGMEM =
 <li><a href='/wificonf'>Wi-Fi</a></li>\
 <li><a href='/espconf'>ESP</a></li>\
 <li><a href='/mqttconf'>MQTT</a></li>\
+<li><a href='/ntpconf'>NTP time</a></li>\
 <li><a href='/update'>Update frimware</a></li>\
 <li><a href='/reboot'>Reboot ESP</a></li>\
 </ul></li></ul></div></div></nav>"; 
@@ -1261,7 +1262,11 @@ void WebRoot(void) {
     //title2             += panelBodySymbol + String(F("tag"))           + panelBodyName + String(F("MQTT Prefix")) + panelBodyValue + closingAngleBracket + JConf.mqtt_name   + panelBodyEnd;
 
     title2             += panelBodySymbol + String(F("time"))          + panelBodyName + String(F("Uptime"))      + panelBodyValue + String(F(" id='uptimeId'"))     + closingAngleBracket  + panelBodyEnd;
-    title2             += panelBodySymbol + String(F("time"))          + panelBodyName + String(F("NTP time"))    + panelBodyValue + String(F(" id='ntpTimeId'"))    + closingAngleBracket  + panelBodyEnd;
+
+    if (atoi(JConf.ntp_enable) == 1) {
+      title2           += panelBodySymbol + String(F("time"))          + panelBodyName + String(F("NTP time"))    + panelBodyValue + String(F(" id='ntpTimeId'"))    + closingAngleBracket  + panelBodyEnd;
+    }
+
     title2             += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Voltage"))     + panelBodyValue + String(F(" id='vccId'"))        + closingAngleBracket  + panelBodyEnd;
     title2             += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
     //title2             += panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + String(ver)                      + panelBodyEnd;
@@ -1786,6 +1791,89 @@ void WebMqttConf(void) {
 
 
 
+void WebNTPConf(void) {
+  #ifdef DEBUG
+    Serial.print(F("WebNTPConf()"));  Serial.println();
+  #endif
+
+    String headerStart;           headerStart += FPSTR(headerStartP);
+    String headerStart2;          headerStart2 += FPSTR(headerStart2P);
+    String headerEnd;             headerEnd += FPSTR(headerEndP);
+    String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
+    String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarNonActive += FPSTR(navbarUartP);
+    #endif
+
+    String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
+    String containerStart;        containerStart += FPSTR(containerStartP);
+    String containerEnd;          containerEnd += FPSTR(containerEndP);
+    String siteEnd;               siteEnd += FPSTR(siteEndP);
+    String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
+    String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
+
+    String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
+    String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
+    String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
+    String inputPlaceHolder;      inputPlaceHolder += FPSTR(inputPlaceHolderP);
+    String inputBodyClose;        inputBodyClose += FPSTR(inputBodyCloseP);
+    String inputBodyCloseDiv;     inputBodyCloseDiv += FPSTR(inputBodyCloseDivP);
+    String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
+    String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
+    String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
+
+    String data;
+    data += panelHeaderName;
+    data += String(F("NTP Configuration"));
+    data += panelHeaderEnd;
+    data += inputBodyStart;
+
+    bool config_changed = false;
+    String payload = "";
+
+
+    payload=WebServer.arg("ntp_enable");
+    if (payload.length() > 0) {
+      payload.toCharArray(JConf.ntp_enable, sizeof(JConf.ntp_enable));
+      config_changed = true;
+    } 
+
+    if (atoi(JConf.ntp_enable) == 1){
+      data += String(F("<div><input type='hidden' name='ntp_enable' value='0'></div>"));
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='ntp_enable' value='1' checked='true'>NTP Enable</label></div>"));
+
+      payload=WebServer.arg("ntp_server");
+      if (payload.length() > 0 ) {
+        payload.toCharArray(JConf.ntp_server, sizeof(JConf.ntp_server));
+        config_changed = true;
+      }
+      data += inputBodyName + String(F("Server NTP")) + inputBodyPOST + String(F("ntp_server")) + inputPlaceHolder + JConf.ntp_server + inputBodyClose + inputBodyCloseDiv;
+
+      payload=WebServer.arg("my_time_zone");
+      if (payload.length() > 0 ) {
+        payload.toCharArray(JConf.my_time_zone, sizeof(JConf.my_time_zone));
+        config_changed = true;
+      }
+      data += inputBodyName + String(F("Time Zone")) + inputBodyPOST + String(F("my_time_zone")) + inputPlaceHolder + JConf.my_time_zone + inputBodyClose + inputBodyCloseDiv;
+
+    } else {
+
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='ntp_enable' value='1'>NTP Enable</label></div>"));
+    }
+
+    data += inputBodyEnd;
+
+    if (config_changed){
+      JConf.saveConfig();
+    }
+
+    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+}
+
+
 void handleControl(){
   #ifdef DEBUG
     Serial.print(F("handleControl()"));  Serial.println();
@@ -2164,9 +2252,13 @@ void handleXML(){
   XML+=String(F("<uptime>"));
   XML+=uptimeString;
   XML+=String(F("</uptime>"));
-  XML+=String(F("<ntpTime>"));
-  XML+=ntpTimeString;
-  XML+=String(F("</ntpTime>"));
+
+  if (atoi(JConf.ntp_enable) == 1) {
+    XML+=String(F("<ntpTime>"));
+    XML+=ntpTimeString;
+    XML+=String(F("</ntpTime>"));
+  }
+
   XML+=String(F("<vcc>"));
   XML+=String(voltage_float);
   XML+=String(F(" V"));
@@ -2204,6 +2296,7 @@ void WebServerInit()
 
   WebServer.on("/espconf", WebEspConf);
   WebServer.on("/mqttconf", WebMqttConf);
+  WebServer.on("/ntpconf", WebNTPConf);
 
   WebServer.on("/control", handleControl);
 
@@ -2370,8 +2463,12 @@ void loop() {
 
   if (millis() - getDataTimer >= atoi(JConf.get_data_delay) * 1000){
     getDataTimer = millis();
-    timeClient.update();
-    ntpTimeString = timeClient.getFormattedTime();
+
+    if (atoi(JConf.ntp_enable) == 1) {
+      timeClient.update();
+      ntpTimeString = timeClient.getFormattedTime();
+    }
+
     int voltage = ESP.getVcc();
     voltage_float = (float) voltage / 1000;
     #ifdef REBOOT_ON
