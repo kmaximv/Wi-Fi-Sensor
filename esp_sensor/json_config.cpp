@@ -17,6 +17,7 @@ bool JsonConf::saveConfig() {
   json["static_ip"]                     = static_ip                    ;                           
   json["static_gateway"]                = static_gateway               ;                                     
   json["static_subnet"]                 = static_subnet                ;                                   
+  json["ntp_enable"]                    = ntp_enable                   ;                               
   json["ntp_server"]                    = ntp_server                   ;                             
   json["my_time_zone"]                  = my_time_zone                 ;                           
   json["mqtt_enable"]                   = mqtt_enable                  ;                               
@@ -124,6 +125,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("static_ip"                     )) {  const char* static_ip_char                     = json["static_ip"                    ];    sprintf_P(static_ip,                     ("%s"), static_ip_char                    ); }
   if (json.containsKey("static_gateway"                )) {  const char* static_gateway_char                = json["static_gateway"               ];    sprintf_P(static_gateway,                ("%s"), static_gateway_char               ); }
   if (json.containsKey("static_subnet"                 )) {  const char* static_subnet_char                 = json["static_subnet"                ];    sprintf_P(static_subnet,                 ("%s"), static_subnet_char                ); }
+  if (json.containsKey("ntp_enable"                    )) {  const char* ntp_enable_char                    = json["ntp_enable"                   ];    sprintf_P(ntp_enable,                    ("%s"), ntp_enable_char                   ); }
   if (json.containsKey("ntp_server"                    )) {  const char* ntp_server_char                    = json["ntp_server"                   ];    sprintf_P(ntp_server,                    ("%s"), ntp_server_char                   ); }
   if (json.containsKey("my_time_zone"                  )) {  const char* my_time_zone_char                  = json["my_time_zone"                 ];    sprintf_P(my_time_zone,                  ("%s"), my_time_zone_char                 ); }
   if (json.containsKey("mqtt_enable"                   )) {  const char* mqtt_enable_char                   = json["mqtt_enable"                  ];    sprintf_P(mqtt_enable,                   ("%s"), mqtt_enable_char                  ); }
@@ -174,8 +176,10 @@ bool JsonConf::printConfig() {
   Serial.print(F("static_ip                    : "));   Serial.println(static_ip                    );
   Serial.print(F("static_gateway               : "));   Serial.println(static_gateway               );
   Serial.print(F("static_subnet                : "));   Serial.println(static_subnet                );
+  Serial.print(F("ntp_enable                   : "));   Serial.println(ntp_enable                   );
   Serial.print(F("ntp_server                   : "));   Serial.println(ntp_server                   );
   Serial.print(F("my_time_zone                 : "));   Serial.println(my_time_zone                 );
+  Serial.print(F("mqtt_enable                  : "));   Serial.println(mqtt_enable                  );
   Serial.print(F("mqtt_server                  : "));   Serial.println(mqtt_server                  );
   Serial.print(F("mqtt_port                    : "));   Serial.println(mqtt_port                    );
   Serial.print(F("mqtt_user                    : "));   Serial.println(mqtt_user                    );
