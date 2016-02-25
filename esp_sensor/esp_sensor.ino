@@ -102,7 +102,9 @@ bool motionDetect = false;
 
 WiFiClient espClient;
 
+
 NTPClient timeClient(JConf.ntp_server, atoi(JConf.my_time_zone) * 60 * 60, 60000);
+
 
 char topic_buff[120];
 char value_buff[120];
@@ -322,8 +324,11 @@ message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('pressureId').innerHTML=message;\
 xmldoc = xmlResponse.getElementsByTagName('uptime');\
 message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('uptimeId').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('ntpTime');\
+document.getElementById('uptimeId').innerHTML=message;";
+
+
+const char javaScript4P[] PROGMEM = 
+"xmldoc = xmlResponse.getElementsByTagName('ntpTime');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('ntpTimeId').innerHTML=message;";
 
@@ -346,7 +351,9 @@ const char bodyNonAjaxP[] PROGMEM = "<body>";
 
 const char navbarStartP[] PROGMEM = 
 "<nav class='navbar navbar-inverse'><div class='container-fluid'><div class='navbar-header'>\
-<a class='navbar-brand' href='/'>ESP8266</a></div><div><ul class='nav navbar-nav'>";
+<a class='navbar-brand' href='/'>";
+//JConf.module_id
+const char navbarStart2P[] PROGMEM = "</a></div><div><ul class='nav navbar-nav'>";
 
 const char navbarNonActiveP[] PROGMEM = "<li>";
 const char navbarActiveP[] PROGMEM = "<li class='active'>";
@@ -1224,9 +1231,11 @@ void WebRoot(void) {
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String javaScript;            javaScript += FPSTR(javaScriptP);
     String javaScript3;           javaScript3 += FPSTR(javaScript3P);
+    String javaScript4;           javaScript4 += FPSTR(javaScript4P);
     String javaScriptEnd;         javaScriptEnd += FPSTR(javaScriptEndP);
     String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarActive;          navbarActive += FPSTR(navbarActiveP);
 
     navbarActive += FPSTR(navbarBeginP);
@@ -1271,7 +1280,13 @@ void WebRoot(void) {
     title2             += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Free Memory")) + panelBodyValue + String(F(" id='freeMemoryId'")) + closingAngleBracket  + panelBodyEnd;
     //title2             += panelBodySymbol + String(F("flag"))          + panelBodyName + String(F("Version"))     + panelBodyValue + closingAngleBracket + String(ver)                      + panelBodyEnd;
 
-    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + javaScript + javaScript3 + javaScriptEnd + bodyAjax + navbarStart + navbarActive + navbarEnd + containerStart + title1 + panelEnd + title2 + panelEnd +  containerEnd + siteEnd);
+    String data = headerStart + JConf.module_id + headerStart2 + headerEnd + javaScript + javaScript3;
+    if (atoi(JConf.ntp_enable) == 1) {
+      data += javaScript4;
+    }
+    data += javaScriptEnd + bodyAjax + navbarStart + JConf.module_id + navbarStart2 +navbarActive + navbarEnd + containerStart + title1 + panelEnd + title2 + panelEnd +  containerEnd + siteEnd;
+
+    WebServer.send ( 200, "text/html", data);
 }
 
 
@@ -1288,6 +1303,7 @@ void WebReboot(void) {
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
 
     navbarNonActive += FPSTR(navbarBeginP);
@@ -1301,7 +1317,7 @@ void WebReboot(void) {
     String siteEnd;               siteEnd += FPSTR(siteEndP);
 
     String data = String(F("<div class='col-md-4'><div class='page-header'><h1>Reboot ESP</h1></div><div class='alert alert-info' role='alert'><a href='#' class='alert-link'>Rebooting...</a></div></div>"));
-    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
     ESP.restart();
 
 }
@@ -1318,6 +1334,7 @@ void WebUpdate(void) {
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
 
     navbarNonActive += FPSTR(navbarBeginP);
@@ -1331,7 +1348,7 @@ void WebUpdate(void) {
     String siteEnd;               siteEnd += FPSTR(siteEndP);
     String sketchUploadForm;      sketchUploadForm += FPSTR(sketchUploadFormP);
 
-    WebServer.send(200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + sketchUploadForm + containerEnd + siteEnd);
+    WebServer.send(200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + sketchUploadForm + containerEnd + siteEnd);
 }
 
 
@@ -1376,6 +1393,7 @@ void WebUploadSketch(void) {
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
 
     navbarNonActive += FPSTR(navbarBeginP);
@@ -1391,7 +1409,7 @@ void WebUploadSketch(void) {
     String varDataString = String(F("<div class='col-md-4'><div class='page-header'><h1>Update Frimware</h1></div><div class='alert alert-success'>")) + ((Update.hasError()) ? String(F("FAIL")) : String(F("Update Frimware: OK"))) + String(F("</div></div>"));
 
 
-    WebServer.send(200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + varDataString + containerEnd + siteEnd);
+    WebServer.send(200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + varDataString + containerEnd + siteEnd);
     ESP.restart();
 }
 
@@ -1406,6 +1424,7 @@ void WebWiFiConf(void) {
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
 
     navbarNonActive += FPSTR(navbarBeginP);
@@ -1505,7 +1524,7 @@ void WebWiFiConf(void) {
       JConf.saveConfig();
     }
 
-    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
 
 
@@ -1522,6 +1541,7 @@ void WebEspConf(void) {
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
 
     navbarNonActive += FPSTR(navbarBeginP);
@@ -1633,7 +1653,7 @@ void WebEspConf(void) {
       JConf.saveConfig();
     }
 
-    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
 
 
@@ -1648,6 +1668,7 @@ void WebMqttConf(void) {
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
 
     navbarNonActive += FPSTR(navbarBeginP);
@@ -1786,7 +1807,7 @@ void WebMqttConf(void) {
       JConf.saveConfig();
     }
 
-    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
 
 
@@ -1801,6 +1822,7 @@ void WebNTPConf(void) {
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
 
     navbarNonActive += FPSTR(navbarBeginP);
@@ -1832,6 +1854,7 @@ void WebNTPConf(void) {
     data += inputBodyStart;
 
     bool config_changed = false;
+    bool enable = false;
     String payload = "";
 
 
@@ -1839,24 +1862,34 @@ void WebNTPConf(void) {
     if (payload.length() > 0) {
       payload.toCharArray(JConf.ntp_enable, sizeof(JConf.ntp_enable));
       config_changed = true;
+      enable = true;
     } 
 
+    payload=WebServer.arg("ntp_server");
+    if (payload.length() > 0 ) {
+      payload.toCharArray(JConf.ntp_server, sizeof(JConf.ntp_server));
+      config_changed = true;
+    }
+
+    payload=WebServer.arg("my_time_zone");
+    if (payload.length() > 0 ) {
+      payload.toCharArray(JConf.my_time_zone, sizeof(JConf.my_time_zone));
+      config_changed = true;
+    }
+
+    if (config_changed){
+      if (!enable){
+        JConf.ntp_enable[0] = '\0';
+      }
+      JConf.saveConfig();
+    }
+
     if (atoi(JConf.ntp_enable) == 1){
-      data += String(F("<div><input type='hidden' name='ntp_enable' value='0'></div>"));
+      //data += String(F("<div><input type='hidden' name='ntp_enable' value='0'></div>"));
       data += String(F("<div class='checkbox'><label><input type='checkbox' name='ntp_enable' value='1' checked='true'>NTP Enable</label></div>"));
 
-      payload=WebServer.arg("ntp_server");
-      if (payload.length() > 0 ) {
-        payload.toCharArray(JConf.ntp_server, sizeof(JConf.ntp_server));
-        config_changed = true;
-      }
       data += inputBodyName + String(F("Server NTP")) + inputBodyPOST + String(F("ntp_server")) + inputPlaceHolder + JConf.ntp_server + inputBodyClose + inputBodyCloseDiv;
 
-      payload=WebServer.arg("my_time_zone");
-      if (payload.length() > 0 ) {
-        payload.toCharArray(JConf.my_time_zone, sizeof(JConf.my_time_zone));
-        config_changed = true;
-      }
       data += inputBodyName + String(F("Time Zone")) + inputBodyPOST + String(F("my_time_zone")) + inputPlaceHolder + JConf.my_time_zone + inputBodyClose + inputBodyCloseDiv;
 
     } else {
@@ -1866,11 +1899,8 @@ void WebNTPConf(void) {
 
     data += inputBodyEnd;
 
-    if (config_changed){
-      JConf.saveConfig();
-    }
 
-    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
 
 
@@ -1941,6 +1971,7 @@ void WebPinControl(void) {
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
 
     navbarNonActive += FPSTR(navbarBeginP);
@@ -1955,7 +1986,7 @@ void WebPinControl(void) {
 
     String javaScriptPinControl;               javaScriptPinControl += FPSTR(javaScriptPinControlP);
 
-    String pinControl = headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + javaScriptPinControl + containerEnd + siteEnd;
+    String pinControl = headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + javaScriptPinControl + containerEnd + siteEnd;
 
     WebServer.send ( 200, "text/html", pinControl);
 }
@@ -2084,6 +2115,7 @@ void WebAnalogUart(void) {
     String javaScript2;           javaScript2 += FPSTR(javaScript2P);
     String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
 
     navbarNonActive += FPSTR(navbarBeginP);
@@ -2121,7 +2153,7 @@ void WebAnalogUart(void) {
     ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin4 + panelBodyEnd;
     ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin5 + panelBodyEnd;
     
-    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + title1 + ApinValue + panelEnd + title2 + ApinDelay + panelEnd + containerEnd + siteEnd);
+    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + title1 + ApinValue + panelEnd + title2 + ApinDelay + panelEnd + containerEnd + siteEnd);
 }
 #endif
 
@@ -2136,6 +2168,7 @@ void WebGreenhouse(void) {
     String headerEnd;             headerEnd += FPSTR(headerEndP);
     String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
     String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
     String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
 
     navbarNonActive += FPSTR(navbarBeginP);
@@ -2220,7 +2253,7 @@ void WebGreenhouse(void) {
 
     JConf.saveConfig();
 
-    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
 ///////////////////////////////////   WEB PAGES  End  //////////////////////////////////////////////
 
@@ -2429,6 +2462,7 @@ void setup() {
     mqttClient.setCallback (callback);
   }
 
+  
 
 
   WebServerInit();
