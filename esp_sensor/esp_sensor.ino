@@ -79,7 +79,7 @@ String lightState =        "AUTO";
 String lightState2 =       "AUTO";
 
 BH1750 lightSensor;
-PubSubClient client;
+PubSubClient mqttClient;
 
 long Day=0;
 int Hour =0;
@@ -593,7 +593,7 @@ void GetBmeSensorData()
   #endif
   float altitudeData = bmeSensor.readFloatAltitudeMeters();
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.conf[PUBLISH_TOPIC),  altitude, JConf.conf[MQTT_NAME));
-  client.publish(topic_buff, floatToChar(altitudeData));
+  mqttClient.publish(topic_buff, floatToChar(altitudeData));
 */
 }
 #endif
@@ -654,12 +654,9 @@ void DHT22Sensor()
     #ifdef DEBUG
       Serial.print(F("Failed to read from DHT. Number errors: "));  Serial.println(errorDHTdata);
     #endif
-  } else if (client.connected()) {
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  temperature, JConf.mqtt_name);
-    client.publish(topic_buff, floatToChar(temperatureData));
-    
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  humidity, JConf.mqtt_name);
-    client.publish(topic_buff, floatToChar(humidityData));
+  } else {
+    temperatureString = String(temperatureData);
+    humidityString = String(humidityData);
   }
 }
 #endif
@@ -673,9 +670,11 @@ void MotionDetect(){
     #endif
     motionDetect = true;
     LightControl();
-    if (client.connected()) {
-      sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  motionSensor, JConf.mqtt_name);
-      client.publish(topic_buff, "ON");
+    if (atoi(JConf.mqtt_enable) == 1) {
+      if (mqttClient.connected()) {
+        sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  motionSensor, JConf.mqtt_name);
+        mqttClient.publish(topic_buff, "ON");
+      }
     }
   }
 }
@@ -823,7 +822,7 @@ bool MqttPubLightState(){
     Serial.print(F("MqttPubLightState()"));  Serial.println();
   #endif
 
-  if (!client.connected()){
+  if (!mqttClient.connected()){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
     #endif
@@ -842,7 +841,7 @@ bool MqttPubLightState(){
   } else {
     lightStateNum = String(F("2"));
   }
-  client.publish(topic_buff, lightStateNum.c_str());
+  mqttClient.publish(topic_buff, lightStateNum.c_str());
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  lightType2, JConf.mqtt_name);
   if (lightState2 == ON){
@@ -852,7 +851,7 @@ bool MqttPubLightState(){
   } else {
     lightStateNum = String(F("2"));
   }
-  client.publish(topic_buff, lightStateNum.c_str());
+  mqttClient.publish(topic_buff, lightStateNum.c_str());
 
   return true;
 }
@@ -860,7 +859,7 @@ bool MqttPubLightState(){
 
 bool MqttPubLightOffDelay() {
 
-  if (!client.connected()){
+  if (!mqttClient.connected()){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
     #endif
@@ -868,10 +867,10 @@ bool MqttPubLightOffDelay() {
   }
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  motionsensortimer, JConf.mqtt_name);
-  client.publish(topic_buff, JConf.lightoff_delay);
+  mqttClient.publish(topic_buff, JConf.lightoff_delay);
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  motionsensortimer2, JConf.mqtt_name);
-  client.publish(topic_buff, JConf.light2off_delay);
+  mqttClient.publish(topic_buff, JConf.light2off_delay);
 
   return true;
 }
@@ -885,7 +884,7 @@ bool MqttPubData()
     Serial.print(F("MqttPubData()"));  Serial.println();
   #endif
 
-  if (client.state() != 0){
+  if (mqttClient.state() != 0){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
     #endif
@@ -895,43 +894,43 @@ bool MqttPubData()
   Serial.print(F("MQTT data send"));  Serial.println();
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  lux, JConf.mqtt_name);
-  client.publish(topic_buff, luxString.c_str());
+  mqttClient.publish(topic_buff, luxString.c_str());
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, temperature, JConf.mqtt_name);
-  client.publish(topic_buff, temperatureString.c_str());
+  mqttClient.publish(topic_buff, temperatureString.c_str());
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, pressure, JConf.mqtt_name);
-  client.publish(topic_buff, pressureString.c_str());
+  mqttClient.publish(topic_buff, pressureString.c_str());
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  humidity, JConf.mqtt_name);
-  client.publish(topic_buff, humidityString.c_str());
+  mqttClient.publish(topic_buff, humidityString.c_str());
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  freeMemory, JConf.mqtt_name);
-  client.publish(topic_buff, freeMemoryString.c_str());
+  mqttClient.publish(topic_buff, freeMemoryString.c_str());
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, uptime, JConf.mqtt_name);
-  client.publish(topic_buff, uptimeString.c_str());
+  mqttClient.publish(topic_buff, uptimeString.c_str());
 
 
   if (ver_send == false){
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  version, JConf.mqtt_name);
-    client.publish(topic_buff, ver);
+    mqttClient.publish(topic_buff, ver);
   }
   
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  ip, JConf.mqtt_name);
-    client.publish(topic_buff, ipString.c_str());
+    mqttClient.publish(topic_buff, ipString.c_str());
 
   
   if (mac_send == false){  
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  mac, JConf.mqtt_name);
-    client.publish(topic_buff, macString.c_str());
+    mqttClient.publish(topic_buff, macString.c_str());
   }
 
  
   #ifdef DHT_ON
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  errorsDHT, JConf.mqtt_name);
     sprintf_P(value_buff, (const char *)F("%d"), errorDHTdata);  
-    client.publish(topic_buff, value_buff);
+    mqttClient.publish(topic_buff, value_buff);
   #endif
 
   return true;
@@ -945,20 +944,20 @@ bool MqttSubscribePrint(char *sub_buff)
     Serial.print(F("MqttSubscribePrint()"));  Serial.println();
   #endif
 
-  if (!client.connected()){
+  if (!mqttClient.connected()){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
     #endif
     return false;
   }
 
-  if (client.subscribe(sub_buff)) {
+  if (mqttClient.subscribe(sub_buff)) {
     #ifdef DEBUG
       Serial.print(F("subscribe: "));  Serial.println(sub_buff);
     #endif
   } else {
     #ifdef DEBUG
-      client.disconnect();
+      mqttClient.disconnect();
       Serial.print(F("ERROR subscribe: "));  Serial.println(sub_buff);
     #endif
   }
@@ -970,7 +969,7 @@ bool MqttSubscribePrint(char *sub_buff)
 
 bool MqttSubscribe(){
 
-  if (!client.connected()){
+  if (!mqttClient.connected()){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
     #endif
@@ -1007,7 +1006,7 @@ void TestMQTTPrint()
     Serial.print(F("TestMQTTPrint()"));  Serial.println();
   #endif
 
-  int state = client.state();
+  int state = mqttClient.state();
 
   switch (state) {
     case -4:
@@ -1172,7 +1171,9 @@ void TestSystemPrint()
 
   Serial.println(F("----------------"));
 
-  TestMQTTPrint();
+  if (atoi(JConf.mqtt_enable) == 1){
+    TestMQTTPrint();
+  }
 
   Serial.println(__TIMESTAMP__);
 
@@ -1561,7 +1562,9 @@ void WebEspConf(void) {
     payload=WebServer.arg("lightoff_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.lightoff_delay, sizeof(JConf.lightoff_delay));
-      MqttPubLightOffDelay();
+      if (atoi(JConf.mqtt_enable) == 1){
+        MqttPubLightOffDelay();
+      }
       config_changed = true;
     }
     data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightoff_delay")) + inputPlaceHolder + JConf.lightoff_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
@@ -1576,7 +1579,9 @@ void WebEspConf(void) {
     payload=WebServer.arg("light2off_delay");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.light2off_delay, sizeof(JConf.light2off_delay));
-      MqttPubLightOffDelay();
+      if (atoi(JConf.mqtt_enable) == 1){
+        MqttPubLightOffDelay();
+      }
       config_changed = true;
     }
     data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2off_delay")) + inputPlaceHolder + JConf.light2off_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
@@ -1669,91 +1674,106 @@ void WebMqttConf(void) {
     data += inputBodyStart;
 
     bool config_changed = false;
+    String payload = "";
 
-    String payload=WebServer.arg("mqtt_server");
-    if (payload.length() > 0 ) {
-      payload.toCharArray(JConf.mqtt_server, sizeof(JConf.mqtt_server));
+
+    payload=WebServer.arg("mqtt_enable");
+    if (payload.length() > 0) {
+      payload.toCharArray(JConf.mqtt_enable, sizeof(JConf.mqtt_enable));
       config_changed = true;
-    }
-    data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_server")) + inputPlaceHolder + JConf.mqtt_server + inputBodyClose + inputBodyCloseDiv;
+    } 
 
-    payload=WebServer.arg("mqtt_port");
-    if (payload.length() > 0 ) {
-      payload.toCharArray(JConf.mqtt_port, sizeof(JConf.mqtt_port));
-      config_changed = true;
-    }
-    data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqtt_port")) + inputPlaceHolder + JConf.mqtt_port + inputBodyClose + inputBodyCloseDiv;
+    if (atoi(JConf.mqtt_enable) == 1){
+      data += String(F("<div><input type='hidden' name='mqtt_enable' value='0'></div>"));
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='mqtt_enable' value='1' checked='true'>MQTT Enable</label></div>"));
 
-    payload=WebServer.arg("mqtt_user");
-    if (payload.length() > 0 ) {
-      if (payload == "0"){
-        String data = "";
-        data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
-        data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
-      } else {
-        payload.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+      payload=WebServer.arg("mqtt_server");
+      if (payload.length() > 0 ) {
+        payload.toCharArray(JConf.mqtt_server, sizeof(JConf.mqtt_server));
+        config_changed = true;
       }
-      config_changed = true;
-    }
-    if (strlen(JConf.mqtt_user) != 0){
-      data += String(F("<div><input type='hidden' name='mqtt_user' value='0'></div>"));
-    } 
-    data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqtt_user")) + inputPlaceHolder + JConf.mqtt_user + inputBodyClose + inputBodyCloseDiv;
+      data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_server")) + inputPlaceHolder + JConf.mqtt_server + inputBodyClose + inputBodyCloseDiv;
 
-    payload=WebServer.arg("mqtt_pwd");
-    if (payload.length() > 0 ) {
-      if (payload == "0"){
-        String data = "";
-        data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
-        data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
-      } else {
-        payload.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+      payload=WebServer.arg("mqtt_port");
+      if (payload.length() > 0 ) {
+        payload.toCharArray(JConf.mqtt_port, sizeof(JConf.mqtt_port));
+        config_changed = true;
       }
-      config_changed = true;
-    } 
-    if (strlen(JConf.mqtt_pwd) != 0){
-      Serial.print(F("JConf.mqtt_pwd[0]"));  Serial.println(JConf.mqtt_pwd[0]);
-      data += String(F("<div><input type='hidden' name='mqtt_pwd' value='0'></div>"));
-    } 
-    data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqtt_pwd")) + inputPlaceHolder + JConf.mqtt_pwd + inputBodyClose + inputBodyCloseDiv;
+      data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqtt_port")) + inputPlaceHolder + JConf.mqtt_port + inputBodyClose + inputBodyCloseDiv;
 
-    payload=WebServer.arg("mqtt_name");
-    if (payload.length() > 0 ) {
-      payload.toCharArray(JConf.mqtt_name, sizeof(JConf.mqtt_name));
-      config_changed = true;
+      payload=WebServer.arg("mqtt_user");
+      if (payload.length() > 0 ) {
+        if (payload == "0"){
+          String data = "";
+          data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+          data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+        } else {
+          payload.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+        }
+        config_changed = true;
+      }
+      if (strlen(JConf.mqtt_user) != 0){
+        data += String(F("<div><input type='hidden' name='mqtt_user' value='0'></div>"));
+      } 
+      data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqtt_user")) + inputPlaceHolder + JConf.mqtt_user + inputBodyClose + inputBodyCloseDiv;
+
+      payload=WebServer.arg("mqtt_pwd");
+      if (payload.length() > 0 ) {
+        if (payload == "0"){
+          String data = "";
+          data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+          data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+        } else {
+          payload.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+        }
+        config_changed = true;
+      } 
+      if (strlen(JConf.mqtt_pwd) != 0){
+        Serial.print(F("JConf.mqtt_pwd[0]"));  Serial.println(JConf.mqtt_pwd[0]);
+        data += String(F("<div><input type='hidden' name='mqtt_pwd' value='0'></div>"));
+      } 
+      data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqtt_pwd")) + inputPlaceHolder + JConf.mqtt_pwd + inputBodyClose + inputBodyCloseDiv;
+
+      payload=WebServer.arg("mqtt_name");
+      if (payload.length() > 0 ) {
+        payload.toCharArray(JConf.mqtt_name, sizeof(JConf.mqtt_name));
+        config_changed = true;
+      }
+      data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.mqtt_name + inputBodyClose + inputBodyCloseDiv;
+
+      payload=WebServer.arg("publish_topic");
+      if (payload.length() > 0 ) {
+        payload.replace("%2F", String(F("/")));
+        payload.toCharArray(JConf.publish_topic, sizeof(JConf.publish_topic));
+        config_changed = true;
+      }
+      data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + JConf.publish_topic + inputBodyClose + inputBodyCloseDiv;
+
+      payload=WebServer.arg("subscribe_topic");
+      if (payload.length() > 0 ) {
+        payload.replace("%2F", String(F("/")));
+        payload.toCharArray(JConf.subscribe_topic, sizeof(JConf.subscribe_topic));
+        config_changed = true;
+      }
+      data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + JConf.subscribe_topic + inputBodyClose + inputBodyCloseDiv;
+
+      payload=WebServer.arg("publish_delay");
+      if (payload.length() > 0 ) {
+        payload.toCharArray(JConf.publish_delay, sizeof(JConf.publish_delay));
+        config_changed = true;
+      }
+      data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + JConf.publish_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+
+      payload=WebServer.arg("subscribe_delay");
+      if (payload.length() > 0 ) {
+        payload.toCharArray(JConf.subscribe_delay, sizeof(JConf.subscribe_delay));
+        config_changed = true;
+      }
+      data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + JConf.subscribe_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+
+    } else {
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='mqtt_enable' value='1'>MQTT Enable</label></div>"));
     }
-    data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.mqtt_name + inputBodyClose + inputBodyCloseDiv;
-
-    payload=WebServer.arg("publish_topic");
-    if (payload.length() > 0 ) {
-      payload.replace("%2F", String(F("/")));
-      payload.toCharArray(JConf.publish_topic, sizeof(JConf.publish_topic));
-      config_changed = true;
-    }
-    data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + JConf.publish_topic + inputBodyClose + inputBodyCloseDiv;
-
-    payload=WebServer.arg("subscribe_topic");
-    if (payload.length() > 0 ) {
-      payload.replace("%2F", String(F("/")));
-      payload.toCharArray(JConf.subscribe_topic, sizeof(JConf.subscribe_topic));
-      config_changed = true;
-    }
-    data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + JConf.subscribe_topic + inputBodyClose + inputBodyCloseDiv;
-
-    payload=WebServer.arg("publish_delay");
-    if (payload.length() > 0 ) {
-      payload.toCharArray(JConf.publish_delay, sizeof(JConf.publish_delay));
-      config_changed = true;
-    }
-    data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + JConf.publish_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
-
-    payload=WebServer.arg("subscribe_delay");
-    if (payload.length() > 0 ) {
-      payload.toCharArray(JConf.subscribe_delay, sizeof(JConf.subscribe_delay));
-      config_changed = true;
-    }
-    data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + JConf.subscribe_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
-
 
     data += inputBodyEnd;
 
@@ -1810,7 +1830,9 @@ void handleControl(){
       #endif
       if (last_light_state != lightState || last_light_state2 != lightState2){
         LightControl();
-        MqttPubLightState();
+        if (atoi(JConf.mqtt_enable) == 1) {
+          MqttPubLightState();
+        }
       }
     }
   }
@@ -1854,7 +1876,6 @@ void WebPinControl(void) {
 void WebPinControlStatus(void) {
 
     LightControl();
-    //MqttPubLightState();
 
     bool pinState;
     bool pinState2;
@@ -2301,16 +2322,20 @@ void setup() {
     WiFi.softAP(JConf.module_id);
   }
 
-  client.setClient(espClient);
 
-  if (isIPValid(JConf.mqtt_server)){
-    IPAddress mqtt_ip = stringToIp(JConf.mqtt_server);
-    client.setServer(mqtt_ip, atoi(JConf.mqtt_port));
-  } else {
-    client.setServer(JConf.mqtt_server, atoi(JConf.mqtt_port));
+  if (atoi(JConf.mqtt_enable) == 1) {
+    mqttClient.setClient(espClient);
+
+    if (isIPValid(JConf.mqtt_server)){
+      IPAddress mqtt_ip = stringToIp(JConf.mqtt_server);
+      mqttClient.setServer(mqtt_ip, atoi(JConf.mqtt_port));
+    } else {
+      mqttClient.setServer(JConf.mqtt_server, atoi(JConf.mqtt_port));
+    }
+    
+    mqttClient.setCallback (callback);
   }
-  
-  client.setCallback (callback);
+
 
 
   WebServerInit();
@@ -2426,21 +2451,24 @@ void loop() {
 
   if (WiFi.status() == WL_CONNECTED) {
 
-    if (!client.connected()) {
-      if (JConf.mqtt_user != "none" && JConf.mqtt_pwd != "none"){
-        client.connect(JConf.mqtt_name, JConf.mqtt_user, JConf.mqtt_pwd);
+    if (atoi(JConf.mqtt_enable) == 1) {
+
+      if (!mqttClient.connected()) {
+        if (JConf.mqtt_user != "none" && JConf.mqtt_pwd != "none"){
+          mqttClient.connect(JConf.mqtt_name, JConf.mqtt_user, JConf.mqtt_pwd);
+        } else {
+
+          mqttClient.connect(JConf.mqtt_name);
+        }
       } else {
-
-        client.connect(JConf.mqtt_name);
+        mqttClient.loop();
+        MqttSubscribe();
       }
-    } else {
-      client.loop();
-      MqttSubscribe();
-    }
 
-    if (millis() - publishTimer >= atoi(JConf.publish_delay) * 1000){
-      publishTimer = millis();
-      MqttPubData();
+      if (millis() - publishTimer >= atoi(JConf.publish_delay) * 1000){
+        publishTimer = millis();
+        MqttPubData();
+      }
     }
   }
 

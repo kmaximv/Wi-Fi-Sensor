@@ -10,13 +10,14 @@
 #define BME280_ON
 //#define SHT21_ON
 
-//#define DEBUG
+#define DEBUG
 #define DEBUG_JSON_CONFIG
 
 
 //#define REBOOT_ON
 
 //UART Settings    ------------------------------------------------------------
+
 //#define UART_ON
 
 #define DEBUG_ESP_UART
@@ -44,6 +45,7 @@ class JsonConf
     char static_subnet                [32] = "255.255.255.0"      ;
     char ntp_server                   [32] = "europe.pool.ntp.org";
     char my_time_zone                 [32] = "+6"                 ;
+    char mqtt_enable                  [32] = "1"                  ;
     char mqtt_server                  [32] = "192.168.2.205"      ;
     char mqtt_port                    [32] = "1883"               ;
     char mqtt_user                    [32] = "none"               ;

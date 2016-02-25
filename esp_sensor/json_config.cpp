@@ -19,6 +19,7 @@ bool JsonConf::saveConfig() {
   json["static_subnet"]                 = static_subnet                ;                                   
   json["ntp_server"]                    = ntp_server                   ;                             
   json["my_time_zone"]                  = my_time_zone                 ;                           
+  json["mqtt_enable"]                   = mqtt_enable                  ;                               
   json["mqtt_server"]                   = mqtt_server                  ;                               
   json["mqtt_port"]                     = mqtt_port                    ;                           
   json["mqtt_user"]                     = mqtt_user                    ;                           
@@ -125,6 +126,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("static_subnet"                 )) {  const char* static_subnet_char                 = json["static_subnet"                ];    sprintf_P(static_subnet,                 ("%s"), static_subnet_char                ); }
   if (json.containsKey("ntp_server"                    )) {  const char* ntp_server_char                    = json["ntp_server"                   ];    sprintf_P(ntp_server,                    ("%s"), ntp_server_char                   ); }
   if (json.containsKey("my_time_zone"                  )) {  const char* my_time_zone_char                  = json["my_time_zone"                 ];    sprintf_P(my_time_zone,                  ("%s"), my_time_zone_char                 ); }
+  if (json.containsKey("mqtt_enable"                   )) {  const char* mqtt_enable_char                   = json["mqtt_enable"                  ];    sprintf_P(mqtt_enable,                   ("%s"), mqtt_enable_char                  ); }
   if (json.containsKey("mqtt_server"                   )) {  const char* mqtt_server_char                   = json["mqtt_server"                  ];    sprintf_P(mqtt_server,                   ("%s"), mqtt_server_char                  ); }
   if (json.containsKey("mqtt_port"                     )) {  const char* mqtt_port_char                     = json["mqtt_port"                    ];    sprintf_P(mqtt_port,                     ("%s"), mqtt_port_char                    ); }
   if (json.containsKey("mqtt_user"                     )) {  const char* mqtt_user_char                     = json["mqtt_user"                    ];    sprintf_P(mqtt_user,                     ("%s"), mqtt_user_char                    ); }
