@@ -9,7 +9,6 @@
 #include "json_config.h"
 #include <ArduinoJson.h>
 
-
 #if defined(UART_ON)
 #include "MY_ESP_UART.h"
 Espuart Uart;
@@ -24,12 +23,10 @@ DHT dht(atoi(JConf.dht_pin), DHTTYPE);
 int errorDHTdata = 0;  // количество ошибок чтения датчика DHT
 #endif
 
-
 #if defined(BME280_ON)
 #include "SparkFunBME280.h"
 BME280 bmeSensor;
 #endif
-
 
 #if defined(SHT21_ON)
 #include "HTU21D.h"
@@ -38,7 +35,6 @@ HTU21D myHTU21D;
 
 ADC_MODE(ADC_VCC);
 float voltage_float;
-
 
 const char *ver                = "1.08"              ;         
 
@@ -60,7 +56,6 @@ const char *errorsDHT          = "ErrorsDHT"         ;
 const char *uptime             = "Uptime"            ;           
 
 const char sec[] PROGMEM = "sec";
-
 
 bool ver_send = false;
 bool ip_send = false;
@@ -96,15 +91,11 @@ unsigned long subscribeTimer = (atoi(JConf.subscribe_delay) *1000UL) - 5000UL;
 unsigned long lightOffTimer = 0;
 unsigned long lightOffTimer2 = 0;
 
-
 bool motionDetect = false;
-
 
 WiFiClient espClient;
 
-
-NTPClient timeClient(JConf.ntp_server, atoi(JConf.my_time_zone) * 60 * 60, 60000);
-
+NTPClient timeClient;
 
 char topic_buff[120];
 char value_buff[120];
@@ -112,7 +103,6 @@ char value_buff[120];
 String network_html;          // Список доступных Wi-Fi точек
 
 ESP8266WebServer WebServer(80);
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
 
@@ -164,8 +154,6 @@ String OFF;        OFF += FPSTR(OFFP);
 
 
 */
-
-
 
 const char headerStartP[] PROGMEM = "<html lang='en'><head><title>";
 //JConf.module_id
@@ -243,7 +231,6 @@ setInterval('show()',5000);\
 });\
 </script>";
 
-
 const char div1P[] PROGMEM =
 "<div class='col-md-6'><h1>Control Pins</h1>\
 <table class='table table-hover'>\
@@ -258,7 +245,6 @@ const char div1P[] PROGMEM =
   <tr>\
     <td class='active'><h4>Led Strip 1</h4></td>\
     <td class='active'><div onclick='Pin1();'><input id='OnOff' type='submit' class='btn btn-";
-
 
 const char javaScriptP[] PROGMEM = 
 "<SCRIPT>\
@@ -308,7 +294,6 @@ document.getElementById('apin5Id').innerHTML=message;\
 </SCRIPT>";
 #endif
 
-
 const char javaScript3P[] PROGMEM = 
 "xmldoc = xmlResponse.getElementsByTagName('temperature');\
 message = xmldoc[0].firstChild.nodeValue;\
@@ -326,12 +311,10 @@ xmldoc = xmlResponse.getElementsByTagName('uptime');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('uptimeId').innerHTML=message;";
 
-
 const char javaScript4P[] PROGMEM = 
 "xmldoc = xmlResponse.getElementsByTagName('ntpTime');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('ntpTimeId').innerHTML=message;";
-
 
 // Длина строки не должна быть больше 1024 символов
 const char javaScriptEndP[] PROGMEM = 
@@ -344,7 +327,6 @@ document.getElementById('freeMemoryId').innerHTML=message;\
  }\
 }\
 </SCRIPT>";
-
 
 const char bodyAjaxP[] PROGMEM = "<body onload='process()'>";
 const char bodyNonAjaxP[] PROGMEM = "<body>";
@@ -378,7 +360,6 @@ const char navbarEndP[] PROGMEM =
 <li><a href='/update'>Update frimware</a></li>\
 <li><a href='/reboot'>Reboot ESP</a></li>\
 </ul></li></ul></div></div></nav>"; 
-
 
 const char containerStartP[] PROGMEM    =  "<div class='container'><div class='row'>";
 const char containerEndP[] PROGMEM      =  "<div class='clearfix visible-lg'></div></div></div>";
@@ -425,13 +406,10 @@ const char sketchUploadFormP[] PROGMEM  =
 <p><input type='submit' value='Upload' class='btn btn-danger'></p></form></div>";
 
 
-
-
 const char ClassInfoP[] PROGMEM  = "info";
 const char ClassDangerP[] PROGMEM  = "danger";
 const char ClassDefaultP[] PROGMEM  = "default";
 const char ClassSuccessP[] PROGMEM  = "success";
-
 
 const char AUTOP[] PROGMEM  = "AUTO";
 const char ONP[] PROGMEM  = "ON";
@@ -449,6 +427,7 @@ static char* floatToChar(float charester)
  dtostrf(charester, 1, 0, value_buff);
  return value_buff;
 }
+
 
 
 void LightControl(){
@@ -525,6 +504,7 @@ void scanWiFi(void) {
   }
   network_html += String(F("</blockquote>"));
 }
+
 
 
 int waitConnected(void) {
@@ -736,6 +716,7 @@ void RebootESP()
 }
 
 
+
 // handles message arrived on subscribed topic(s)
 void callback(char* topic, byte* payload, unsigned int length) {
 
@@ -867,6 +848,7 @@ bool MqttPubLightState(){
 }
 
 
+
 bool MqttPubLightOffDelay() {
 
   if (!mqttClient.connected()){
@@ -884,7 +866,6 @@ bool MqttPubLightOffDelay() {
 
   return true;
 }
-
 
 
 
@@ -1053,6 +1034,7 @@ void TestMQTTPrint()
 }
 
 
+
 void GetFreeMemory () {
   #ifdef DEBUG
     Serial.print(F("GetFreeMemory()"));  Serial.println();
@@ -1123,6 +1105,7 @@ IPAddress stringToIp (String strIp) {
 }
 
 
+
 bool isIPValid(const char * IP)
 {
     //limited size
@@ -1173,6 +1156,7 @@ bool isIPValid(const char * IP)
 }
 
 
+
 void TestSystemPrint()
 {
   #ifdef DEBUG
@@ -1209,10 +1193,6 @@ void TestSystemPrint()
 
   Serial.println(F("----------------"));
 }
-
-
-
-
 
 
 
@@ -1264,7 +1244,7 @@ void WebRoot(void) {
       title1           += panelBodySymbol + String(F("fire"))          + panelBodyName + String(F("Temperature")) + panelBodyValue + String(F(" id='temperatureId'")) + closingAngleBracket   + panelBodyEnd;
       title1           += panelBodySymbol + String(F("tint"))          + panelBodyName + String(F("Humidity"))    + panelBodyValue + String(F(" id='humidityId'")) + closingAngleBracket      + panelBodyEnd;
     }
-    
+
     #ifdef BME280_ON
       if (atoi(JConf.bme280_enable) == 1){
         title1         += panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + String(F(" id='pressureId'")) + closingAngleBracket      + panelBodyEnd;
@@ -1363,6 +1343,7 @@ void WebUpdate(void) {
 }
 
 
+
 void WebFileUpload(void) {
 
     if (WebServer.uri() != "/upload_sketch") return;
@@ -1423,6 +1404,7 @@ void WebUploadSketch(void) {
     WebServer.send(200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + varDataString + containerEnd + siteEnd);
     ESP.restart();
 }
+
 
 
 void WebWiFiConf(void) {
@@ -1670,6 +1652,7 @@ void WebSensorsConf(void) {
 
     WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
+
 
 
 void WebEspConf(void) {
@@ -2056,6 +2039,7 @@ void WebNTPConf(void) {
 }
 
 
+
 void handleControl(){
   #ifdef DEBUG
     Serial.print(F("handleControl()"));  Serial.println();
@@ -2142,6 +2126,7 @@ void WebPinControl(void) {
 
     WebServer.send ( 200, "text/html", pinControl);
 }
+
 
 
 void WebPinControlStatus(void) {
@@ -2310,6 +2295,7 @@ void WebAnalogUart(void) {
 #endif
 
 
+
 void WebGreenhouse(void) {
   #ifdef DEBUG
     Serial.print(F("WebGreenhouse()"));  Serial.println();
@@ -2464,6 +2450,7 @@ void handleXML(){
 
   WebServer.send(200,"text/xml",XML);
 }
+
 
 
 void WebServerInit()
@@ -2641,7 +2628,9 @@ void setup() {
   // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
 
+  timeClient.reconfigure(JConf.ntp_server, atoi(JConf.my_time_zone) * 60 * 60, 60000);
 }
+
 
 
 void loop() {
