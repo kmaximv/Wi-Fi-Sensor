@@ -1416,7 +1416,7 @@ void WebUploadSketch(void) {
 
 void WebWiFiConf(void) {
   #ifdef DEBUG
-    Serial.print(F("WebEspConf()"));  Serial.println();
+    Serial.print(F("WebWiFiConf()"));  Serial.println();
   #endif
 
     String headerStart;           headerStart += FPSTR(headerStartP);
@@ -1457,43 +1457,33 @@ void WebWiFiConf(void) {
     String data = title1 + network_html + inputBodyStart;
 
     bool config_changed = false;
+    bool enable = false;
+    String payload = "";
 
-    String payload=WebServer.arg("module_id");
+    payload=WebServer.arg("module_id");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.module_id, sizeof(JConf.module_id));
       config_changed = true;
     }
-    data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
-
 
     payload=WebServer.arg("sta_ssid");
     if (payload.length() > 0 ) {
       payload.toCharArray(JConf.sta_ssid, sizeof(JConf.sta_ssid));
       config_changed = true;
     }
-    data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.sta_ssid + inputBodyClose + inputBodyCloseDiv;
 
     payload=WebServer.arg("sta_pwd");
     if (payload.length() > 7 &&  payload != String(F("********"))) {
       payload.toCharArray(JConf.sta_pwd, sizeof(JConf.sta_pwd));
       config_changed = true;
     }
-    data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
-
 
     payload=WebServer.arg("static_ip_mode");
     if (payload.length() > 0) {
       payload.toCharArray(JConf.static_ip_mode, sizeof(JConf.static_ip_mode));
       config_changed = true;
+      enable = true;
     } 
-
-    if (atoi(JConf.static_ip_mode) == 1){
-      data += String(F("<div><input type='hidden' name='static_ip_mode' value='0'></div>"));
-      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1' checked='true'>Static IP Mode</label></div>"));
-    } else {
-      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1'>Static IP Mode</label></div>"));
-    }
-
 
     payload=WebServer.arg("static_ip");
     if (payload.length() > 6 ) {
@@ -1513,16 +1503,28 @@ void WebWiFiConf(void) {
       config_changed = true;
     }
 
-    data += inputBodyName + String(F("Static IP"))      + inputBodyPOST + String(F("static_ip"))      + inputPlaceHolder + JConf.static_ip      + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("static_gateway")) + inputPlaceHolder + JConf.static_gateway + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Static Subnet"))  + inputBodyPOST + String(F("static_subnet"))  + inputPlaceHolder + JConf.static_subnet  + inputBodyClose + inputBodyCloseDiv;
-
-
-    data += inputBodyEnd;
-
     if (config_changed){
+      if (!enable){
+        JConf.static_ip_mode[0] = '0';
+        JConf.static_ip_mode[1] = '\0';
+      }
       JConf.saveConfig();
     }
+
+    data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.sta_ssid + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
+
+    if (atoi(JConf.static_ip_mode) == 1){
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1' checked='true'>Static IP Mode</label></div>"));
+      data += inputBodyName + String(F("Static IP"))      + inputBodyPOST + String(F("static_ip"))      + inputPlaceHolder + JConf.static_ip      + inputBodyClose + inputBodyCloseDiv;
+      data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("static_gateway")) + inputPlaceHolder + JConf.static_gateway + inputBodyClose + inputBodyCloseDiv;
+      data += inputBodyName + String(F("Static Subnet"))  + inputBodyPOST + String(F("static_subnet"))  + inputPlaceHolder + JConf.static_subnet  + inputBodyClose + inputBodyCloseDiv;
+    } else {
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1'>Static IP Mode</label></div>"));
+    }
+
+    data += inputBodyEnd;
 
     WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
@@ -1700,6 +1702,7 @@ void WebMqttConf(void) {
     data += inputBodyStart;
 
     bool config_changed = false;
+    bool enable = false;
     String payload = "";
 
 
@@ -1707,94 +1710,107 @@ void WebMqttConf(void) {
     if (payload.length() > 0) {
       payload.toCharArray(JConf.mqtt_enable, sizeof(JConf.mqtt_enable));
       config_changed = true;
+      enable = true;
     } 
 
+    payload=WebServer.arg("mqtt_server");
+    if (payload.length() > 0 ) {
+      payload.toCharArray(JConf.mqtt_server, sizeof(JConf.mqtt_server));
+      config_changed = true;
+    }
+
+    payload=WebServer.arg("mqtt_port");
+    if (payload.length() > 0 ) {
+      payload.toCharArray(JConf.mqtt_port, sizeof(JConf.mqtt_port));
+      config_changed = true;
+    }
+
+    payload=WebServer.arg("mqtt_user");
+    if (payload.length() > 0 ) {
+      if (payload == "0"){
+        String data = "";
+        data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+        data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+      } else {
+        payload.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+      }
+      config_changed = true;
+    }
+
+    payload=WebServer.arg("mqtt_pwd");
+    if (payload.length() > 0 ) {
+      if (payload == "0"){
+        String data = "";
+        data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
+        data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+      } else {
+        payload.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
+      }
+      config_changed = true;
+    } 
+
+    payload=WebServer.arg("mqtt_name");
+    if (payload.length() > 0 ) {
+      payload.toCharArray(JConf.mqtt_name, sizeof(JConf.mqtt_name));
+      config_changed = true;
+    }
+
+    payload=WebServer.arg("publish_topic");
+    if (payload.length() > 0 ) {
+      payload.replace("%2F", String(F("/")));
+      payload.toCharArray(JConf.publish_topic, sizeof(JConf.publish_topic));
+      config_changed = true;
+    }
+
+    payload=WebServer.arg("subscribe_topic");
+    if (payload.length() > 0 ) {
+      payload.replace("%2F", String(F("/")));
+      payload.toCharArray(JConf.subscribe_topic, sizeof(JConf.subscribe_topic));
+      config_changed = true;
+    }
+
+    payload=WebServer.arg("publish_delay");
+    if (payload.length() > 0 ) {
+      payload.toCharArray(JConf.publish_delay, sizeof(JConf.publish_delay));
+      config_changed = true;
+    }
+
+    payload=WebServer.arg("subscribe_delay");
+    if (payload.length() > 0 ) {
+      payload.toCharArray(JConf.subscribe_delay, sizeof(JConf.subscribe_delay));
+      config_changed = true;
+    }
+
+
+    if (config_changed){
+      if (!enable){
+        JConf.mqtt_enable[0] = '0';
+        JConf.mqtt_enable[1] = '\0';
+      }
+      JConf.saveConfig();
+    }
+
+
     if (atoi(JConf.mqtt_enable) == 1){
-      data += String(F("<div><input type='hidden' name='mqtt_enable' value='0'></div>"));
+
       data += String(F("<div class='checkbox'><label><input type='checkbox' name='mqtt_enable' value='1' checked='true'>MQTT Enable</label></div>"));
-
-      payload=WebServer.arg("mqtt_server");
-      if (payload.length() > 0 ) {
-        payload.toCharArray(JConf.mqtt_server, sizeof(JConf.mqtt_server));
-        config_changed = true;
-      }
       data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_server")) + inputPlaceHolder + JConf.mqtt_server + inputBodyClose + inputBodyCloseDiv;
-
-      payload=WebServer.arg("mqtt_port");
-      if (payload.length() > 0 ) {
-        payload.toCharArray(JConf.mqtt_port, sizeof(JConf.mqtt_port));
-        config_changed = true;
-      }
       data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqtt_port")) + inputPlaceHolder + JConf.mqtt_port + inputBodyClose + inputBodyCloseDiv;
 
-      payload=WebServer.arg("mqtt_user");
-      if (payload.length() > 0 ) {
-        if (payload == "0"){
-          String data = "";
-          data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
-          data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
-        } else {
-          payload.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
-        }
-        config_changed = true;
-      }
       if (strlen(JConf.mqtt_user) != 0){
         data += String(F("<div><input type='hidden' name='mqtt_user' value='0'></div>"));
       } 
       data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqtt_user")) + inputPlaceHolder + JConf.mqtt_user + inputBodyClose + inputBodyCloseDiv;
 
-      payload=WebServer.arg("mqtt_pwd");
-      if (payload.length() > 0 ) {
-        if (payload == "0"){
-          String data = "";
-          data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
-          data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
-        } else {
-          payload.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
-        }
-        config_changed = true;
-      } 
       if (strlen(JConf.mqtt_pwd) != 0){
-        Serial.print(F("JConf.mqtt_pwd[0]"));  Serial.println(JConf.mqtt_pwd[0]);
         data += String(F("<div><input type='hidden' name='mqtt_pwd' value='0'></div>"));
       } 
       data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqtt_pwd")) + inputPlaceHolder + JConf.mqtt_pwd + inputBodyClose + inputBodyCloseDiv;
 
-      payload=WebServer.arg("mqtt_name");
-      if (payload.length() > 0 ) {
-        payload.toCharArray(JConf.mqtt_name, sizeof(JConf.mqtt_name));
-        config_changed = true;
-      }
       data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.mqtt_name + inputBodyClose + inputBodyCloseDiv;
-
-      payload=WebServer.arg("publish_topic");
-      if (payload.length() > 0 ) {
-        payload.replace("%2F", String(F("/")));
-        payload.toCharArray(JConf.publish_topic, sizeof(JConf.publish_topic));
-        config_changed = true;
-      }
       data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + JConf.publish_topic + inputBodyClose + inputBodyCloseDiv;
-
-      payload=WebServer.arg("subscribe_topic");
-      if (payload.length() > 0 ) {
-        payload.replace("%2F", String(F("/")));
-        payload.toCharArray(JConf.subscribe_topic, sizeof(JConf.subscribe_topic));
-        config_changed = true;
-      }
       data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + JConf.subscribe_topic + inputBodyClose + inputBodyCloseDiv;
-
-      payload=WebServer.arg("publish_delay");
-      if (payload.length() > 0 ) {
-        payload.toCharArray(JConf.publish_delay, sizeof(JConf.publish_delay));
-        config_changed = true;
-      }
       data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + JConf.publish_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
-
-      payload=WebServer.arg("subscribe_delay");
-      if (payload.length() > 0 ) {
-        payload.toCharArray(JConf.subscribe_delay, sizeof(JConf.subscribe_delay));
-        config_changed = true;
-      }
       data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + JConf.subscribe_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
     } else {
@@ -1802,10 +1818,6 @@ void WebMqttConf(void) {
     }
 
     data += inputBodyEnd;
-
-    if (config_changed){
-      JConf.saveConfig();
-    }
 
     WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 }
@@ -1879,7 +1891,8 @@ void WebNTPConf(void) {
 
     if (config_changed){
       if (!enable){
-        JConf.ntp_enable[0] = '\0';
+        JConf.ntp_enable[0] = '0';
+        JConf.ntp_enable[1] = '\0';
       }
       JConf.saveConfig();
     }
@@ -1962,7 +1975,7 @@ void handleControl(){
 
 void WebPinControl(void) {
   #ifdef DEBUG
-    Serial.print(F("WebControl()"));  Serial.println();
+    Serial.print(F("WebPinControl()"));  Serial.println();
   #endif
 
 
