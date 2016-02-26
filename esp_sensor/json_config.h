@@ -39,28 +39,25 @@ class JsonConf
     char module_id                    [32] = "ESP8266"            ;
     char sta_ssid                     [32] = "IoT"                ;
     char sta_pwd                      [32] = "Poiu0987"           ;
-    char static_ip_mode               [32] = "0"                  ;
-    char static_ip                    [32] = "192.168.2.220"      ;
-    char static_gateway               [32] = "192.168.2.1"        ;
-    char static_subnet                [32] = "255.255.255.0"      ;
-    char ntp_enable                   [32] = "1"                  ;
+    char static_ip                    [16] = "192.168.2.220"      ;
+    char static_gateway               [16] = "192.168.2.1"        ;
+    char static_subnet                [16] = "255.255.255.0"      ;
     char ntp_server                   [32] = "europe.pool.ntp.org";
-    char my_time_zone                 [32] = "+6"                 ;
-    char mqtt_enable                  [32] = "1"                  ;
+    char my_time_zone                 [4]  = "+6"                 ;
     char mqtt_server                  [32] = "192.168.2.205"      ;
-    char mqtt_port                    [32] = "1883"               ;
+    char mqtt_port                    [6]  = "1883"               ;
     char mqtt_user                    [32] = "none"               ;
     char mqtt_pwd                     [32] = "none"               ;
     char mqtt_name                    [32] = "_BedM"              ;
     char publish_topic                [32] = "/stateSub/"         ;
     char subscribe_topic              [32] = "/statePub/"         ;
     char command_pub_topic            [32] = "/commandPub/"       ;
-    char light_pin                    [32] = "13"                 ;
+    char light_pin                    [3]  = "13"                 ;
     char lightoff_delay               [32] = "5"                  ;
-    char light_pin2                   [32] = "12"                 ;
+    char light_pin2                   [3]  = "12"                 ;
     char light2off_delay              [32] = "5"                  ;
-    char motion_pin                   [32] = "2"                  ;
-    char dht_pin                      [32] = "14"                 ;
+    char motion_pin                   [3]  = "2"                  ;
+    char dht_pin                      [3] =  "14"                 ;
     char get_data_delay               [32] = "10"                 ;
     char publish_delay                [32] = "10"                 ;
     char subscribe_delay              [32] = "60"                 ;
@@ -72,13 +69,22 @@ class JsonConf
     char uart_delay_analog_pin3       [32] = "none"               ;
     char uart_delay_analog_pin4       [32] = "none"               ;
     char uart_delay_analog_pin5       [32] = "none"               ;
-    char green_light_on               [32] = "8:00"               ;
-    char green_light_off              [32] = "22:00"              ;
-    char green_light_pin              [32] = "12"                 ;
-    char green_humidity_threshold_up  [32] = "800"                ;
-    char green_humidity_threshold_down[32] = "250"                ;
-    char green_humidity_sensor_pin    [32] = "20"                 ;
-    char green_pump_pin               [32] = "33"                 ;
+    char green_light_on               [6]  = "8:00"               ;
+    char green_light_off              [6]  = "22:00"              ;
+    char green_light_pin              [3]  = "12"                 ;
+    char green_humidity_threshold_up  [5]  = "800"                ;
+    char green_humidity_threshold_down[5]  = "250"                ;
+    char green_humidity_sensor_pin    [3]  = "20"                 ;
+    char green_pump_pin               [3]  = "33"                 ;
+
+    char static_ip_enable             [2]  = "0"                  ;
+    char ntp_enable                   [2]  = "0"                  ;
+    char mqtt_enable                  [2]  = "0"                  ;
+    char bme280_enable                [2]  = "0"                  ;
+    char sht21_enable                 [2]  = "0"                  ;
+    char bh1750_enable                [2]  = "0"                  ;
+    char motion_sensor_enable         [2]  = "0"                  ;
+
 
   private:
 };

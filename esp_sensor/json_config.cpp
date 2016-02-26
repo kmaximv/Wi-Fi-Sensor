@@ -13,14 +13,11 @@ bool JsonConf::saveConfig() {
   json["module_id"]                     = module_id                    ;                           
   json["sta_ssid"]                      = sta_ssid                     ;                         
   json["sta_pwd"]                       = sta_pwd                      ;                       
-  json["static_ip_mode"]                = static_ip_mode               ;                                     
   json["static_ip"]                     = static_ip                    ;                           
   json["static_gateway"]                = static_gateway               ;                                     
   json["static_subnet"]                 = static_subnet                ;                                   
-  json["ntp_enable"]                    = ntp_enable                   ;                               
   json["ntp_server"]                    = ntp_server                   ;                             
   json["my_time_zone"]                  = my_time_zone                 ;                           
-  json["mqtt_enable"]                   = mqtt_enable                  ;                               
   json["mqtt_server"]                   = mqtt_server                  ;                               
   json["mqtt_port"]                     = mqtt_port                    ;                           
   json["mqtt_user"]                     = mqtt_user                    ;                           
@@ -53,6 +50,16 @@ bool JsonConf::saveConfig() {
   json["green_humidity_threshold_down"] = green_humidity_threshold_down;                                                                   
   json["green_humidity_sensor_pin"]     = green_humidity_sensor_pin    ;                                                           
   json["green_pump_pin"]                = green_pump_pin               ;                                     
+
+  json["static_ip_enable"]              = static_ip_enable             ;                                     
+  json["ntp_enable"]                    = ntp_enable                   ;                               
+  json["mqtt_enable"]                   = mqtt_enable                  ;                               
+  json["bme280_enable"]                 = bme280_enable                ;                               
+  json["sht21_enable"]                  = sht21_enable                 ;                               
+  json["bh1750_enable"]                 = bh1750_enable                ;                               
+  json["motion_sensor_enable"]          = motion_sensor_enable         ;                               
+
+
 
 
   File configFile = SPIFFS.open("/config.json", "w");
@@ -121,14 +128,11 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("module_id"                     )) {  const char* module_id_char                     = json["module_id"                    ];    sprintf_P(module_id,                     ("%s"), module_id_char                    ); }
   if (json.containsKey("sta_ssid"                      )) {  const char* sta_ssid_char                      = json["sta_ssid"                     ];    sprintf_P(sta_ssid,                      ("%s"), sta_ssid_char                     ); }
   if (json.containsKey("sta_pwd"                       )) {  const char* sta_pwd_char                       = json["sta_pwd"                      ];    sprintf_P(sta_pwd,                       ("%s"), sta_pwd_char                      ); }
-  if (json.containsKey("static_ip_mode"                )) {  const char* static_ip_mode_char                = json["static_ip_mode"               ];    sprintf_P(static_ip_mode,                ("%s"), static_ip_mode_char               ); }
   if (json.containsKey("static_ip"                     )) {  const char* static_ip_char                     = json["static_ip"                    ];    sprintf_P(static_ip,                     ("%s"), static_ip_char                    ); }
   if (json.containsKey("static_gateway"                )) {  const char* static_gateway_char                = json["static_gateway"               ];    sprintf_P(static_gateway,                ("%s"), static_gateway_char               ); }
   if (json.containsKey("static_subnet"                 )) {  const char* static_subnet_char                 = json["static_subnet"                ];    sprintf_P(static_subnet,                 ("%s"), static_subnet_char                ); }
-  if (json.containsKey("ntp_enable"                    )) {  const char* ntp_enable_char                    = json["ntp_enable"                   ];    sprintf_P(ntp_enable,                    ("%s"), ntp_enable_char                   ); }
   if (json.containsKey("ntp_server"                    )) {  const char* ntp_server_char                    = json["ntp_server"                   ];    sprintf_P(ntp_server,                    ("%s"), ntp_server_char                   ); }
   if (json.containsKey("my_time_zone"                  )) {  const char* my_time_zone_char                  = json["my_time_zone"                 ];    sprintf_P(my_time_zone,                  ("%s"), my_time_zone_char                 ); }
-  if (json.containsKey("mqtt_enable"                   )) {  const char* mqtt_enable_char                   = json["mqtt_enable"                  ];    sprintf_P(mqtt_enable,                   ("%s"), mqtt_enable_char                  ); }
   if (json.containsKey("mqtt_server"                   )) {  const char* mqtt_server_char                   = json["mqtt_server"                  ];    sprintf_P(mqtt_server,                   ("%s"), mqtt_server_char                  ); }
   if (json.containsKey("mqtt_port"                     )) {  const char* mqtt_port_char                     = json["mqtt_port"                    ];    sprintf_P(mqtt_port,                     ("%s"), mqtt_port_char                    ); }
   if (json.containsKey("mqtt_user"                     )) {  const char* mqtt_user_char                     = json["mqtt_user"                    ];    sprintf_P(mqtt_user,                     ("%s"), mqtt_user_char                    ); }
@@ -162,6 +166,19 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("green_humidity_sensor_pin"     )) {  const char* green_humidity_sensor_pin_char     = json["green_humidity_sensor_pin"    ];    sprintf_P(green_humidity_sensor_pin,     ("%s"), green_humidity_sensor_pin_char    ); }
   if (json.containsKey("green_pump_pin"                )) {  const char* green_pump_pin_char                = json["green_pump_pin"               ];    sprintf_P(green_pump_pin,                ("%s"), green_pump_pin_char               ); }
 
+  if (json.containsKey("static_ip_enable"              )) {  const char* static_ip_enable_char              = json["static_ip_enable"             ];    sprintf_P(static_ip_enable,              ("%s"), static_ip_enable_char             ); }
+  if (json.containsKey("ntp_enable"                    )) {  const char* ntp_enable_char                    = json["ntp_enable"                   ];    sprintf_P(ntp_enable,                    ("%s"), ntp_enable_char                   ); }
+  if (json.containsKey("mqtt_enable"                   )) {  const char* mqtt_enable_char                   = json["mqtt_enable"                  ];    sprintf_P(mqtt_enable,                   ("%s"), mqtt_enable_char                  ); }
+  if (json.containsKey("bme280_enable"                 )) {  const char* bme280_enable_char                 = json["bme280_enable"                ];    sprintf_P(bme280_enable,                 ("%s"), bme280_enable_char                ); }
+  if (json.containsKey("sht21_enable"                  )) {  const char* sht21_enable_char                  = json["sht21_enable"                 ];    sprintf_P(sht21_enable,                  ("%s"), sht21_enable_char                 ); }
+  if (json.containsKey("bh1750_enable"                 )) {  const char* bh1750_enable_char                 = json["bh1750_enable"                ];    sprintf_P(bh1750_enable,                 ("%s"), bh1750_enable_char                ); }
+  if (json.containsKey("motion_sensor_enable"          )) {  const char* motion_sensor_enable_char          = json["motion_sensor_enable"         ];    sprintf_P(motion_sensor_enable,          ("%s"), motion_sensor_enable_char         ); }
+
+
+
+
+
+
   configFile.close();
   return true;
 }
@@ -172,14 +189,11 @@ bool JsonConf::printConfig() {
   Serial.print(F("module_id                    : "));   Serial.println(module_id                    );
   Serial.print(F("sta_ssid                     : "));   Serial.println(sta_ssid                     );
   Serial.print(F("sta_pwd                      : "));   Serial.println(sta_pwd                      );
-  Serial.print(F("static_ip_mode               : "));   Serial.println(static_ip_mode               );
   Serial.print(F("static_ip                    : "));   Serial.println(static_ip                    );
   Serial.print(F("static_gateway               : "));   Serial.println(static_gateway               );
   Serial.print(F("static_subnet                : "));   Serial.println(static_subnet                );
-  Serial.print(F("ntp_enable                   : "));   Serial.println(ntp_enable                   );
   Serial.print(F("ntp_server                   : "));   Serial.println(ntp_server                   );
   Serial.print(F("my_time_zone                 : "));   Serial.println(my_time_zone                 );
-  Serial.print(F("mqtt_enable                  : "));   Serial.println(mqtt_enable                  );
   Serial.print(F("mqtt_server                  : "));   Serial.println(mqtt_server                  );
   Serial.print(F("mqtt_port                    : "));   Serial.println(mqtt_port                    );
   Serial.print(F("mqtt_user                    : "));   Serial.println(mqtt_user                    );
@@ -212,4 +226,12 @@ bool JsonConf::printConfig() {
   Serial.print(F("green_humidity_threshold_down: "));   Serial.println(green_humidity_threshold_down);
   Serial.print(F("green_humidity_sensor_pin    : "));   Serial.println(green_humidity_sensor_pin    );
   Serial.print(F("green_pump_pin               : "));   Serial.println(green_pump_pin               );
+
+  Serial.print(F("static_ip_enable             : "));   Serial.println(static_ip_enable             );
+  Serial.print(F("ntp_enable                   : "));   Serial.println(ntp_enable                   );
+  Serial.print(F("mqtt_enable                  : "));   Serial.println(mqtt_enable                  );
+  Serial.print(F("bme280_enable                : "));   Serial.println(bme280_enable                );
+  Serial.print(F("sht21_enable                 : "));   Serial.println(sht21_enable                 );
+  Serial.print(F("bh1750_enable                : "));   Serial.println(bh1750_enable                );
+  Serial.print(F("motion_sensor_enable         : "));   Serial.println(motion_sensor_enable         );
 }

@@ -371,12 +371,14 @@ const char navbarEndP[] PROGMEM =
 "<li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'>\
 <span class='glyphicon glyphicon-cog'></span> Configure<span class='caret'></span></a><ul class='dropdown-menu'>\
 <li><a href='/wificonf'>Wi-Fi</a></li>\
+<li><a href='/sensorsconf'>Sensors</a></li>\
 <li><a href='/espconf'>ESP</a></li>\
 <li><a href='/mqttconf'>MQTT</a></li>\
 <li><a href='/ntpconf'>NTP time</a></li>\
 <li><a href='/update'>Update frimware</a></li>\
 <li><a href='/reboot'>Reboot ESP</a></li>\
 </ul></li></ul></div></div></nav>"; 
+
 
 const char containerStartP[] PROGMEM    =  "<div class='container'><div class='row'>";
 const char containerEndP[] PROGMEM      =  "<div class='clearfix visible-lg'></div></div></div>";
@@ -1257,12 +1259,21 @@ void WebRoot(void) {
     String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
 
     String title1       = panelHeaderName + String(F("Sensor Data"))   + panelHeaderEnd;
-    title1             += panelBodySymbol + String(F("fire"))          + panelBodyName + String(F("Temperature")) + panelBodyValue + String(F(" id='temperatureId'")) + closingAngleBracket   + panelBodyEnd;
-    title1             += panelBodySymbol + String(F("tint"))          + panelBodyName + String(F("Humidity"))    + panelBodyValue + String(F(" id='humidityId'")) + closingAngleBracket      + panelBodyEnd;
+
+    if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.sht21_enable) == 1){
+      title1           += panelBodySymbol + String(F("fire"))          + panelBodyName + String(F("Temperature")) + panelBodyValue + String(F(" id='temperatureId'")) + closingAngleBracket   + panelBodyEnd;
+      title1           += panelBodySymbol + String(F("tint"))          + panelBodyName + String(F("Humidity"))    + panelBodyValue + String(F(" id='humidityId'")) + closingAngleBracket      + panelBodyEnd;
+    }
+    
     #ifdef BME280_ON
-      title1           += panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + String(F(" id='pressureId'")) + closingAngleBracket      + panelBodyEnd;
+      if (atoi(JConf.bme280_enable) == 1){
+        title1         += panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + String(F(" id='pressureId'")) + closingAngleBracket      + panelBodyEnd;
+      }
     #endif
-    title1             += panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket   + panelBodyEnd;
+
+    if (atoi(JConf.bh1750_enable) == 1){
+      title1           += panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket   + panelBodyEnd;
+    }
     
     String title2       = panelHeaderName + String(F("Settings"))      + panelHeaderEnd;
     //title2             += panelBodySymbol + String(F("signal"))        + panelBodyName + String(F("Wi-Fi SSID"))  + panelBodyValue + closingAngleBracket + JConf.sta_ssid    + panelBodyEnd;
@@ -1478,9 +1489,9 @@ void WebWiFiConf(void) {
       config_changed = true;
     }
 
-    payload=WebServer.arg("static_ip_mode");
+    payload=WebServer.arg("static_ip_enable");
     if (payload.length() > 0) {
-      payload.toCharArray(JConf.static_ip_mode, sizeof(JConf.static_ip_mode));
+      payload.toCharArray(JConf.static_ip_enable, sizeof(JConf.static_ip_enable));
       config_changed = true;
       enable = true;
     } 
@@ -1505,8 +1516,8 @@ void WebWiFiConf(void) {
 
     if (config_changed){
       if (!enable){
-        JConf.static_ip_mode[0] = '0';
-        JConf.static_ip_mode[1] = '\0';
+        JConf.static_ip_enable[0] = '0';
+        JConf.static_ip_enable[1] = '\0';
       }
       JConf.saveConfig();
     }
@@ -1515,13 +1526,13 @@ void WebWiFiConf(void) {
     data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.sta_ssid + inputBodyClose + inputBodyCloseDiv;
     data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
-    if (atoi(JConf.static_ip_mode) == 1){
-      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1' checked='true'>Static IP Mode</label></div>"));
+    if (atoi(JConf.static_ip_enable) == 1){
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_enable' value='1' checked='true'>Static IP Mode</label></div>"));
       data += inputBodyName + String(F("Static IP"))      + inputBodyPOST + String(F("static_ip"))      + inputPlaceHolder + JConf.static_ip      + inputBodyClose + inputBodyCloseDiv;
       data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("static_gateway")) + inputPlaceHolder + JConf.static_gateway + inputBodyClose + inputBodyCloseDiv;
       data += inputBodyName + String(F("Static Subnet"))  + inputBodyPOST + String(F("static_subnet"))  + inputPlaceHolder + JConf.static_subnet  + inputBodyClose + inputBodyCloseDiv;
     } else {
-      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_mode' value='1'>Static IP Mode</label></div>"));
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_enable' value='1'>Static IP Mode</label></div>"));
     }
 
     data += inputBodyEnd;
@@ -1531,6 +1542,134 @@ void WebWiFiConf(void) {
 
 
 
+void WebSensorsConf(void) {
+  #ifdef DEBUG
+    Serial.print(F("WebSensorsConf()"));  Serial.println();
+  #endif
+
+    String headerStart;           headerStart += FPSTR(headerStartP);
+    String headerStart2;          headerStart2 += FPSTR(headerStart2P);
+    String headerEnd;             headerEnd += FPSTR(headerEndP);
+    String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
+    String navbarStart;           navbarStart += FPSTR(navbarStartP);
+    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
+    String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+
+    navbarNonActive += FPSTR(navbarBeginP);
+    #ifdef UART_ON
+      navbarNonActive += FPSTR(navbarUartP);
+    #endif
+
+    String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
+    String containerStart;        containerStart += FPSTR(containerStartP);
+    String containerEnd;          containerEnd += FPSTR(containerEndP);
+    String siteEnd;               siteEnd += FPSTR(siteEndP);
+    String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
+    String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
+
+    String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
+    String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
+    String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
+    String inputPlaceHolder;      inputPlaceHolder += FPSTR(inputPlaceHolderP);
+    String inputBodyClose;        inputBodyClose += FPSTR(inputBodyCloseP);
+    String inputBodyCloseDiv;     inputBodyCloseDiv += FPSTR(inputBodyCloseDivP);
+    String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
+    String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
+    String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
+
+    String data;
+    data += panelHeaderName;
+    data += String(F("Sensors Configuration"));
+    data += panelHeaderEnd;
+    data += inputBodyStart;
+
+    bool config_changed = false;
+
+    bool bme280_enable = false;
+    bool sht21_enable = false;
+    bool bh1750_enable = false;
+    bool motion_sensor_enable = false;
+
+    String payload = "";
+
+
+    payload=WebServer.arg("bme280_enable");
+    if (payload.length() > 0) {
+      payload.toCharArray(JConf.bme280_enable, sizeof(JConf.bme280_enable));
+      config_changed = true;
+      bme280_enable = true;
+    } 
+
+    payload=WebServer.arg("sht21_enable");
+    if (payload.length() > 0) {
+      payload.toCharArray(JConf.sht21_enable, sizeof(JConf.sht21_enable));
+      config_changed = true;
+      sht21_enable = true;
+    } 
+
+    payload=WebServer.arg("bh1750_enable");
+    if (payload.length() > 0) {
+      payload.toCharArray(JConf.bh1750_enable, sizeof(JConf.bh1750_enable));
+      config_changed = true;
+      bh1750_enable = true;
+    } 
+
+    payload=WebServer.arg("motion_sensor_enable");
+    if (payload.length() > 0) {
+      payload.toCharArray(JConf.motion_sensor_enable, sizeof(JConf.motion_sensor_enable));
+      config_changed = true;
+      motion_sensor_enable = true;
+    } 
+
+    if (config_changed){
+      if (!bme280_enable){
+        JConf.bme280_enable[0] = '0';
+        JConf.bme280_enable[1] = '\0';
+      }
+      if (!sht21_enable){
+        JConf.sht21_enable[0] = '0';
+        JConf.sht21_enable[1] = '\0';
+      }
+      if (!bh1750_enable){
+        JConf.bh1750_enable[0] = '0';
+        JConf.bh1750_enable[1] = '\0';
+      }
+      if (!motion_sensor_enable){
+        JConf.motion_sensor_enable[0] = '0';
+        JConf.motion_sensor_enable[1] = '\0';
+      }
+      JConf.saveConfig();
+    }
+
+    if (atoi(JConf.bme280_enable) == 1){
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='bme280_enable' value='1' checked='true'>BME280 Enable</label></div>"));
+    } else {
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='bme280_enable' value='1'>BME280 Enable</label></div>"));
+    }
+
+    if (atoi(JConf.sht21_enable) == 1){
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='sht21_enable' value='1' checked='true'>SHT21 Enable</label></div>"));
+    } else {
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='sht21_enable' value='1'>SHT21 Enable</label></div>"));
+    }
+
+    if (atoi(JConf.bh1750_enable) == 1){
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='bh1750_enable' value='1' checked='true'>BH1750 Enable</label></div>"));
+    } else {
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='bh1750_enable' value='1'>BH1750 Enable</label></div>"));
+    }
+
+    if (atoi(JConf.motion_sensor_enable) == 1){
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='motion_sensor_enable' value='1' checked='true'>Motion Sensor Enable</label></div>"));
+    } else {
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='motion_sensor_enable' value='1'>Motion Sensor Enable</label></div>"));
+    }
+
+
+    data += inputBodyEnd;
+
+    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+}
 
 
 void WebEspConf(void) {
@@ -2340,6 +2479,7 @@ void WebServerInit()
 
   WebServer.on("/wificonf", WebWiFiConf);
 
+  WebServer.on("/sensorsconf", WebSensorsConf);
   WebServer.on("/espconf", WebEspConf);
   WebServer.on("/mqttconf", WebMqttConf);
   WebServer.on("/ntpconf", WebNTPConf);
@@ -2445,7 +2585,7 @@ void setup() {
 
   WiFi.mode(WIFI_AP_STA);
   WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
-  if (atoi(JConf.static_ip_mode) == 1) {
+  if (atoi(JConf.static_ip_enable) == 1) {
     IPAddress staticIP = stringToIp(JConf.static_ip);
     IPAddress staticGateway = stringToIp(JConf.static_gateway);
     IPAddress staticSubnet = stringToIp(JConf.static_subnet);
@@ -2521,13 +2661,21 @@ void loop() {
     #ifdef REBOOT_ON
     RebootESP();
     #endif
-    GetLightSensorData();
+
+    if (atoi(JConf.bh1750_enable) == 1){
+      GetLightSensorData();
+    }
+
     #ifdef BME280_ON
-      GetBmeSensorData();
+      if (atoi(JConf.bme280_enable) == 1){
+        GetBmeSensorData();
+      }
     #endif
 
     #ifdef SHT21_ON
-      GetSHT21SensorData();
+      if (atoi(JConf.sht21_enable) == 1){
+        GetSHT21SensorData();
+      }
     #endif
 
     GetUptimeData();
@@ -2559,14 +2707,16 @@ void loop() {
   }
 
 
-  if (motionDetect == false){
-    MotionDetect();
-  }  
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    if (motionDetect == false){
+      MotionDetect();
+    }  
 
-  if (millis() - motionTimer >= atoi(JConf.motion_read_delay) * 1000){
-    motionTimer = millis();
-    motionDetect = false;
-    MotionDetect();
+    if (millis() - motionTimer >= atoi(JConf.motion_read_delay) * 1000){
+      motionTimer = millis();
+      motionDetect = false;
+      MotionDetect();
+    }
   }
 
   String AUTO;   AUTO += FPSTR(AUTOP);
