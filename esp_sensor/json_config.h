@@ -10,8 +10,8 @@
 #define BME280_ON
 //#define SHT21_ON
 
-#define DEBUG
-#define DEBUG_JSON_CONFIG
+//#define DEBUG
+//#define DEBUG_JSON_CONFIG
 
 
 //#define REBOOT_ON
@@ -56,8 +56,8 @@ class JsonConf
     char lightoff_delay               [32] = "5"                  ;
     char light_pin2                   [3]  = "12"                 ;
     char light2off_delay              [32] = "5"                  ;
-    char motion_pin                   [3]  = "2"                  ;
-    char dht_pin                      [3] =  "14"                 ;
+    char motion_pin                   [3]  = "14"                 ;
+    char dht_pin                      [3] =  "2"                  ;
     char get_data_delay               [32] = "10"                 ;
     char publish_delay                [32] = "10"                 ;
     char subscribe_delay              [32] = "60"                 ;

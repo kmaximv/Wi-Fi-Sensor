@@ -232,7 +232,7 @@ setInterval('show()',5000);\
 </script>";
 
 const char div1P[] PROGMEM =
-"<div class='col-md-6'><h1>Control Pins</h1>\
+"<div class='col-sm-10 col-md-8 col-lg-6'><h2>Control Pins</h2>\
 <table class='table table-hover'>\
 <tbody>\
   <tr>\
@@ -372,8 +372,8 @@ const char containerStartP[] PROGMEM    =  "<div class='container'><div class='r
 const char containerEndP[] PROGMEM      =  "<div class='clearfix visible-lg'></div></div></div>";
 const char siteEndP[] PROGMEM         =  "</body></html>";
   
-const char panelHeaderNameP[] PROGMEM     =  "<div class='col-md-4'><div class='page-header'><h1>";
-const char panelHeaderEndP[] PROGMEM    =  "</h1></div>";
+const char panelHeaderNameP[] PROGMEM     =  "<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>";
+const char panelHeaderEndP[] PROGMEM    =  "</h2></div>";
 const char panelEndP[] PROGMEM        =  "</div>";
   
 const char panelBodySymbolP[] PROGMEM     =  
@@ -406,7 +406,7 @@ const char inputBodyEndP[] PROGMEM      =
 <button type='submit' class='btn btn-default' name='save_conf' value='1'>Save</button></div></div></div></form>";
 
 const char sketchUploadFormP[] PROGMEM  = 
-"<div class='col-md-4'><div class='page-header'><h1>Update Frimware</h1></div>\
+"<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>Update Frimware</h2></div>\
 <form method='POST' action='/upload_sketch' enctype='multipart/form-data'>\
 <p><input type='file' class='btn btn-primary' name='sketch'></p>\
 <h3><small>Выберите файл формата *.bin</small></h3>\
@@ -1495,7 +1495,7 @@ void WebReboot(void) {
   String containerEnd;          containerEnd += FPSTR(containerEndP);
   String siteEnd;               siteEnd += FPSTR(siteEndP);
 
-  String data = String(F("<div class='col-md-4'><div class='page-header'><h1>Reboot ESP</h1></div><div class='alert alert-info' role='alert'><a href='#' class='alert-link'>Rebooting...</a></div></div>"));
+  String data = String(F("<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>Reboot ESP</h2></div><div class='alert alert-info' role='alert'><a href='#' class='alert-link'>Rebooting...</a></div></div>"));
   WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 
   #ifdef DEBUG
@@ -1613,7 +1613,7 @@ void WebUploadSketch(void) {
   String containerEnd;          containerEnd += FPSTR(containerEndP);
   String siteEnd;               siteEnd += FPSTR(siteEndP);
 
-  String varDataString = String(F("<div class='col-md-4'><div class='page-header'><h1>Update Frimware</h1></div><div class='alert alert-success'>")) + ((Update.hasError()) ? String(F("FAIL")) : String(F("Update Frimware: OK"))) + String(F("</div></div>"));
+  String varDataString = String(F("<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>Update Frimware</h2></div><div class='alert alert-success'>")) + ((Update.hasError()) ? String(F("FAIL")) : String(F("Update Frimware: OK"))) + String(F("</div></div>"));
 
 
   WebServer.send(200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + varDataString + containerEnd + siteEnd);
@@ -2636,7 +2636,7 @@ void WebGreenhouse(void) {
 
   data += inputBodyEnd;
 
-  data += String(F("<div class='page-header'><h1>"));
+  data += String(F("<div class='page-header'><h2>"));
   data += String(F("Влажность почвы"));
   data += panelHeaderEnd;
   data += inputBodyStart;
