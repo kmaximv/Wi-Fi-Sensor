@@ -37,6 +37,7 @@ class JsonConf
     bool printConfig();
 
     char module_id                    [32] = "ESP8266"            ;
+    char wifi_mode                    [2]  = "0"                  ; 
     char sta_ssid                     [32] = "IoT"                ;
     char sta_pwd                      [32] = "Poiu0987"           ;
     char static_ip                    [16] = "192.168.2.220"      ;

@@ -11,6 +11,7 @@ bool JsonConf::saveConfig() {
 
 
   json["module_id"]                     = module_id                    ;                           
+  json["wifi_mode"]                     = wifi_mode                    ;                           
   json["sta_ssid"]                      = sta_ssid                     ;                         
   json["sta_pwd"]                       = sta_pwd                      ;                       
   json["static_ip"]                     = static_ip                    ;                           
@@ -126,6 +127,7 @@ bool JsonConf::loadConfig() {
 
 
   if (json.containsKey("module_id"                     )) {  const char* module_id_char                     = json["module_id"                    ];    sprintf_P(module_id,                     ("%s"), module_id_char                    ); }
+  if (json.containsKey("wifi_mode"                     )) {  const char* wifi_mode_char                     = json["wifi_mode"                    ];    sprintf_P(wifi_mode,                     ("%s"), wifi_mode_char                    ); }
   if (json.containsKey("sta_ssid"                      )) {  const char* sta_ssid_char                      = json["sta_ssid"                     ];    sprintf_P(sta_ssid,                      ("%s"), sta_ssid_char                     ); }
   if (json.containsKey("sta_pwd"                       )) {  const char* sta_pwd_char                       = json["sta_pwd"                      ];    sprintf_P(sta_pwd,                       ("%s"), sta_pwd_char                      ); }
   if (json.containsKey("static_ip"                     )) {  const char* static_ip_char                     = json["static_ip"                    ];    sprintf_P(static_ip,                     ("%s"), static_ip_char                    ); }
@@ -187,6 +189,7 @@ bool JsonConf::loadConfig() {
 bool JsonConf::printConfig() {
 
   Serial.print(F("module_id                    : "));   Serial.println(module_id                    );
+  Serial.print(F("wifi_mode                    : "));   Serial.println(wifi_mode                    );
   Serial.print(F("sta_ssid                     : "));   Serial.println(sta_ssid                     );
   Serial.print(F("sta_pwd                      : "));   Serial.println(sta_pwd                      );
   Serial.print(F("static_ip                    : "));   Serial.println(static_ip                    );

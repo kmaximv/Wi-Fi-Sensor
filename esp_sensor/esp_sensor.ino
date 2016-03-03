@@ -1,6 +1,11 @@
+
+extern "C" {
+#include "user_interface.h"
+}
 #include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
+//#include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
+//#include <WiFiClient.h>
 #include <PubSubClient.h>
 #include <Wire.h>
 #include "SPI.h"
@@ -443,6 +448,167 @@ static char* floatToChar(float charester)
 }
 
 
+void GetFreeMemory () {
+
+  #ifdef DEBUG
+    unsigned long start_time = millis();
+    Serial.println(F("GetFreeMemory() Start"));
+  #endif
+
+  freeMemoryString = String(ESP.getFreeHeap());
+
+  #ifdef DEBUG
+    unsigned long load_time = millis() - start_time;
+    Serial.print(F("GetFreeMemory() Load Time: ")); Serial.println(load_time);
+  #endif
+}
+
+
+
+String GetIpString (IPAddress ip) {
+
+  #ifdef DEBUG
+    unsigned long start_time = millis();
+    Serial.println(F("GetIpString() Start"));
+  #endif
+
+  String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
+
+  #ifdef DEBUG
+    unsigned long load_time = millis() - start_time;
+    Serial.print(F("GetIpString() Load Time: ")); Serial.println(load_time);
+  #endif
+
+  return ipStr;
+}
+
+
+
+void GetMacString () {
+
+  #ifdef DEBUG
+    unsigned long start_time = millis();
+    Serial.println(F("GetMacString() Start"));
+  #endif
+
+  uint8_t macData[6];
+  WiFi.macAddress(macData);
+  sprintf_P(value_buff, (const char *)F("%x:%x:%x:%x:%x:%x"), macData[0],  macData[1], macData[2], macData[3], macData[4], macData[5]);
+  if (macString != String(value_buff)){  
+    macString = String(value_buff);
+    mac_send = false;
+  }
+
+  #ifdef DEBUG
+    unsigned long load_time = millis() - start_time;
+    Serial.print(F("GetMacString() Load Time: ")); Serial.println(load_time);
+  #endif
+}
+
+
+
+IPAddress stringToIp (String strIp) {
+
+  #ifdef DEBUG
+    unsigned long start_time = millis();
+    Serial.println(F("stringToIp() Start"));
+  #endif
+
+  String temp;
+  IPAddress ip;
+
+  int count = 0;
+  for(int i=0; i <= strIp.length(); i++)
+  {
+    if(strIp[i] != '.')
+    {
+      temp += strIp[i];
+    }
+    else
+    {
+      if(count < 4)
+      {
+        ip[count] = atoi(temp.c_str());
+        temp = "";
+        count++;
+      }
+    }
+    if(i==strIp.length())
+    {
+      ip[count] = atoi(temp.c_str());
+    }
+  }
+
+  #ifdef DEBUG
+    unsigned long load_time = millis() - start_time;
+    Serial.print(F("stringToIp() Load Time: ")); Serial.println(load_time);
+  #endif
+
+  return ip;
+}
+
+
+
+bool isIPValid(const char * IP){
+
+  #ifdef DEBUG
+    unsigned long start_time = millis();
+    Serial.println(F("isIPValid() Start"));
+  #endif
+
+  //limited size
+  int internalcount=0;
+  int dotcount = 0;
+  bool previouswasdot=false;
+  char c;
+
+  if (strlen(IP)>15 || strlen(IP)==0) {
+      return false;
+  }
+  //cannot start with .
+  if (IP[0]=='.') {
+      return false;
+  }
+  //only letter and digit
+  for (int i=0; i < strlen(IP); i++) {
+      c = IP[i];
+      if (isdigit(c)) {
+          //only 3 digit at once
+          internalcount++;
+          previouswasdot=false;
+          if (internalcount>3) {
+              return false;
+          }
+      } else if(c=='.') {
+          //cannot have 2 dots side by side
+          if (previouswasdot) {
+              return false;
+          }
+          previouswasdot=true;
+          internalcount=0;
+          dotcount++;
+      }//if not a dot neither a digit it is wrong
+      else {
+          return false;
+      }
+  }
+  //if not 3 dots then it is wrong
+  if (dotcount!=3) {
+      return false;
+  }
+  //cannot have the last dot as last char
+  if (IP[strlen(IP)-1]=='.') {
+      return false;
+  }
+
+  #ifdef DEBUG
+    unsigned long load_time = millis() - start_time;
+    Serial.print(F("isIPValid() Load Time: ")); Serial.println(load_time);
+  #endif
+
+  return true;
+}
+
 
 void LightControl() {
 
@@ -536,41 +702,111 @@ void scanWiFi(void) {
 }
 
 
-
-int waitConnected(void) {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("waitConnected() Start"));
-  #endif
-
-  int wait = 0;
-  #ifdef DEBUG
-  Serial.println();  Serial.println(F("Waiting for WiFi to connect"));
-  #endif
-  while ( wait < 20 ) {
-    if (WiFi.status() == WL_CONNECTED) {
-      #ifdef DEBUG
-      Serial.println(F(""));  Serial.println(F("WiFi connected"));
-      #endif
-      return (1);
+bool WiFiSetup()
+{
+  wifi_set_sleep_type ((sleep_type_t)MODEM_SLEEP_T);   // NONE_SLEEP_T,LIGHT_SLEEP_T,MODEM_SLEEP_T
+  //disconnect if connected
+  WiFi.disconnect();
+  //this is AP mode
+  if (atoi(JConf.wifi_mode) == 0) {
+    //setup Soft AP
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(JConf.module_id, JConf.sta_pwd);
+    //setup PHY_MODE
+    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
+    //get current config
+    struct softap_config apconfig;
+    wifi_softap_get_config(&apconfig);
+    //set the chanel
+    apconfig.channel=10;
+    //set Authentification type
+    apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
+    //set the visibility of SSID
+    apconfig.ssid_hidden=0;
+    //no need to add these settings to configuration just use default ones
+    apconfig.max_connection=2;
+    apconfig.beacon_interval=100;
+    //apply settings to current and to default
+    if (!wifi_softap_set_config(&apconfig) || !wifi_softap_set_config_current(&apconfig)) {
+        Serial.println(F("Error Wifi AP!"));
+        delay(1000);
     }
+  } else if (atoi(JConf.wifi_mode) == 1) {
+    //setup station mode
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
     delay(500);
-    #ifdef DEBUG
-    Serial.print(WiFi.status());
-    #endif
-    wait++;
-    yield();
+    //setup PHY_MODE
+    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);
+    delay(500);
+    byte i=0;
+    //try to connect
+    while (WiFi.status() != WL_CONNECTED && i<40) {
+        switch(WiFi.status()) {
+        case 1:
+            Serial.println(F("No SSID found!"));
+            break;
+
+        case 4:
+            Serial.println(F("No Connection!"));
+            break;
+
+        default:
+            Serial.println(F("Connecting..."));
+            break;
+        }
+        delay(500);
+        i++;
+    }
+    if (WiFi.status() != WL_CONNECTED) {
+        return false;
+    }
+    WiFi.hostname(JConf.module_id);
   }
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("waitConnected() Load Time: ")); Serial.println(load_time);
-  #endif
+  //DHCP or Static IP ?
+  if (atoi(JConf.static_ip_enable) == 1) {
 
-  return (0);
+      IPAddress staticIP = stringToIp(JConf.static_ip);
+      IPAddress staticGateway = stringToIp(JConf.static_gateway);
+      IPAddress staticSubnet = stringToIp(JConf.static_subnet);
+
+      //apply according active wifi mode
+      if (wifi_get_opmode()==WIFI_AP || wifi_get_opmode()==WIFI_AP_STA) {
+          WiFi.softAPConfig(staticIP, staticGateway, staticSubnet);
+      } else {
+          WiFi.config(staticIP, staticGateway, staticSubnet);
+      }
+  }
+  //Get IP
+  IPAddress espIP;
+  if (wifi_get_opmode()==WIFI_STA) {
+      espIP=WiFi.localIP();
+  } else {
+      espIP=WiFi.softAPIP();
+  }
+  ipString = GetIpString(espIP);
+
+  return true;
 }
 
+
+void  WiFiSafeSetup()
+{
+  WiFi.disconnect();
+
+  IPAddress staticIP = stringToIp(JConf.static_ip);
+  IPAddress staticGateway = stringToIp(JConf.static_gateway);
+  IPAddress staticSubnet = stringToIp(JConf.static_subnet);
+
+  //setup Soft AP
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(JConf.module_id, JConf.sta_pwd);
+  delay(500);
+  WiFi.softAPConfig(staticIP, staticGateway, staticSubnet);
+  delay(1000);
+  Serial.println(F("Safe mode started"));
+}
 
 
 void GetLightSensorData()
@@ -1151,169 +1387,6 @@ void TestMQTTPrint()
     unsigned long load_time = millis() - start_time;
     Serial.print(F("TestMQTTPrint() Load Time: ")); Serial.println(load_time);
   #endif
-}
-
-
-
-void GetFreeMemory () {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetFreeMemory() Start"));
-  #endif
-
-  freeMemoryString = String(ESP.getFreeHeap());
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetFreeMemory() Load Time: ")); Serial.println(load_time);
-  #endif
-}
-
-
-
-String GetIpString (IPAddress ip) {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetIpString() Start"));
-  #endif
-
-  String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetIpString() Load Time: ")); Serial.println(load_time);
-  #endif
-
-  return ipStr;
-}
-
-
-
-void GetMacString () {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetMacString() Start"));
-  #endif
-
-  uint8_t macData[6];
-  WiFi.macAddress(macData);
-  sprintf_P(value_buff, (const char *)F("%x:%x:%x:%x:%x:%x"), macData[0],  macData[1], macData[2], macData[3], macData[4], macData[5]);
-  if (macString != String(value_buff)){  
-    macString = String(value_buff);
-    mac_send = false;
-  }
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetMacString() Load Time: ")); Serial.println(load_time);
-  #endif
-}
-
-
-
-IPAddress stringToIp (String strIp) {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("stringToIp() Start"));
-  #endif
-
-  String temp;
-  IPAddress ip;
-
-  int count = 0;
-  for(int i=0; i <= strIp.length(); i++)
-  {
-    if(strIp[i] != '.')
-    {
-      temp += strIp[i];
-    }
-    else
-    {
-      if(count < 4)
-      {
-        ip[count] = atoi(temp.c_str());
-        temp = "";
-        count++;
-      }
-    }
-    if(i==strIp.length())
-    {
-      ip[count] = atoi(temp.c_str());
-    }
-  }
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("stringToIp() Load Time: ")); Serial.println(load_time);
-  #endif
-
-  return ip;
-}
-
-
-
-bool isIPValid(const char * IP){
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("isIPValid() Start"));
-  #endif
-
-  //limited size
-  int internalcount=0;
-  int dotcount = 0;
-  bool previouswasdot=false;
-  char c;
-
-  if (strlen(IP)>15 || strlen(IP)==0) {
-      return false;
-  }
-  //cannot start with .
-  if (IP[0]=='.') {
-      return false;
-  }
-  //only letter and digit
-  for (int i=0; i < strlen(IP); i++) {
-      c = IP[i];
-      if (isdigit(c)) {
-          //only 3 digit at once
-          internalcount++;
-          previouswasdot=false;
-          if (internalcount>3) {
-              return false;
-          }
-      } else if(c=='.') {
-          //cannot have 2 dots side by side
-          if (previouswasdot) {
-              return false;
-          }
-          previouswasdot=true;
-          internalcount=0;
-          dotcount++;
-      }//if not a dot neither a digit it is wrong
-      else {
-          return false;
-      }
-  }
-  //if not 3 dots then it is wrong
-  if (dotcount!=3) {
-      return false;
-  }
-  //cannot have the last dot as last char
-  if (IP[strlen(IP)-1]=='.') {
-      return false;
-  }
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("isIPValid() Load Time: ")); Serial.println(load_time);
-  #endif
-
-  return true;
 }
 
 
@@ -2863,37 +2936,22 @@ void setup() {
 
   //Wire.begin(4,5); //SDA=4, SCL=5
 
-  if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.bh1750_enable) == 1 || atoi(JConf.sht21_enable) == 1) {
+  if (atoi(JConf.bh1750_enable) == 1) {
     lightSensor.begin();
-    Wire.setClock(100000);
   }
 
+  if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.bh1750_enable) == 1 || atoi(JConf.sht21_enable) == 1) {
+    Wire.setClock(100000);
+  }
 
   // scan Access Points
   scanWiFi();
 
-  // start WiFi
 
-  //WiFi.disconnect();
+  if (!WiFiSetup()) {
+    WiFiSafeSetup();
+  }
   delay(1000);
-
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
-  if (atoi(JConf.static_ip_enable) == 1) {
-    IPAddress staticIP = stringToIp(JConf.static_ip);
-    IPAddress staticGateway = stringToIp(JConf.static_gateway);
-    IPAddress staticSubnet = stringToIp(JConf.static_subnet);
-    WiFi.config(staticIP, staticGateway, staticSubnet);
-  }
-
-  waitConnected();
-
-  if (WiFi.status() == WL_CONNECTED) {
-    WiFi.softAP(JConf.module_id);
-  } else {
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP(JConf.module_id);
-  }
 
 
   if (atoi(JConf.mqtt_enable) == 1) {
@@ -2909,8 +2967,6 @@ void setup() {
     mqttClient.setCallback (callback);
   }
 
-  
-
 
   WebServerInit();
 
@@ -2918,6 +2974,8 @@ void setup() {
   #ifdef DEBUG
   Serial.println();  Serial.println(F("Server started"));
   #endif
+
+/*
   // start mDNS responder
   if (!MDNS.begin(JConf.module_id)) {
     #ifdef DEBUG
@@ -2934,6 +2992,8 @@ void setup() {
 
   // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
+
+*/
 
   if (atoi(JConf.ntp_enable) == 1) {
     timeClient.reconfigure(JConf.ntp_server, atoi(JConf.my_time_zone) * 60 * 60, 60000);
@@ -2967,7 +3027,7 @@ void loop() {
     }
 
     int voltage = ESP.getVcc();
-    voltage_float = (float) voltage / 1000;
+    voltage_float = voltage / 1000.0;
     #ifdef REBOOT_ON
       RebootESP();
     #endif
@@ -2998,9 +3058,6 @@ void loop() {
 
     GetUptimeData();
     GetFreeMemory();
-
-    IPAddress espIP = WiFi.localIP();
-    ipString = GetIpString(espIP);
 
     GetMacString();
 
@@ -3050,6 +3107,26 @@ void loop() {
   }
 
 
+
+  if (WiFi.status() != WL_CONNECTED) {
+    #ifdef DEBUG
+    Serial.print(F("Connecting "));
+    Serial.println(F("..."));
+    #endif
+
+    if (!WiFiSetup()) {
+      WiFiSafeSetup();
+    }
+    delay(1000);
+
+    if (WiFi.waitForConnectResult() != WL_CONNECTED)
+      return;
+    #ifdef DEBUG
+    Serial.println(F("WiFi connected"));
+    #endif
+  }
+
+/*
   if (WiFi.status() != WL_CONNECTED) {
     #ifdef DEBUG
     Serial.print(F("Connecting to "));
@@ -3066,7 +3143,7 @@ void loop() {
     Serial.println(F("WiFi connected"));
     #endif
   }
-
+*/
 
   if (WiFi.status() == WL_CONNECTED) {
 
