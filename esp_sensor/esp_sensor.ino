@@ -1,11 +1,11 @@
+#include <ESP8266WiFi.h>
+//#include <ESP8266mDNS.h>
+#include <ESP8266WebServer.h>
 
 extern "C" {
 #include "user_interface.h"
 }
-#include <ESP8266WiFi.h>
-//#include <ESP8266mDNS.h>
-#include <ESP8266WebServer.h>
-//#include <WiFiClient.h>
+
 #include <PubSubClient.h>
 #include <Wire.h>
 #include "SPI.h"
@@ -704,7 +704,7 @@ void scanWiFi(void) {
 
 bool WiFiSetup()
 {
-  wifi_set_sleep_type ((sleep_type_t)MODEM_SLEEP_T);   // NONE_SLEEP_T,LIGHT_SLEEP_T,MODEM_SLEEP_T
+  //wifi_set_sleep_type ((sleep_type_t)NONE_SLEEP_T);   // NONE_SLEEP_T,LIGHT_SLEEP_T,MODEM_SLEEP_T
   //disconnect if connected
   WiFi.disconnect();
   //this is AP mode
@@ -712,8 +712,9 @@ bool WiFiSetup()
     //setup Soft AP
     WiFi.mode(WIFI_AP);
     WiFi.softAP(JConf.module_id, JConf.sta_pwd);
+    //WiFi.softAP(JConf.module_id);
     //setup PHY_MODE
-    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
+    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
     //get current config
     struct softap_config apconfig;
     wifi_softap_get_config(&apconfig);
@@ -724,8 +725,8 @@ bool WiFiSetup()
     //set the visibility of SSID
     apconfig.ssid_hidden=0;
     //no need to add these settings to configuration just use default ones
-    apconfig.max_connection=2;
-    apconfig.beacon_interval=100;
+    //apconfig.max_connection=2;
+    //apconfig.beacon_interval=100;
     //apply settings to current and to default
     if (!wifi_softap_set_config(&apconfig) || !wifi_softap_set_config_current(&apconfig)) {
         Serial.println(F("Error Wifi AP!"));
@@ -737,7 +738,7 @@ bool WiFiSetup()
     WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
     delay(500);
     //setup PHY_MODE
-    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);
+    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);
     delay(500);
     byte i=0;
     //try to connect
@@ -772,10 +773,8 @@ bool WiFiSetup()
       IPAddress staticSubnet = stringToIp(JConf.static_subnet);
 
       //apply according active wifi mode
-      if (wifi_get_opmode()==WIFI_AP || wifi_get_opmode()==WIFI_AP_STA) {
-          WiFi.softAPConfig(staticIP, staticGateway, staticSubnet);
-      } else {
-          WiFi.config(staticIP, staticGateway, staticSubnet);
+      if (wifi_get_opmode()==WIFI_STA) {
+        WiFi.config(staticIP, staticGateway, staticSubnet);
       }
   }
   //Get IP
@@ -1756,6 +1755,12 @@ void WebWiFiConf(void) {
     config_changed = true;
   }
 
+  payload=WebServer.arg("wifi_mode");
+  if (payload.length() > 0 ) {
+    payload.toCharArray(JConf.wifi_mode, sizeof(JConf.wifi_mode));
+    config_changed = true;
+  }
+
   payload=WebServer.arg("sta_ssid");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.sta_ssid, sizeof(JConf.sta_ssid));
@@ -1802,6 +1807,7 @@ void WebWiFiConf(void) {
   }
 
   data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
+  data += inputBodyName + String(F("Wi-Fi Mode")) + inputBodyPOST + String(F("wifi_mode"))  + inputPlaceHolder + JConf.wifi_mode + inputBodyClose + inputBodyCloseDiv;
   data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.sta_ssid + inputBodyClose + inputBodyCloseDiv;
   data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
@@ -3107,15 +3113,14 @@ void loop() {
   }
 
 
-
   if (WiFi.status() != WL_CONNECTED) {
     #ifdef DEBUG
     Serial.print(F("Connecting "));
     Serial.println(F("..."));
     #endif
 
-    if (!WiFiSetup()) {
-      WiFiSafeSetup();
+    if (atoi(JConf.wifi_mode) == 1) {
+      WiFiSetup();
     }
     delay(1000);
 
