@@ -763,6 +763,31 @@ bool WiFiSetup()
         return false;
     }
     WiFi.hostname(JConf.module_id);
+  } else if (atoi(JConf.wifi_mode) == 2) {
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
+
+    WiFi.softAP(JConf.module_id, JConf.sta_pwd);
+    //WiFi.softAP(JConf.module_id);
+    //setup PHY_MODE
+    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
+    //get current config
+    struct softap_config apconfig;
+    wifi_softap_get_config(&apconfig);
+    //set the chanel
+    apconfig.channel=10;
+    //set Authentification type
+    apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
+    //set the visibility of SSID
+    apconfig.ssid_hidden=0;
+    //no need to add these settings to configuration just use default ones
+    //apconfig.max_connection=2;
+    //apconfig.beacon_interval=100;
+    //apply settings to current and to default
+    if (!wifi_softap_set_config(&apconfig) || !wifi_softap_set_config_current(&apconfig)) {
+        Serial.println(F("Error Wifi AP_STA!"));
+        delay(1000);
+    }
   }
 
   //DHCP or Static IP ?
@@ -773,13 +798,13 @@ bool WiFiSetup()
       IPAddress staticSubnet = stringToIp(JConf.static_subnet);
 
       //apply according active wifi mode
-      if (wifi_get_opmode()==WIFI_STA) {
+      if (wifi_get_opmode()==WIFI_STA || wifi_get_opmode()==WIFI_AP_STA) {
         WiFi.config(staticIP, staticGateway, staticSubnet);
       }
   }
   //Get IP
   IPAddress espIP;
-  if (wifi_get_opmode()==WIFI_STA) {
+  if (wifi_get_opmode()==WIFI_STA || wifi_get_opmode()==WIFI_AP_STA) {
       espIP=WiFi.localIP();
   } else {
       espIP=WiFi.softAPIP();
@@ -793,17 +818,10 @@ bool WiFiSetup()
 void  WiFiSafeSetup()
 {
   WiFi.disconnect();
-
-  IPAddress staticIP = stringToIp(JConf.static_ip);
-  IPAddress staticGateway = stringToIp(JConf.static_gateway);
-  IPAddress staticSubnet = stringToIp(JConf.static_subnet);
-
   //setup Soft AP
   WiFi.mode(WIFI_AP);
   WiFi.softAP(JConf.module_id, JConf.sta_pwd);
   delay(500);
-  WiFi.softAPConfig(staticIP, staticGateway, staticSubnet);
-  delay(1000);
   Serial.println(F("Safe mode started"));
 }
 
@@ -1807,7 +1825,17 @@ void WebWiFiConf(void) {
   }
 
   data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
-  data += inputBodyName + String(F("Wi-Fi Mode")) + inputBodyPOST + String(F("wifi_mode"))  + inputPlaceHolder + JConf.wifi_mode + inputBodyClose + inputBodyCloseDiv;
+
+  data += String(F("<label for='wifi_mode_id' class='control-label col-xs-2'>Wi-Fi mode</label><div class='col-xs-10'>"));
+  if (atoi(JConf.wifi_mode) == 1){
+    data += String(F("<select class='form-control input-lg' name='wifi_mode' id='wifi_mode_id'><option value='0'>AP</option><option value='1' selected>STA</option><option value='2'>AP_STA</option></select></div>"));
+  } else if (atoi(JConf.wifi_mode) == 2){
+    data += String(F("<select class='form-control input-lg' name='wifi_mode' id='wifi_mode_id'><option value='0'>AP</option><option value='1'>STA</option><option value='2' selected>AP_STA</option></select></div>"));
+  } else {
+    data += String(F("<select class='form-control input-lg' name='wifi_mode' id='wifi_mode_id'><option value='0' selected>AP</option><option value='1'>STA</option><option value='2'>AP_STA</option></select></div>"));
+  }
+  //data += inputBodyName + String(F("Wi-Fi Mode")) + inputBodyPOST + String(F("wifi_mode"))  + inputPlaceHolder + JConf.wifi_mode + inputBodyClose + inputBodyCloseDiv;
+
   data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.sta_ssid + inputBodyClose + inputBodyCloseDiv;
   data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
