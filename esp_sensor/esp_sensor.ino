@@ -790,6 +790,31 @@ bool WiFiSetup()
     WiFi.mode(WIFI_AP_STA);
     WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
 
+    delay(500);
+    byte i=0;
+    //try to connect
+    while (WiFi.status() != WL_CONNECTED && i<40) {
+        switch(WiFi.status()) {
+        case 1:
+            Serial.println(F("No SSID found!"));
+            break;
+
+        case 4:
+            Serial.println(F("No Connection!"));
+            break;
+
+        default:
+            Serial.println(F("Connecting..."));
+            break;
+        }
+        delay(500);
+        i++;
+    }
+    if (WiFi.status() != WL_CONNECTED) {
+        return false;
+    }
+
+
     if (atoi(JConf.wifi_auth) == OPEN){
       WiFi.softAP(JConf.module_id);
     } else {
@@ -1886,24 +1911,26 @@ void WebWiFiConf(void) {
 
   data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
 
-  data += String(F("<label for='wifi_mode_id' class='control-label col-xs-2'>Wi-Fi mode</label><div class='col-xs-10'>"));
+
+
+  data += String(F("<div class='form-group'><div class='input-group'><span class='input-group-addon'>Wi-Fi type</span>"));
   if (atoi(JConf.wifi_mode) == 1){
-    data += String(F("<select class='form-control input-lg' name='wifi_mode' id='wifi_mode_id'><option value='0'>AP</option><option value='1' selected>STA</option><option value='2'>AP_STA</option></select></div>"));
+    data += String(F("<select class='form-control' name='wifi_mode'><option value='0'>AP</option><option value='1' selected>STA</option><option value='2'>AP_STA</option></select></div></div>"));
   } else if (atoi(JConf.wifi_mode) == 2){
-    data += String(F("<select class='form-control input-lg' name='wifi_mode' id='wifi_mode_id'><option value='0'>AP</option><option value='1'>STA</option><option value='2' selected>AP_STA</option></select></div>"));
+    data += String(F("<select class='form-control' name='wifi_mode'><option value='0'>AP</option><option value='1'>STA</option><option value='2' selected>AP_STA</option></select></div></div>"));
   } else {
-    data += String(F("<select class='form-control input-lg' name='wifi_mode' id='wifi_mode_id'><option value='0' selected>AP</option><option value='1'>STA</option><option value='2'>AP_STA</option></select></div>"));
+    data += String(F("<select class='form-control' name='wifi_mode'><option value='0' selected>AP</option><option value='1'>STA</option><option value='2'>AP_STA</option></select></div></div>"));
   }
   //data += inputBodyName + String(F("Wi-Fi Mode")) + inputBodyPOST + String(F("wifi_mode"))  + inputPlaceHolder + JConf.wifi_mode + inputBodyClose + inputBodyCloseDiv;
 
 
-  data += String(F("<label for='wifi_phy_mode_id' class='control-label col-xs-2'>Wi-Fi Speed</label><div class='col-xs-10'>"));
+  data += String(F("<div class='form-group'><div class='input-group'><span class='input-group-addon'>Wi-Fi mode</span>"));
   if (atoi(JConf.wifi_phy_mode) == 1){
-    data += String(F("<select class='form-control input-lg' name='wifi_phy_mode' id='wifi_phy_mode_id'><option value='0'>11B</option><option value='1' selected>11G</option><option value='2'>11N</option></select></div>"));
+    data += String(F("<select class='form-control' name='wifi_phy_mode'><option value='0'>11B</option><option value='1' selected>11G</option><option value='2'>11N</option></select></div></div>"));
   } else if (atoi(JConf.wifi_phy_mode) == 2){
-    data += String(F("<select class='form-control input-lg' name='wifi_phy_mode' id='wifi_phy_mode_id'><option value='0'>11B</option><option value='1'>11G</option><option value='2' selected>11N</option></select></div>"));
+    data += String(F("<select class='form-control' name='wifi_phy_mode'><option value='0'>11B</option><option value='1'>11G</option><option value='2' selected>11N</option></select></div></div>"));
   } else {
-    data += String(F("<select class='form-control input-lg' name='wifi_phy_mode' id='wifi_phy_mode_id'><option value='0' selected>11B</option><option value='1'>11G</option><option value='2'>11N</option></select></div>"));
+    data += String(F("<select class='form-control' name='wifi_phy_mode'><option value='0' selected>11B</option><option value='1'>11G</option><option value='2'>11N</option></select></div></div>"));
   }
 
 
@@ -2980,21 +3007,6 @@ void WebServerInit()
 
 void setup() {
 
-  pinMode(atoi(JConf.light_pin), OUTPUT);
-  pinMode(atoi(JConf.light_pin2), OUTPUT);
-  pinMode(atoi(JConf.motion_pin), INPUT);           // set pin to input
-
-  digitalWrite(atoi(JConf.light_pin), LOW);
-  digitalWrite(atoi(JConf.light_pin2), LOW);
-
-
-  #ifdef SHT21_ON
-    myHTU21D.begin();
-  #endif
-
-  #ifdef DHT_ON
-    dht.begin();
-  #endif
   // Setup console
   #ifdef DEBUG
     Serial.begin(115200);
@@ -3026,6 +3038,20 @@ void setup() {
   }
   JConf.printConfig();
 
+  pinMode(atoi(JConf.light_pin), OUTPUT);
+  pinMode(atoi(JConf.light_pin2), OUTPUT);
+  pinMode(atoi(JConf.motion_pin), INPUT);           // set pin to input
+
+  digitalWrite(atoi(JConf.light_pin), LOW);
+  digitalWrite(atoi(JConf.light_pin2), LOW);
+
+  #ifdef SHT21_ON
+    myHTU21D.begin();
+  #endif
+
+  #ifdef DHT_ON
+    dht.begin();
+  #endif
 
   if (atoi(JConf.bme280_enable) == 1) {
     #ifdef BME280_ON
@@ -3214,16 +3240,13 @@ void loop() {
   }
 
 
-  if (WiFi.status() != WL_CONNECTED) {
+  if (WiFi.status() != WL_CONNECTED && atoi(JConf.wifi_mode) != AP) {
     #ifdef DEBUG
     Serial.print(F("Connecting "));
     Serial.println(F("..."));
     #endif
 
-    if (atoi(JConf.wifi_mode) == 1) {
-      WiFiSetup();
-    }
-    delay(1000);
+    WiFiSetup();
 
     if (WiFi.waitForConnectResult() != WL_CONNECTED)
       return;

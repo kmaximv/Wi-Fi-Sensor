@@ -42,6 +42,7 @@ bool JsonConf::saveConfig() {
   json["subscribe_delay"]               = subscribe_delay              ;                                       
   json["motion_read_delay"]             = motion_read_delay            ;                                           
   json["reboot_delay"]                  = reboot_delay                 ;                                 
+/*
   json["uart_delay_analog_pin0"]        = uart_delay_analog_pin0       ;                                                     
   json["uart_delay_analog_pin1"]        = uart_delay_analog_pin1       ;                                                     
   json["uart_delay_analog_pin2"]        = uart_delay_analog_pin2       ;                                                     
@@ -55,7 +56,7 @@ bool JsonConf::saveConfig() {
   json["green_humidity_threshold_down"] = green_humidity_threshold_down;                                                                   
   json["green_humidity_sensor_pin"]     = green_humidity_sensor_pin    ;                                                           
   json["green_pump_pin"]                = green_pump_pin               ;                                     
-
+*/
   json["static_ip_enable"]              = static_ip_enable             ;                                     
   json["ntp_enable"]                    = ntp_enable                   ;                               
   json["mqtt_enable"]                   = mqtt_enable                  ;                               
@@ -67,7 +68,7 @@ bool JsonConf::saveConfig() {
 
 
 
-  File configFile = SPIFFS.open("/config.json", "w");
+  File configFile = SPIFFS.open("/conf.json", "w");
   if (!configFile) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to open config file for writing"));
@@ -90,7 +91,7 @@ bool JsonConf::loadConfig() {
   Serial.print(F("loadConfig()"));  Serial.println();
 #endif
 
-  File configFile = SPIFFS.open("/config.json", "r");
+  File configFile = SPIFFS.open("/conf.json", "r");
   if (!configFile) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to open config file"));
@@ -103,7 +104,7 @@ bool JsonConf::loadConfig() {
   if (size > 2048) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Config file size is too large"));
-    SPIFFS.remove("/config.json");
+    SPIFFS.remove("/conf.json");
     saveConfig();
 #endif
     return false;
@@ -123,7 +124,7 @@ bool JsonConf::loadConfig() {
   if (!json.success()) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to parse config file"));
-    SPIFFS.remove("/config.json");
+    SPIFFS.remove("/conf.json");
     saveConfig();
 #endif
     return false;
@@ -161,6 +162,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("subscribe_delay"               )) {  const char* subscribe_delay_char               = json["subscribe_delay"              ];    sprintf_P(subscribe_delay,               ("%s"), subscribe_delay_char              ); }
   if (json.containsKey("motion_read_delay"             )) {  const char* motion_read_delay_char             = json["motion_read_delay"            ];    sprintf_P(motion_read_delay,             ("%s"), motion_read_delay_char            ); }
   if (json.containsKey("reboot_delay"                  )) {  const char* reboot_delay_char                  = json["reboot_delay"                 ];    sprintf_P(reboot_delay,                  ("%s"), reboot_delay_char                 ); }
+/*
   if (json.containsKey("uart_delay_analog_pin0"        )) {  const char* uart_delay_analog_pin0_char        = json["uart_delay_analog_pin0"       ];    sprintf_P(uart_delay_analog_pin0,        ("%s"), uart_delay_analog_pin0_char       ); }
   if (json.containsKey("uart_delay_analog_pin1"        )) {  const char* uart_delay_analog_pin1_char        = json["uart_delay_analog_pin1"       ];    sprintf_P(uart_delay_analog_pin1,        ("%s"), uart_delay_analog_pin1_char       ); }
   if (json.containsKey("uart_delay_analog_pin2"        )) {  const char* uart_delay_analog_pin2_char        = json["uart_delay_analog_pin2"       ];    sprintf_P(uart_delay_analog_pin2,        ("%s"), uart_delay_analog_pin2_char       ); }
@@ -174,7 +176,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("green_humidity_threshold_down" )) {  const char* green_humidity_threshold_down_char = json["green_humidity_threshold_down"];    sprintf_P(green_humidity_threshold_down, ("%s"), green_humidity_threshold_down_char); }
   if (json.containsKey("green_humidity_sensor_pin"     )) {  const char* green_humidity_sensor_pin_char     = json["green_humidity_sensor_pin"    ];    sprintf_P(green_humidity_sensor_pin,     ("%s"), green_humidity_sensor_pin_char    ); }
   if (json.containsKey("green_pump_pin"                )) {  const char* green_pump_pin_char                = json["green_pump_pin"               ];    sprintf_P(green_pump_pin,                ("%s"), green_pump_pin_char               ); }
-
+*/
   if (json.containsKey("static_ip_enable"              )) {  const char* static_ip_enable_char              = json["static_ip_enable"             ];    sprintf_P(static_ip_enable,              ("%s"), static_ip_enable_char             ); }
   if (json.containsKey("ntp_enable"                    )) {  const char* ntp_enable_char                    = json["ntp_enable"                   ];    sprintf_P(ntp_enable,                    ("%s"), ntp_enable_char                   ); }
   if (json.containsKey("mqtt_enable"                   )) {  const char* mqtt_enable_char                   = json["mqtt_enable"                  ];    sprintf_P(mqtt_enable,                   ("%s"), mqtt_enable_char                  ); }
@@ -227,6 +229,7 @@ bool JsonConf::printConfig() {
   Serial.print(F("subscribe_delay              : "));   Serial.println(subscribe_delay              );
   Serial.print(F("motion_read_delay            : "));   Serial.println(motion_read_delay            );
   Serial.print(F("reboot_delay                 : "));   Serial.println(reboot_delay                 );
+/*
   Serial.print(F("uart_delay_analog_pin0       : "));   Serial.println(uart_delay_analog_pin0       );
   Serial.print(F("uart_delay_analog_pin1       : "));   Serial.println(uart_delay_analog_pin1       );
   Serial.print(F("uart_delay_analog_pin2       : "));   Serial.println(uart_delay_analog_pin2       );
@@ -240,7 +243,7 @@ bool JsonConf::printConfig() {
   Serial.print(F("green_humidity_threshold_down: "));   Serial.println(green_humidity_threshold_down);
   Serial.print(F("green_humidity_sensor_pin    : "));   Serial.println(green_humidity_sensor_pin    );
   Serial.print(F("green_pump_pin               : "));   Serial.println(green_pump_pin               );
-
+*/
   Serial.print(F("static_ip_enable             : "));   Serial.println(static_ip_enable             );
   Serial.print(F("ntp_enable                   : "));   Serial.println(ntp_enable                   );
   Serial.print(F("mqtt_enable                  : "));   Serial.println(mqtt_enable                  );

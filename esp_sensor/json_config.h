@@ -10,8 +10,8 @@
 #define BME280_ON
 //#define SHT21_ON
 
-//#define DEBUG
-//#define DEBUG_JSON_CONFIG
+#define DEBUG
+#define DEBUG_JSON_CONFIG
 
 
 //#define REBOOT_ON
@@ -46,7 +46,6 @@ class JsonConf
     char wifi_phy_mode                [2]  = "0"                  ;
     char wifi_channel                 [3]  = "10"                 ;
     char wifi_auth                    [2]  = "0"                  ;
-
     char sta_ssid                     [16] = "IoT"                ;
     char sta_pwd                      [32] = "Poiu0987"           ;
     char static_ip                    [16] = "192.168.2.220"      ;
@@ -73,6 +72,7 @@ class JsonConf
     char subscribe_delay              [32] = "60"                 ;
     char motion_read_delay            [32] = "10"                 ;
     char reboot_delay                 [32] = "1800"               ;
+
     char uart_delay_analog_pin0       [32] = "none"               ;
     char uart_delay_analog_pin1       [32] = "none"               ;
     char uart_delay_analog_pin2       [32] = "none"               ;
