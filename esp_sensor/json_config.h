@@ -29,6 +29,11 @@
 #define DATA_LENGTH 10    //Максимальный размер пакета данных без маркеров и CRC
 //------------------------------------------------------------------------------
 
+enum WIFI_MODE_ENUM {AP, STA, AP_STA};
+enum WIFI_PHY_MODE_ENUM {B, G, N};
+enum WIFI_AUTH_ENUM {OPEN, WPA_PSK, WPA2_PSK, WPA_WPA2_PSK};
+
+
 class JsonConf
 {
   public:
@@ -36,9 +41,13 @@ class JsonConf
     bool loadConfig();
     bool printConfig();
 
-    char module_id                    [32] = "ESP8266"            ;
-    char wifi_mode                    [2]  = "0"                  ; 
-    char sta_ssid                     [32] = "IoT"                ;
+    char module_id                    [16] = "ESP8266"            ;
+    char wifi_mode                    [2]  = "0"                  ;
+    char wifi_phy_mode                [2]  = "0"                  ;
+    char wifi_channel                 [3]  = "10"                 ;
+    char wifi_auth                    [2]  = "0"                  ;
+
+    char sta_ssid                     [16] = "IoT"                ;
     char sta_pwd                      [32] = "Poiu0987"           ;
     char static_ip                    [16] = "192.168.2.220"      ;
     char static_gateway               [16] = "192.168.2.1"        ;

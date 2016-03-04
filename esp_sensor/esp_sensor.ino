@@ -704,24 +704,46 @@ void scanWiFi(void) {
 
 bool WiFiSetup()
 {
-  //wifi_set_sleep_type ((sleep_type_t)NONE_SLEEP_T);   // NONE_SLEEP_T,LIGHT_SLEEP_T,MODEM_SLEEP_T
+  wifi_set_sleep_type ((sleep_type_t)NONE_SLEEP_T);   // NONE_SLEEP_T,LIGHT_SLEEP_T,MODEM_SLEEP_T
   //disconnect if connected
   WiFi.disconnect();
   //this is AP mode
-  if (atoi(JConf.wifi_mode) == 0) {
+  if (atoi(JConf.wifi_mode) == AP) {
     //setup Soft AP
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(JConf.module_id, JConf.sta_pwd);
-    //WiFi.softAP(JConf.module_id);
+
+    if (atoi(JConf.wifi_auth) == OPEN){
+      WiFi.softAP(JConf.module_id);
+    } else {
+      WiFi.softAP(JConf.module_id, JConf.sta_pwd);
+    }
+
     //setup PHY_MODE
-    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
+    if (atoi(JConf.wifi_phy_mode) == B){
+      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11B);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
+    } else if (atoi(JConf.wifi_phy_mode) == G){
+      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);
+    } else {
+      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);
+    }
+
     //get current config
     struct softap_config apconfig;
     wifi_softap_get_config(&apconfig);
     //set the chanel
-    apconfig.channel=10;
-    //set Authentification type
-    apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
+    apconfig.channel=atoi(JConf.wifi_channel);
+
+    //set Authentification type                      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
+    if (atoi(JConf.wifi_auth) == OPEN){
+      apconfig.authmode=(AUTH_MODE)AUTH_OPEN;
+    } else if (atoi(JConf.wifi_auth) == WPA_PSK){
+      apconfig.authmode=(AUTH_MODE)AUTH_WPA_PSK;
+    } else if (atoi(JConf.wifi_auth) == WPA2_PSK){
+      apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;
+    } else {
+      apconfig.authmode=(AUTH_MODE)AUTH_WPA_WPA2_PSK;
+    }
+
     //set the visibility of SSID
     apconfig.ssid_hidden=0;
     //no need to add these settings to configuration just use default ones
@@ -732,7 +754,8 @@ bool WiFiSetup()
         Serial.println(F("Error Wifi AP!"));
         delay(1000);
     }
-  } else if (atoi(JConf.wifi_mode) == 1) {
+    
+  } else if (atoi(JConf.wifi_mode) == STA) {
     //setup station mode
     WiFi.mode(WIFI_STA);
     WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
@@ -763,21 +786,42 @@ bool WiFiSetup()
         return false;
     }
     WiFi.hostname(JConf.module_id);
-  } else if (atoi(JConf.wifi_mode) == 2) {
+  } else if (atoi(JConf.wifi_mode) == AP_STA) {
     WiFi.mode(WIFI_AP_STA);
     WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
 
-    WiFi.softAP(JConf.module_id, JConf.sta_pwd);
-    //WiFi.softAP(JConf.module_id);
+    if (atoi(JConf.wifi_auth) == OPEN){
+      WiFi.softAP(JConf.module_id);
+    } else {
+      WiFi.softAP(JConf.module_id, JConf.sta_pwd);
+    }
+
     //setup PHY_MODE
-    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
+    if (atoi(JConf.wifi_phy_mode) == B){
+      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11B);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
+    } else if (atoi(JConf.wifi_phy_mode) == G){
+      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);
+    } else {
+      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);
+    }
+
     //get current config
     struct softap_config apconfig;
     wifi_softap_get_config(&apconfig);
     //set the chanel
-    apconfig.channel=10;
-    //set Authentification type
-    apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
+    apconfig.channel=atoi(JConf.wifi_channel);
+
+    //set Authentification type                      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
+    if (atoi(JConf.wifi_auth) == OPEN){
+      apconfig.authmode=(AUTH_MODE)AUTH_OPEN;
+    } else if (atoi(JConf.wifi_auth) == WPA_PSK){
+      apconfig.authmode=(AUTH_MODE)AUTH_WPA_PSK;
+    } else if (atoi(JConf.wifi_auth) == WPA2_PSK){
+      apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;
+    } else {
+      apconfig.authmode=(AUTH_MODE)AUTH_WPA_WPA2_PSK;
+    }
+
     //set the visibility of SSID
     apconfig.ssid_hidden=0;
     //no need to add these settings to configuration just use default ones
@@ -1779,6 +1823,22 @@ void WebWiFiConf(void) {
     config_changed = true;
   }
 
+  payload=WebServer.arg("wifi_phy_mode");
+  if (payload.length() > 0 ) {
+    payload.toCharArray(JConf.wifi_phy_mode, sizeof(JConf.wifi_phy_mode));
+    config_changed = true;
+  }
+  payload=WebServer.arg("wifi_channel");
+  if (payload.length() > 0 ) {
+    payload.toCharArray(JConf.wifi_channel, sizeof(JConf.wifi_channel));
+    config_changed = true;
+  }
+  payload=WebServer.arg("wifi_auth");
+  if (payload.length() > 0 ) {
+    payload.toCharArray(JConf.wifi_auth, sizeof(JConf.wifi_auth));
+    config_changed = true;
+  }
+
   payload=WebServer.arg("sta_ssid");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.sta_ssid, sizeof(JConf.sta_ssid));
@@ -1835,6 +1895,19 @@ void WebWiFiConf(void) {
     data += String(F("<select class='form-control input-lg' name='wifi_mode' id='wifi_mode_id'><option value='0' selected>AP</option><option value='1'>STA</option><option value='2'>AP_STA</option></select></div>"));
   }
   //data += inputBodyName + String(F("Wi-Fi Mode")) + inputBodyPOST + String(F("wifi_mode"))  + inputPlaceHolder + JConf.wifi_mode + inputBodyClose + inputBodyCloseDiv;
+
+
+  data += String(F("<label for='wifi_phy_mode_id' class='control-label col-xs-2'>Wi-Fi Speed</label><div class='col-xs-10'>"));
+  if (atoi(JConf.wifi_phy_mode) == 1){
+    data += String(F("<select class='form-control input-lg' name='wifi_phy_mode' id='wifi_phy_mode_id'><option value='0'>11B</option><option value='1' selected>11G</option><option value='2'>11N</option></select></div>"));
+  } else if (atoi(JConf.wifi_phy_mode) == 2){
+    data += String(F("<select class='form-control input-lg' name='wifi_phy_mode' id='wifi_phy_mode_id'><option value='0'>11B</option><option value='1'>11G</option><option value='2' selected>11N</option></select></div>"));
+  } else {
+    data += String(F("<select class='form-control input-lg' name='wifi_phy_mode' id='wifi_phy_mode_id'><option value='0' selected>11B</option><option value='1'>11G</option><option value='2'>11N</option></select></div>"));
+  }
+
+
+  data += inputBodyName + String(F("Channel")) + inputBodyPOST + String(F("wifi_channel"))  + inputPlaceHolder + JConf.wifi_channel + inputBodyClose + inputBodyCloseDiv;
 
   data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.sta_ssid + inputBodyClose + inputBodyCloseDiv;
   data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
