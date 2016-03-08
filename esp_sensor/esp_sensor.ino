@@ -1876,6 +1876,12 @@ void WebWiFiConf(void) {
     config_changed = true;
   }
 
+  payload=WebServer.arg("ap_pwd");
+  if (payload.length() > 7 &&  payload != String(F("********"))) {
+    payload.toCharArray(JConf.ap_pwd, sizeof(JConf.ap_pwd));
+    config_changed = true;
+  }
+
   payload=WebServer.arg("static_ip_enable");
   if (payload.length() > 0) {
     payload.toCharArray(JConf.static_ip_enable, sizeof(JConf.static_ip_enable));
@@ -1911,41 +1917,55 @@ void WebWiFiConf(void) {
 
   data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
 
-
-
-  data += String(F("<div class='form-group'><div class='input-group'><span class='input-group-addon'>Wi-Fi type</span>"));
-  if (atoi(JConf.wifi_mode) == 1){
+  data += String(F("<div class='form-group'><div class='input-group'><span class='input-group-addon'>AP type</span>"));
+  if (atoi(JConf.wifi_mode) == STA){
     data += String(F("<select class='form-control' name='wifi_mode'><option value='0'>AP</option><option value='1' selected>STA</option><option value='2'>AP_STA</option></select></div></div>"));
-  } else if (atoi(JConf.wifi_mode) == 2){
+  } else if (atoi(JConf.wifi_mode) == AP_STA){
     data += String(F("<select class='form-control' name='wifi_mode'><option value='0'>AP</option><option value='1'>STA</option><option value='2' selected>AP_STA</option></select></div></div>"));
   } else {
     data += String(F("<select class='form-control' name='wifi_mode'><option value='0' selected>AP</option><option value='1'>STA</option><option value='2'>AP_STA</option></select></div></div>"));
   }
-  //data += inputBodyName + String(F("Wi-Fi Mode")) + inputBodyPOST + String(F("wifi_mode"))  + inputPlaceHolder + JConf.wifi_mode + inputBodyClose + inputBodyCloseDiv;
 
+  if ( atoi(JConf.wifi_mode) != STA){
+    data += String(F("<div class='form-group'><div class='input-group'><span class='input-group-addon'>AP mode</span>"));
+    if (atoi(JConf.wifi_phy_mode) == G){
+      data += String(F("<select class='form-control' name='wifi_phy_mode'><option value='0'>11B</option><option value='1' selected>11G</option><option value='2'>11N</option></select></div></div>"));
+    } else if (atoi(JConf.wifi_phy_mode) == N){
+      data += String(F("<select class='form-control' name='wifi_phy_mode'><option value='0'>11B</option><option value='1'>11G</option><option value='2' selected>11N</option></select></div></div>"));
+    } else {
+      data += String(F("<select class='form-control' name='wifi_phy_mode'><option value='0' selected>11B</option><option value='1'>11G</option><option value='2'>11N</option></select></div></div>"));
+    }
 
-  data += String(F("<div class='form-group'><div class='input-group'><span class='input-group-addon'>Wi-Fi mode</span>"));
-  if (atoi(JConf.wifi_phy_mode) == 1){
-    data += String(F("<select class='form-control' name='wifi_phy_mode'><option value='0'>11B</option><option value='1' selected>11G</option><option value='2'>11N</option></select></div></div>"));
-  } else if (atoi(JConf.wifi_phy_mode) == 2){
-    data += String(F("<select class='form-control' name='wifi_phy_mode'><option value='0'>11B</option><option value='1'>11G</option><option value='2' selected>11N</option></select></div></div>"));
-  } else {
-    data += String(F("<select class='form-control' name='wifi_phy_mode'><option value='0' selected>11B</option><option value='1'>11G</option><option value='2'>11N</option></select></div></div>"));
+    data += inputBodyName + String(F("AP Channel")) + inputBodyPOST + String(F("wifi_channel"))  + inputPlaceHolder + JConf.wifi_channel + inputBodyClose + inputBodyCloseDiv;
+
+    data += String(F("<div class='form-group'><div class='input-group'><span class='input-group-addon'>AP auth</span>"));
+    if (atoi(JConf.wifi_auth) == WPA_PSK){
+      data += String(F("<select class='form-control' name='wifi_auth'><option value='0'>OPEN</option><option value='1' selected>WPA_PSK</option><option value='2'>WPA2_PSK</option><option value='3'>WPA_WPA2_PSK</option></select></div></div>"));
+    } else if (atoi(JConf.wifi_auth) == WPA2_PSK){
+      data += String(F("<select class='form-control' name='wifi_auth'><option value='0'>OPEN</option><option value='1'>WPA_PSK</option><option value='2' selected>WPA2_PSK</option><option value='3'>WPA_WPA2_PSK</option></select></div></div>"));
+    } else if (atoi(JConf.wifi_auth) == WPA_WPA2_PSK){
+      data += String(F("<select class='form-control' name='wifi_auth'><option value='0'>OPEN</option><option value='1'>WPA_PSK</option><option value='2'>WPA2_PSK</option><option value='3' selected>WPA_WPA2_PSK</option></select></div></div>"));
+    } else {
+      data += String(F("<select class='form-control' name='wifi_auth'><option value='0' selected>OPEN</option><option value='1'>WPA_PSK</option><option value='2'>WPA2_PSK</option><option value='3'>WPA_WPA2_PSK</option></select></div></div>"));
+    }
+
+    if (atoi(JConf.wifi_auth) != OPEN){
+      data += inputBodyName + String(F("AP Password")) + String(F("</span><input type='password' name='")) + String(F("ap_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
+    }
   }
 
+  if ( atoi(JConf.wifi_mode) != AP){
+    data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.sta_ssid + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("STA Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
 
-  data += inputBodyName + String(F("Channel")) + inputBodyPOST + String(F("wifi_channel"))  + inputPlaceHolder + JConf.wifi_channel + inputBodyClose + inputBodyCloseDiv;
-
-  data += inputBodyName + String(F("STA SSID")) + inputBodyPOST + String(F("sta_ssid"))  + inputPlaceHolder + JConf.sta_ssid + inputBodyClose + inputBodyCloseDiv;
-  data += inputBodyName + String(F("Password")) + String(F("</span><input type='password' name='")) + String(F("sta_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
-
-  if (atoi(JConf.static_ip_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_enable' value='1' checked='true'>Static IP Mode</label></div>"));
-    data += inputBodyName + String(F("Static IP"))      + inputBodyPOST + String(F("static_ip"))      + inputPlaceHolder + JConf.static_ip      + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("static_gateway")) + inputPlaceHolder + JConf.static_gateway + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Static Subnet"))  + inputBodyPOST + String(F("static_subnet"))  + inputPlaceHolder + JConf.static_subnet  + inputBodyClose + inputBodyCloseDiv;
-  } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_enable' value='1'>Static IP Mode</label></div>"));
+    if (atoi(JConf.static_ip_enable) == 1){
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_enable' value='1' checked='true'>Static IP Mode</label></div>"));
+      data += inputBodyName + String(F("Static IP"))      + inputBodyPOST + String(F("static_ip"))      + inputPlaceHolder + JConf.static_ip      + inputBodyClose + inputBodyCloseDiv;
+      data += inputBodyName + String(F("Static Gateway")) + inputBodyPOST + String(F("static_gateway")) + inputPlaceHolder + JConf.static_gateway + inputBodyClose + inputBodyCloseDiv;
+      data += inputBodyName + String(F("Static Subnet"))  + inputBodyPOST + String(F("static_subnet"))  + inputPlaceHolder + JConf.static_subnet  + inputBodyClose + inputBodyCloseDiv;
+    } else {
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='static_ip_enable' value='1'>Static IP Mode</label></div>"));
+    }
   }
 
   data += inputBodyEnd;

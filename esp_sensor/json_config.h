@@ -48,6 +48,7 @@ class JsonConf
     char wifi_auth                    [2]  = "0"                  ;
     char sta_ssid                     [16] = "IoT"                ;
     char sta_pwd                      [32] = "Poiu0987"           ;
+    char ap_pwd                       [32] = "Poiu0987"           ;
     char static_ip                    [16] = "192.168.2.220"      ;
     char static_gateway               [16] = "192.168.2.1"        ;
     char static_subnet                [16] = "255.255.255.0"      ;

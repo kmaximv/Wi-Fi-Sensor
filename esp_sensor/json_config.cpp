@@ -18,6 +18,7 @@ bool JsonConf::saveConfig() {
   json["wifi_auth"]                     = wifi_auth                    ;                           
   json["sta_ssid"]                      = sta_ssid                     ;                         
   json["sta_pwd"]                       = sta_pwd                      ;                       
+  json["ap_pwd"]                        = ap_pwd                       ;                       
   json["static_ip"]                     = static_ip                    ;                           
   json["static_gateway"]                = static_gateway               ;                                     
   json["static_subnet"]                 = static_subnet                ;                                   
@@ -100,6 +101,8 @@ bool JsonConf::loadConfig() {
     return false;
   }
 
+  //SPIFFS.remove("/conf.json");
+
   size_t size = configFile.size();
   if (size > 2048) {
 #ifdef DEBUG_JSON_CONFIG
@@ -138,6 +141,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("wifi_auth"                     )) {  const char* wifi_auth_char                     = json["wifi_auth"                    ];    sprintf_P(wifi_auth,                     ("%s"), wifi_auth_char                    ); }
   if (json.containsKey("sta_ssid"                      )) {  const char* sta_ssid_char                      = json["sta_ssid"                     ];    sprintf_P(sta_ssid,                      ("%s"), sta_ssid_char                     ); }
   if (json.containsKey("sta_pwd"                       )) {  const char* sta_pwd_char                       = json["sta_pwd"                      ];    sprintf_P(sta_pwd,                       ("%s"), sta_pwd_char                      ); }
+  if (json.containsKey("ap_pwd"                        )) {  const char* ap_pwd_char                        = json["ap_pwd"                       ];    sprintf_P(ap_pwd,                        ("%s"), ap_pwd_char                       ); }
   if (json.containsKey("static_ip"                     )) {  const char* static_ip_char                     = json["static_ip"                    ];    sprintf_P(static_ip,                     ("%s"), static_ip_char                    ); }
   if (json.containsKey("static_gateway"                )) {  const char* static_gateway_char                = json["static_gateway"               ];    sprintf_P(static_gateway,                ("%s"), static_gateway_char               ); }
   if (json.containsKey("static_subnet"                 )) {  const char* static_subnet_char                 = json["static_subnet"                ];    sprintf_P(static_subnet,                 ("%s"), static_subnet_char                ); }
@@ -205,6 +209,7 @@ bool JsonConf::printConfig() {
   Serial.print(F("wifi_auth                    : "));   Serial.println(wifi_auth                    );
   Serial.print(F("sta_ssid                     : "));   Serial.println(sta_ssid                     );
   Serial.print(F("sta_pwd                      : "));   Serial.println(sta_pwd                      );
+  Serial.print(F("ap_pwd                       : "));   Serial.println(ap_pwd                       );
   Serial.print(F("static_ip                    : "));   Serial.println(static_ip                    );
   Serial.print(F("static_gateway               : "));   Serial.println(static_gateway               );
   Serial.print(F("static_subnet                : "));   Serial.println(static_subnet                );
