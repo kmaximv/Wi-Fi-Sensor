@@ -621,11 +621,11 @@ void LightControl() {
   String ON;         ON += FPSTR(ONP);
   String OFF;        OFF += FPSTR(OFFP);
 
-  if (lightState == ON){
+  if (lightState == ON && luxString.toInt() < atoi(JConf.lighton_lux)){
     digitalWrite(atoi(JConf.light_pin), HIGH);
   } else if (lightState == OFF){
     digitalWrite(atoi(JConf.light_pin), LOW);
-  } else if (lightState == AUTO && motionDetect == true ){
+  } else if (lightState == AUTO && motionDetect == true && luxString.toInt() < atoi(JConf.lighton_lux)){
       digitalWrite(atoi(JConf.light_pin), HIGH);
       lightOffTimer = millis();
   } else if (lightState == AUTO && motionDetect == false && digitalRead(atoi(JConf.light_pin)) == HIGH){
@@ -634,11 +634,11 @@ void LightControl() {
     }
   }
 
-  if (lightState2 == ON){
+  if (lightState2 == ON && luxString.toInt() < atoi(JConf.light2on_lux)){
     digitalWrite(atoi(JConf.light_pin2), HIGH);
   } else if (lightState2 == OFF){
     digitalWrite(atoi(JConf.light_pin2), LOW);
-  } else if (lightState2 == AUTO && motionDetect == true ){
+  } else if (lightState2 == AUTO && motionDetect == true && luxString.toInt() < atoi(JConf.light2on_lux)){
       digitalWrite(atoi(JConf.light_pin2), HIGH);
       lightOffTimer2 = millis();
   } else if (lightState2 == AUTO && motionDetect == false && digitalRead(atoi(JConf.light_pin2)) == HIGH){
@@ -2182,6 +2182,13 @@ void WebEspConf(void) {
   }
   data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightoff_delay")) + inputPlaceHolder + JConf.lightoff_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
+  payload=WebServer.arg("lighton_lux");
+  if (payload.length() > 0 ) {
+    payload.toCharArray(JConf.lighton_lux, sizeof(JConf.lighton_lux));
+    config_changed = true;
+  }
+  data += inputBodyName + String(F("Light On Lux")) + inputBodyPOST + String(F("lighton_lux")) + inputPlaceHolder + JConf.lighton_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
+
   payload=WebServer.arg("light_pin2");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.light_pin2, sizeof(JConf.light_pin2));
@@ -2198,6 +2205,13 @@ void WebEspConf(void) {
     config_changed = true;
   }
   data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2off_delay")) + inputPlaceHolder + JConf.light2off_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
+
+  payload=WebServer.arg("light2on_lux");
+  if (payload.length() > 0 ) {
+    payload.toCharArray(JConf.light2on_lux, sizeof(JConf.light2on_lux));
+    config_changed = true;
+  }
+  data += inputBodyName + String(F("Light2 On Lux")) + inputBodyPOST + String(F("light2on_lux")) + inputPlaceHolder + JConf.light2on_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
   payload=WebServer.arg("motion_pin");
   if (payload.length() > 0 ) {
