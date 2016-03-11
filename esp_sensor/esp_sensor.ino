@@ -109,6 +109,16 @@ String network_html;          // Список доступных Wi-Fi точе�
 
 ESP8266WebServer WebServer(80);
 
+bool PWMOn[ESP_PINS] = {true,true,true,true,true,true,false,false,false,false,false,false,true,true,true,true,true}; 
+
+int statePins[ESP_PINS];
+int cycleStart[ESP_PINS];
+int cycleNow[ESP_PINS];
+int cycleEnd[ESP_PINS];
+unsigned long timerDigitalPin[ESP_PINS];
+unsigned long delayDigitalPin[ESP_PINS] = {30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30};
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
 
 /*
@@ -610,6 +620,63 @@ bool isIPValid(const char * IP){
 }
 
 
+
+void FadeSwitch (int pin, int x, int y, bool z){
+  if (z){
+    x = 270 + x;
+    y = map(y, 0, 180, 180, 0);
+    y = 450 - y;
+  } else {
+    x = map(x, 0, 180, 180, 0);
+    x = 90 + x;
+    y = 270 - y;
+  }
+  cycleStart[pin] = x;
+  cycleNow[pin] = cycleStart[pin];
+  cycleEnd[pin] = y;
+}
+
+
+
+void PWMChange(int pin, int bright){
+  if (PWMOn[pin] == true){
+    if (statePins[pin] < bright){
+      FadeSwitch(pin, statePins[pin], bright, UP);
+    } else {
+      FadeSwitch(pin, statePins[pin], bright, DOWN);
+    } 
+    statePins[pin] = bright;
+  } else {
+    #ifdef DEBUG
+    Serial.print(F("PWM not support on pin: ")); Serial.println(pin);
+    #endif
+  }
+}
+
+
+
+void FadeSwitchDelay(int pin){
+  if (millis() - timerDigitalPin[pin] >= delayDigitalPin[pin] && cycleNow[pin] != cycleEnd[pin]){
+    timerDigitalPin[pin] = millis();
+    float rad = DEG_TO_RAD * cycleNow[pin];    //convert 0-360 angle to radian (needed for sin function)
+    int sinOut = constrain((sin(rad) * 128) + 128, 0, 255); //calculate sin of angle as number between 0 and 255
+    analogWrite(pin, sinOut);
+    cycleNow[pin] = cycleNow[pin] + 1;
+  }
+}
+
+
+
+void FadeSwitchLoop(){
+  for ( size_t i = 0; i < ESP_PINS; i++ ){
+    if (PWMOn[i] == true){
+      FadeSwitchDelay(i);
+    }
+  }
+}
+
+
+
 void LightControl() {
 
   #ifdef DEBUG
@@ -622,9 +689,11 @@ void LightControl() {
   String OFF;        OFF += FPSTR(OFFP);
 
   if (lightState == ON && luxString.toInt() < atoi(JConf.lighton_lux)){
-    digitalWrite(atoi(JConf.light_pin), HIGH);
+    PWMChange(atoi(JConf.light_pin), 180);
+    //digitalWrite(atoi(JConf.light_pin), HIGH);
   } else if (lightState == OFF){
-    digitalWrite(atoi(JConf.light_pin), LOW);
+    PWMChange(atoi(JConf.light_pin), 0);
+    //digitalWrite(atoi(JConf.light_pin), LOW);
   } else if (lightState == AUTO && motionDetect == true && luxString.toInt() < atoi(JConf.lighton_lux)){
       digitalWrite(atoi(JConf.light_pin), HIGH);
       lightOffTimer = millis();
@@ -642,7 +711,7 @@ void LightControl() {
       digitalWrite(atoi(JConf.light_pin2), HIGH);
       lightOffTimer2 = millis();
   } else if (lightState2 == AUTO && motionDetect == false && digitalRead(atoi(JConf.light_pin2)) == HIGH){
-    if (millis() - lightOffTimer2 >= atoi(JConf.light2off_delay) * 60 * 1000){
+    if (millis() - lightOffTimer2 >= atoi(JConf.light2off_delay) * 60UL * 1000UL){
       digitalWrite(atoi(JConf.light_pin2), LOW);
     }
   }
@@ -3337,6 +3406,8 @@ void loop() {
   #ifdef UART_ON
   Uart.serialEvent();
   #endif
+
+  FadeSwitchLoop();
 
   #ifdef DEBUG
     unsigned long load_time3 = millis() - start_time;

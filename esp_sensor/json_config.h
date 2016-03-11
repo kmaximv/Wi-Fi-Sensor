@@ -29,9 +29,14 @@
 #define DATA_LENGTH 10    //Максимальный размер пакета данных без маркеров и CRC
 //------------------------------------------------------------------------------
 
+#define ESP_PINS 17
+#define UP true 
+#define DOWN false
+
 enum WIFI_MODE_ENUM {AP, STA, AP_STA};
 enum WIFI_PHY_MODE_ENUM {B, G, N};
 enum WIFI_AUTH_ENUM {OPEN, WPA_PSK, WPA2_PSK, WPA_WPA2_PSK};
+
 
 
 class JsonConf
