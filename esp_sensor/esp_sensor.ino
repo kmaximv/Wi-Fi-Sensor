@@ -62,9 +62,6 @@ const char *uptime             = "Uptime"            ;
 
 const char sec[] PROGMEM = "sec";
 
-bool ver_send = false;
-bool ip_send = false;
-bool mac_send = false;
 
 String temperatureString = "none";
 String pressureString =    "none";
@@ -109,14 +106,11 @@ String network_html;          // Список доступных Wi-Fi точе�
 
 ESP8266WebServer WebServer(80);
 
-bool PWMOn[ESP_PINS] = {true,true,true,true,true,true,false,false,false,false,false,false,true,true,true,true,true}; 
 
-int statePins[ESP_PINS];
-int cycleStart[ESP_PINS];
 int cycleNow[ESP_PINS];
 int cycleEnd[ESP_PINS];
 unsigned long timerDigitalPin[ESP_PINS];
-unsigned long delayDigitalPin[ESP_PINS] = {30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30};
+unsigned long delayDigitalPin[ESP_PINS] = {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10};
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
@@ -506,7 +500,6 @@ void GetMacString () {
   sprintf_P(value_buff, (const char *)F("%x:%x:%x:%x:%x:%x"), macData[0],  macData[1], macData[2], macData[3], macData[4], macData[5]);
   if (macString != String(value_buff)){  
     macString = String(value_buff);
-    mac_send = false;
   }
 
   #ifdef DEBUG
@@ -621,36 +614,8 @@ bool isIPValid(const char * IP){
 
 
 
-void FadeSwitch (int pin, int x, int y, bool z){
-  if (z){
-    x = 270 + x;
-    y = map(y, 0, 180, 180, 0);
-    y = 450 - y;
-  } else {
-    x = map(x, 0, 180, 180, 0);
-    x = 90 + x;
-    y = 270 - y;
-  }
-  cycleStart[pin] = x;
-  cycleNow[pin] = cycleStart[pin];
-  cycleEnd[pin] = y;
-}
-
-
-
 void PWMChange(int pin, int bright){
-  if (PWMOn[pin] == true){
-    if (statePins[pin] < bright){
-      FadeSwitch(pin, statePins[pin], bright, UP);
-    } else {
-      FadeSwitch(pin, statePins[pin], bright, DOWN);
-    } 
-    statePins[pin] = bright;
-  } else {
-    #ifdef DEBUG
-    Serial.print(F("PWM not support on pin: ")); Serial.println(pin);
-    #endif
-  }
+  cycleEnd[pin] = bright;
 }
 
 
@@ -658,10 +623,17 @@ void PWMChange(int pin, int bright){
 void FadeSwitchDelay(int pin){
   if (millis() - timerDigitalPin[pin] >= delayDigitalPin[pin] && cycleNow[pin] != cycleEnd[pin]){
     timerDigitalPin[pin] = millis();
-    float rad = DEG_TO_RAD * cycleNow[pin];    //convert 0-360 angle to radian (needed for sin function)
-    int sinOut = constrain((sin(rad) * 128) + 128, 0, 255); //calculate sin of angle as number between 0 and 255
-    analogWrite(pin, sinOut);
-    cycleNow[pin] = cycleNow[pin] + 1;
+    if (cycleNow[pin] < cycleEnd[pin]){
+      cycleNow[pin] = constrain(cycleNow[pin] + 10, 0, 1023);
+    } else if (cycleNow[pin] > cycleEnd[pin]){
+      cycleNow[pin] = constrain(cycleNow[pin] - 10, 0, 1023);
+    }
+    analogWrite(pin, cycleNow[pin]);
+
+    #ifdef DEBUG
+    Serial.print(F("PWM pin: ")); Serial.print(pin);
+    Serial.print(F("   PWM Value: ")); Serial.println(cycleNow[pin]);
+    #endif
   }
 }
 
@@ -669,9 +641,7 @@ void FadeSwitchDelay(int pin){
 
 void FadeSwitchLoop(){
   for ( size_t i = 0; i < ESP_PINS; i++ ){
-    if (PWMOn[i] == true){
-      FadeSwitchDelay(i);
-    }
+    FadeSwitchDelay(i);
   }
 }
 
@@ -679,7 +649,7 @@ void FadeSwitchLoop(){
 
 void LightControl() {
 
-  #ifdef DEBUG
+  #ifdef DEBUG11
     unsigned long start_time = millis();
     Serial.println(F("LightControl() Start"));
   #endif
@@ -689,17 +659,19 @@ void LightControl() {
   String OFF;        OFF += FPSTR(OFFP);
 
   if (lightState == ON && luxString.toInt() < atoi(JConf.lighton_lux)){
-    PWMChange(atoi(JConf.light_pin), 180);
+    PWMChange(atoi(JConf.light_pin), 1023);
     //digitalWrite(atoi(JConf.light_pin), HIGH);
   } else if (lightState == OFF){
     PWMChange(atoi(JConf.light_pin), 0);
     //digitalWrite(atoi(JConf.light_pin), LOW);
   } else if (lightState == AUTO && motionDetect == true && luxString.toInt() < atoi(JConf.lighton_lux)){
-      digitalWrite(atoi(JConf.light_pin), HIGH);
-      lightOffTimer = millis();
-  } else if (lightState == AUTO && motionDetect == false && digitalRead(atoi(JConf.light_pin)) == HIGH){
+    PWMChange(atoi(JConf.light_pin), 1023);
+    //digitalWrite(atoi(JConf.light_pin), HIGH);
+    lightOffTimer = millis();
+  } else if (lightState == AUTO && motionDetect == false && cycleEnd[atoi(JConf.light_pin)] != 0){
     if (millis() - lightOffTimer >= atoi(JConf.lightoff_delay) * 60UL * 1000UL){
-      digitalWrite(atoi(JConf.light_pin), LOW);
+      PWMChange(atoi(JConf.light_pin), 0);
+      //digitalWrite(atoi(JConf.light_pin), LOW);
     }
   }
 
@@ -716,7 +688,7 @@ void LightControl() {
     }
   }
 
-  #ifdef DEBUG
+  #ifdef DEBUG11
     unsigned long load_time = millis() - start_time;
     Serial.print(F("LightControl() Load Time: ")); Serial.println(load_time);
   #endif
@@ -1091,7 +1063,7 @@ void DHT22Sensor()
 
 void MotionDetect(){
 
-  #ifdef DEBUG
+  #ifdef DEBUG11
     unsigned long start_time = millis();
     Serial.println(F("MotionDetect() Start"));
   #endif
@@ -1110,7 +1082,7 @@ void MotionDetect(){
     }
   }
 
-  #ifdef DEBUG
+  #ifdef DEBUG11
     unsigned long load_time = millis() - start_time;
     Serial.print(F("MotionDetect() Load Time: ")); Serial.println(load_time);
   #endif
@@ -1242,24 +1214,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
 
 
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.subscribe_topic, version, JConf.mqtt_name);
-  if (strcmp (topic,topic_buff) == 0){
-    if (strncmp (value_buff, ver, 4) == 0){
-      ver_send = true;
-      ip_send = true;
-      mac_send = true;
-    } else {
-      ver_send = false;
-      ip_send = false;
-      mac_send = false;
-    }
-  }
-
-
   #ifdef DEBUG
     Serial.print(F("topic: "));  Serial.println(topic);  Serial.print(F("value_buff: "));  Serial.println(value_buff);
-    Serial.print(F("topic_buff: "));  Serial.println(topic_buff);  Serial.println();
+    Serial.println();
   #endif
 
   #ifdef DEBUG
@@ -1390,20 +1347,14 @@ bool MqttPubData() {
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, uptime, JConf.mqtt_name);
   mqttClient.publish(topic_buff, uptimeString.c_str());
 
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  version, JConf.mqtt_name);
+  mqttClient.publish(topic_buff, ver);
 
-  if (ver_send == false){
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  version, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, ver);
-  }
-  
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  ip, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, ipString.c_str());
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  ip, JConf.mqtt_name);
+  mqttClient.publish(topic_buff, ipString.c_str());
 
-  
-  if (mac_send == false){  
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  mac, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, macString.c_str());
-  }
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  mac, JConf.mqtt_name);
+  mqttClient.publish(topic_buff, macString.c_str());
 
  
   #ifdef DHT_ON
@@ -1429,6 +1380,7 @@ bool MqttSubscribePrint(char *sub_buff)
     Serial.println(F("MqttSubscribePrint() Start"));
   #endif
 
+  delay(50);
   if (!mqttClient.connected()){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
@@ -1482,16 +1434,17 @@ bool MqttSubscribe(){
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.subscribe_topic, uptime, JConf.mqtt_name);
   MqttSubscribePrint(topic_buff);
-
+/*
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.subscribe_topic, version, JConf.mqtt_name);
   MqttSubscribePrint(topic_buff);
-
-  return true;
+*/
 
   #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
     Serial.print(F("MqttSubscribe() Load Time: ")); Serial.println(load_time);
   #endif
+
+  return true;
 }
 
 
@@ -2623,12 +2576,12 @@ void handleControl(){
   if (WebServer.args() > 0 ) {
     for ( size_t i = 0; i < WebServer.args(); i++ ) {
       if (WebServer.argName(i) == "1" && WebServer.arg(i) == "1") {
-        digitalWrite(atoi(JConf.light_pin), !digitalRead(atoi(JConf.light_pin)));
-        if (digitalRead(atoi(JConf.light_pin)) == HIGH){
-          lightState = ON;
-        } else {
+        if (cycleEnd[atoi(JConf.light_pin)] != 0){
           lightState = OFF;
+        } else {
+          lightState = ON;
         }
+        //digitalWrite(atoi(JConf.light_pin), !digitalRead(atoi(JConf.light_pin)));
       }
       if (WebServer.argName(i) == "1" && WebServer.arg(i) == "2") {
         lightState = AUTO;
@@ -2728,11 +2681,14 @@ void WebPinControlStatus(void) {
   String OFF;             OFF += FPSTR(OFFP);
 
 
-  if (digitalRead(atoi(JConf.light_pin)) == HIGH){
+
+
+  if (cycleEnd[atoi(JConf.light_pin)] != 0){
     pinState = true;
   } else {
     pinState = false;
   }
+
 
   if (digitalRead(atoi(JConf.light_pin2)) == HIGH){
     pinState2 = true;
@@ -2775,15 +2731,15 @@ void WebPinControlStatus(void) {
   String data;    data += FPSTR(div1P);
   
 
-  if (lightState == AUTO) { data+=ClassDefault; } else if (pinState == true) { data+=ClassDanger; } else { data+=ClassInfo; }
+  if (lightState == AUTO) { data+=ClassDefault; } else if (pinState) { data+=ClassDanger; } else { data+=ClassInfo; }
   data+=String(F("' value='"));
-  if (pinState == true) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
+  if (pinState) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
   data+=String(F("'></div></td><td class='active'><div onclick='Auto1();'><input id='Auto' type='submit' class='btn btn-"));
   if (lightState == AUTO) { data+=ClassDanger; } else { data+=ClassDefault; }
   data+=String(F("' value='Auto'></div></td><td class='"));
-  if (pinState == true) { data+=ClassInfo; } else { data+=ClassDanger; }
+  if (pinState) { data+=ClassInfo; } else { data+=ClassDanger; }
   data+=String(F("'><h4>"));
-  if (pinState == true) { data+=ON; } else { data+=OFF; }
+  if (pinState) { data+=ON; } else { data+=OFF; }
   data+=String(F("</h4></td><td class='"));
   data+=mode;    
   data+=String(F("'><h4>"));
@@ -3382,10 +3338,9 @@ void loop() {
     if (atoi(JConf.mqtt_enable) == 1) {
 
       if (!mqttClient.connected()) {
-        if (JConf.mqtt_user != "none" && JConf.mqtt_pwd != "none"){
+        if (JConf.mqtt_user != "" && JConf.mqtt_pwd != ""){
           mqttClient.connect(JConf.mqtt_name, JConf.mqtt_user, JConf.mqtt_pwd);
         } else {
-
           mqttClient.connect(JConf.mqtt_name);
         }
       } else {
