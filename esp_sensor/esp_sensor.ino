@@ -758,7 +758,7 @@ bool WiFiSetup()
     if (atoi(JConf.wifi_auth) == OPEN){
       WiFi.softAP(JConf.module_id);
     } else {
-      WiFi.softAP(JConf.module_id, JConf.sta_pwd);
+      WiFi.softAP(JConf.module_id, JConf.ap_pwd);
     }
 
     //setup PHY_MODE
@@ -861,7 +861,7 @@ bool WiFiSetup()
     if (atoi(JConf.wifi_auth) == OPEN){
       WiFi.softAP(JConf.module_id);
     } else {
-      WiFi.softAP(JConf.module_id, JConf.sta_pwd);
+      WiFi.softAP(JConf.module_id, JConf.ap_pwd);
     }
 
     //setup PHY_MODE
@@ -932,7 +932,7 @@ void  WiFiSafeSetup()
   WiFi.disconnect();
   //setup Soft AP
   WiFi.mode(WIFI_AP);
-  WiFi.softAP(JConf.module_id, JConf.sta_pwd);
+  WiFi.softAP(JConf.module_id, JConf.ap_pwd);
   delay(500);
   Serial.println(F("Safe mode started"));
   wifiSafeMode = true;
