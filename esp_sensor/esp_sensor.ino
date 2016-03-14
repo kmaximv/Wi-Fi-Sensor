@@ -95,6 +95,8 @@ unsigned long lightOffTimer2 = 0;
 
 bool motionDetect = false;
 
+bool wifiSafeMode = false;
+
 WiFiClient espClient;
 
 NTPClient timeClient;
@@ -933,6 +935,7 @@ void  WiFiSafeSetup()
   WiFi.softAP(JConf.module_id, JConf.sta_pwd);
   delay(500);
   Serial.println(F("Safe mode started"));
+  wifiSafeMode = true;
 }
 
 
@@ -3299,7 +3302,7 @@ void loop() {
   }
 
 
-  if (WiFi.status() != WL_CONNECTED && atoi(JConf.wifi_mode) != AP) {
+  if (WiFi.status() != WL_CONNECTED && atoi(JConf.wifi_mode) != AP && wifiSafeMode == false) {
     #ifdef DEBUG
     Serial.print(F("Connecting "));
     Serial.println(F("..."));
@@ -3307,11 +3310,10 @@ void loop() {
 
     WiFiSetup();
 
+/*
     if (WiFi.waitForConnectResult() != WL_CONNECTED)
       return;
-    #ifdef DEBUG
-    Serial.println(F("WiFi connected"));
-    #endif
+*/
   }
 
 /*
