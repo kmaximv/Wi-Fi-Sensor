@@ -620,7 +620,7 @@ bool isIPValid(const char * IP){
 void PWMChange(int pin, int bright){
   cycleEnd[pin] = bright;
 
-  if ( ( atoi(JConf.light_smooth) == 1 && pin == atoi(JConf.light_pin) )   ||   ( atoi(JConf.light2_smooth) == 1 && pin == atoi(JConf.light2_pin) ) ){
+  if ( ( atoi(JConf.light_smooth) == 0 && pin == atoi(JConf.light_pin) )   ||   ( atoi(JConf.light2_smooth) == 0 && pin == atoi(JConf.light2_pin) ) ){
     if (cycleNow[pin] < cycleEnd[pin]){
       cycleNow[pin] = 1022;
     } else if (cycleNow[pin] > cycleEnd[pin]){
