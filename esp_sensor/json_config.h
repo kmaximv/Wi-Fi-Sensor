@@ -70,9 +70,11 @@ class JsonConf
     char light_pin                    [3]  = "13"                 ;
     char lightoff_delay               [32] = "5"                  ;
     char lighton_lux                  [6]  = "10"                 ; // Значение в люксах, ниже которого будет включаться нагрузка
-    char light_pin2                   [3]  = "12"                 ;
+    char light_smooth                 [2]  = "0"                  ;
+    char light2_pin                   [3]  = "12"                 ;
     char light2off_delay              [32] = "5"                  ;
     char light2on_lux                 [6]  = "10"                 ; // Значение в люксах, ниже которого будет включаться нагрузка
+    char light2_smooth                [2]  = "0"                  ;
     char motion_pin                   [3]  = "14"                 ;
     char dht_pin                      [3] =  "2"                  ;
     char get_data_delay               [32] = "10"                 ;

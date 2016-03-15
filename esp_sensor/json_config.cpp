@@ -10,7 +10,6 @@ bool JsonConf::saveConfig() {
   JsonObject& json = jsonBuffer.createObject();
 
 
-
   json["module_id"]                     = module_id                    ;                           
   json["wifi_mode"]                     = wifi_mode                    ;                           
   json["wifi_phy_mode"]                 = wifi_phy_mode                ;                           
@@ -35,9 +34,11 @@ bool JsonConf::saveConfig() {
   json["light_pin"]                     = light_pin                    ;                           
   json["lightoff_delay"]                = lightoff_delay               ;                                     
   json["lighton_lux"]                   = lighton_lux                  ;                                     
-  json["light_pin2"]                    = light_pin2                   ;                             
+  json["light_smooth"]                  = light_smooth                 ;                           
+  json["light2_pin"]                    = light2_pin                   ;                             
   json["light2off_delay"]               = light2off_delay              ;                                       
   json["light2on_lux"]                  = light2on_lux                 ;                                       
+  json["light2_smooth"]                 = light2_smooth                ;                           
   json["motion_pin"]                    = motion_pin                   ;                             
   json["dht_pin"]                       = dht_pin                      ;                       
   json["get_data_delay"]                = get_data_delay               ;                                     
@@ -160,9 +161,11 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("light_pin"                     )) {  const char* light_pin_char                     = json["light_pin"                    ];    sprintf_P(light_pin,                     ("%s"), light_pin_char                    ); }
   if (json.containsKey("lightoff_delay"                )) {  const char* lightoff_delay_char                = json["lightoff_delay"               ];    sprintf_P(lightoff_delay,                ("%s"), lightoff_delay_char               ); }
   if (json.containsKey("lighton_lux"                   )) {  const char* lighton_lux_char                   = json["lighton_lux"                  ];    sprintf_P(lighton_lux,                   ("%s"), lighton_lux_char                  ); }
-  if (json.containsKey("light_pin2"                    )) {  const char* light_pin2_char                    = json["light_pin2"                   ];    sprintf_P(light_pin2,                    ("%s"), light_pin2_char                   ); }
+  if (json.containsKey("light_smooth"                  )) {  const char* light_smooth_char                  = json["light_smooth"                 ];    sprintf_P(light_smooth,                  ("%s"), light_smooth_char                 ); }
+  if (json.containsKey("light2_pin"                    )) {  const char* light2_pin_char                    = json["light2_pin"                   ];    sprintf_P(light2_pin,                    ("%s"), light2_pin_char                   ); }
   if (json.containsKey("light2off_delay"               )) {  const char* light2off_delay_char               = json["light2off_delay"              ];    sprintf_P(light2off_delay,               ("%s"), light2off_delay_char              ); }
   if (json.containsKey("light2on_lux"                  )) {  const char* light2on_lux_char                  = json["light2on_lux"                 ];    sprintf_P(light2on_lux,                  ("%s"), light2on_lux_char                 ); }
+  if (json.containsKey("light2_smooth"                 )) {  const char* light2_smooth_char                 = json["light2_smooth"                ];    sprintf_P(light2_smooth,                 ("%s"), light2_smooth_char                ); }
   if (json.containsKey("motion_pin"                    )) {  const char* motion_pin_char                    = json["motion_pin"                   ];    sprintf_P(motion_pin,                    ("%s"), motion_pin_char                   ); }
   if (json.containsKey("dht_pin"                       )) {  const char* dht_pin_char                       = json["dht_pin"                      ];    sprintf_P(dht_pin,                       ("%s"), dht_pin_char                      ); }
   if (json.containsKey("get_data_delay"                )) {  const char* get_data_delay_char                = json["get_data_delay"               ];    sprintf_P(get_data_delay,                ("%s"), get_data_delay_char               ); }
@@ -229,8 +232,12 @@ bool JsonConf::printConfig() {
   Serial.print(F("command_pub_topic            : "));   Serial.println(command_pub_topic            );
   Serial.print(F("light_pin                    : "));   Serial.println(light_pin                    );
   Serial.print(F("lightoff_delay               : "));   Serial.println(lightoff_delay               );
-  Serial.print(F("light_pin2                   : "));   Serial.println(light_pin2                   );
+  Serial.print(F("lighton_lux                  : "));   Serial.println(lighton_lux                  );
+  Serial.print(F("light_smooth                 : "));   Serial.println(light_smooth                 );
+  Serial.print(F("light2_pin                   : "));   Serial.println(light2_pin                   );
   Serial.print(F("light2off_delay              : "));   Serial.println(light2off_delay              );
+  Serial.print(F("light2on_lux                 : "));   Serial.println(light2on_lux                 );
+  Serial.print(F("light2_smooth                : "));   Serial.println(light2_smooth                );
   Serial.print(F("motion_pin                   : "));   Serial.println(motion_pin                   );
   Serial.print(F("dht_pin                      : "));   Serial.println(dht_pin                      );
   Serial.print(F("get_data_delay               : "));   Serial.println(get_data_delay               );

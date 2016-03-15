@@ -111,8 +111,9 @@ ESP8266WebServer WebServer(80);
 
 int cycleNow[ESP_PINS];
 int cycleEnd[ESP_PINS];
+
 unsigned long timerDigitalPin[ESP_PINS];
-unsigned long delayDigitalPin[ESP_PINS] = {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10};
+int delayDigitalPin = 10;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
@@ -618,12 +619,20 @@ bool isIPValid(const char * IP){
 
 void PWMChange(int pin, int bright){
   cycleEnd[pin] = bright;
+
+  if ( ( atoi(JConf.light_smooth) == 1 && pin == atoi(JConf.light_pin) )   ||   ( atoi(JConf.light2_smooth) == 1 && pin == atoi(JConf.light2_pin) ) ){
+    if (cycleNow[pin] < cycleEnd[pin]){
+      cycleNow[pin] = 1022;
+    } else if (cycleNow[pin] > cycleEnd[pin]){
+      cycleNow[pin] = 1;
+    }
+  }
 }
 
 
 
 void FadeSwitchDelay(int pin){
-  if (millis() - timerDigitalPin[pin] >= delayDigitalPin[pin] && cycleNow[pin] != cycleEnd[pin]){
+  if (millis() - timerDigitalPin[pin] >= delayDigitalPin && cycleNow[pin] != cycleEnd[pin]){
     timerDigitalPin[pin] = millis();
     if (cycleNow[pin] < cycleEnd[pin]){
       cycleNow[pin] = constrain(cycleNow[pin] + 10, 0, 1023);
@@ -662,31 +671,27 @@ void LightControl() {
 
   if (lightState == ON && luxString.toInt() < atoi(JConf.lighton_lux)){
     PWMChange(atoi(JConf.light_pin), 1023);
-    //digitalWrite(atoi(JConf.light_pin), HIGH);
   } else if (lightState == OFF){
     PWMChange(atoi(JConf.light_pin), 0);
-    //digitalWrite(atoi(JConf.light_pin), LOW);
   } else if (lightState == AUTO && motionDetect == true && luxString.toInt() < atoi(JConf.lighton_lux)){
     PWMChange(atoi(JConf.light_pin), 1023);
-    //digitalWrite(atoi(JConf.light_pin), HIGH);
     lightOffTimer = millis();
   } else if (lightState == AUTO && motionDetect == false && cycleEnd[atoi(JConf.light_pin)] != 0){
     if (millis() - lightOffTimer >= atoi(JConf.lightoff_delay) * 60UL * 1000UL){
       PWMChange(atoi(JConf.light_pin), 0);
-      //digitalWrite(atoi(JConf.light_pin), LOW);
     }
   }
 
   if (lightState2 == ON && luxString.toInt() < atoi(JConf.light2on_lux)){
-    digitalWrite(atoi(JConf.light_pin2), HIGH);
+    PWMChange(atoi(JConf.light2_pin), 1023);
   } else if (lightState2 == OFF){
-    digitalWrite(atoi(JConf.light_pin2), LOW);
+    PWMChange(atoi(JConf.light2_pin), 0);
   } else if (lightState2 == AUTO && motionDetect == true && luxString.toInt() < atoi(JConf.light2on_lux)){
-      digitalWrite(atoi(JConf.light_pin2), HIGH);
-      lightOffTimer2 = millis();
-  } else if (lightState2 == AUTO && motionDetect == false && digitalRead(atoi(JConf.light_pin2)) == HIGH){
+    PWMChange(atoi(JConf.light2_pin), 1023);
+    lightOffTimer2 = millis();
+  } else if (lightState2 == AUTO && motionDetect == false && cycleEnd[atoi(JConf.light2_pin)] != 0){
     if (millis() - lightOffTimer2 >= atoi(JConf.light2off_delay) * 60UL * 1000UL){
-      digitalWrite(atoi(JConf.light_pin2), LOW);
+      PWMChange(atoi(JConf.light2_pin), 0);
     }
   }
 
@@ -2187,15 +2192,17 @@ void WebEspConf(void) {
   String data = title1 + inputBodyStart;
 
   bool config_changed = false;
+  bool enable_light_smooth = false;
+  bool enable_light2_smooth = false;
+  String payload = "";
 
 
 
-  String payload=WebServer.arg("light_pin");
+  payload=WebServer.arg("light_pin");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.light_pin, sizeof(JConf.light_pin));
     config_changed = true;
   }
-  data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.light_pin + inputBodyClose + inputBodyCloseDiv;
 
   payload=WebServer.arg("lightoff_delay");
   if (payload.length() > 0 ) {
@@ -2205,21 +2212,25 @@ void WebEspConf(void) {
     }
     config_changed = true;
   }
-  data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightoff_delay")) + inputPlaceHolder + JConf.lightoff_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
   payload=WebServer.arg("lighton_lux");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.lighton_lux, sizeof(JConf.lighton_lux));
     config_changed = true;
   }
-  data += inputBodyName + String(F("Light On Lux")) + inputBodyPOST + String(F("lighton_lux")) + inputPlaceHolder + JConf.lighton_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
-  payload=WebServer.arg("light_pin2");
+  payload=WebServer.arg("light_smooth");
   if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.light_pin2, sizeof(JConf.light_pin2));
+    payload.toCharArray(JConf.light_smooth, sizeof(JConf.light_smooth));
+    config_changed = true;
+    enable_light_smooth = true;
+  }
+
+  payload=WebServer.arg("light2_pin");
+  if (payload.length() > 0 ) {
+    payload.toCharArray(JConf.light2_pin, sizeof(JConf.light2_pin));
     config_changed = true;
   }
-  data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light_pin2")) + inputPlaceHolder + JConf.light_pin2 + inputBodyClose + inputBodyCloseDiv;
 
   payload=WebServer.arg("light2off_delay");
   if (payload.length() > 0 ) {
@@ -2229,56 +2240,90 @@ void WebEspConf(void) {
     }
     config_changed = true;
   }
-  data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2off_delay")) + inputPlaceHolder + JConf.light2off_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
   payload=WebServer.arg("light2on_lux");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.light2on_lux, sizeof(JConf.light2on_lux));
     config_changed = true;
   }
-  data += inputBodyName + String(F("Light2 On Lux")) + inputBodyPOST + String(F("light2on_lux")) + inputPlaceHolder + JConf.light2on_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
+
+  payload=WebServer.arg("light2_smooth");
+  if (payload.length() > 0 ) {
+    payload.toCharArray(JConf.light2_smooth, sizeof(JConf.light2_smooth));
+    config_changed = true;
+    enable_light2_smooth = true;
+  }
 
   payload=WebServer.arg("motion_pin");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.motion_pin, sizeof(JConf.motion_pin));
     config_changed = true;
   }
-  data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + JConf.motion_pin + inputBodyClose + inputBodyCloseDiv;
 
   payload=WebServer.arg("dht_pin");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.dht_pin, sizeof(JConf.dht_pin));
     config_changed = true;
   }
-  data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + JConf.dht_pin + inputBodyClose + inputBodyCloseDiv;
 
   payload=WebServer.arg("get_data_delay");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.get_data_delay, sizeof(JConf.get_data_delay));
     config_changed = true;
   }
-  data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + JConf.get_data_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
   payload=WebServer.arg("motion_read_delay");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.motion_read_delay, sizeof(JConf.motion_read_delay));
     config_changed = true;
   }
-  data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + JConf.motion_read_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
   payload=WebServer.arg("reboot_delay");
   if (payload.length() > 0 ) {
     payload.toCharArray(JConf.reboot_delay, sizeof(JConf.reboot_delay));
     config_changed = true;
   }
-  data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + JConf.reboot_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
 
-
-  data += inputBodyEnd;
 
   if (config_changed){
+    if (!enable_light_smooth){
+      JConf.light_smooth[0] = '0';
+      JConf.light_smooth[1] = '\0';
+    }
+    if (!enable_light2_smooth){
+      JConf.light2_smooth[0] = '0';
+      JConf.light2_smooth[1] = '\0';
+    }
     JConf.saveConfig();
   }
+
+  data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.light_pin + inputBodyClose + inputBodyCloseDiv;
+  data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightoff_delay")) + inputPlaceHolder + JConf.lightoff_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
+  data += inputBodyName + String(F("Light On Lux")) + inputBodyPOST + String(F("lighton_lux")) + inputPlaceHolder + JConf.lighton_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
+
+  if (atoi(JConf.light_smooth) == 1){
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light_smooth' value='1' checked='true'>Light Smooth On</label></div>"));
+  } else {
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light_smooth' value='1'>Light Smooth On</label></div>"));
+  }
+
+  data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light2_pin")) + inputPlaceHolder + JConf.light2_pin + inputBodyClose + inputBodyCloseDiv;
+  data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2off_delay")) + inputPlaceHolder + JConf.light2off_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
+  data += inputBodyName + String(F("Light2 On Lux")) + inputBodyPOST + String(F("light2on_lux")) + inputPlaceHolder + JConf.light2on_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
+
+  if (atoi(JConf.light2_smooth) == 1){
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light2_smooth' value='1' checked='true'>Light2 Smooth On</label></div>"));
+  } else {
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light2_smooth' value='1'>Light2 Smooth On</label></div>"));
+  }
+
+  data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + JConf.motion_pin + inputBodyClose + inputBodyCloseDiv;
+  data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + JConf.dht_pin + inputBodyClose + inputBodyCloseDiv;
+  data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + JConf.get_data_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+  data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + JConf.motion_read_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+  data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + JConf.reboot_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+
+  data += inputBodyEnd;
 
   WebServer.send( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 
@@ -2584,18 +2629,16 @@ void handleControl(){
         } else {
           lightState = ON;
         }
-        //digitalWrite(atoi(JConf.light_pin), !digitalRead(atoi(JConf.light_pin)));
       }
       if (WebServer.argName(i) == "1" && WebServer.arg(i) == "2") {
         lightState = AUTO;
       }
 
       if (WebServer.argName(i) == "2" && WebServer.arg(i) == "1") {
-        digitalWrite(atoi(JConf.light_pin2), !digitalRead(atoi(JConf.light_pin2)));
-        if (digitalRead(atoi(JConf.light_pin2)) == HIGH){
-          lightState2 = ON;
-        } else {
+        if (cycleEnd[atoi(JConf.light2_pin)] != 0){
           lightState2 = OFF;
+        } else {
+          lightState2 = ON;
         }
       }
       if (WebServer.argName(i) == "2" && WebServer.arg(i) == "2") {
@@ -2693,7 +2736,7 @@ void WebPinControlStatus(void) {
   }
 
 
-  if (digitalRead(atoi(JConf.light_pin2)) == HIGH){
+  if (cycleEnd[atoi(JConf.light2_pin)] != 0){
     pinState2 = true;
   } else {
     pinState2 = false;
@@ -2755,15 +2798,15 @@ void WebPinControlStatus(void) {
 
 
   data+=String(F("<tr><td class='active'><h4>Led Strip 2</h4></td><td class='active'><div onclick='Pin2();'><input id='OnOff2' type='submit' class='btn btn-"));
-  if (lightState2 == AUTO) { data+=ClassDefault; } else if (pinState2 == true) { data+=ClassDanger; } else { data+=ClassInfo; }
+  if (lightState2 == AUTO) { data+=ClassDefault; } else if (pinState2) { data+=ClassDanger; } else { data+=ClassInfo; }
   data+=String(F("' value='"));
-  if (pinState2 == true) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
+  if (pinState2) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
   data+=String(F("'></div></td><td class='active'><div onclick='Auto2();'><input id='Auto2' type='submit' class='btn btn-"));
   if (lightState2 == AUTO) { data+=ClassDanger; } else { data+=ClassDefault; }
   data+=String(F("' value='Auto'></div></td><td class='"));
-  if (pinState2 == true) { data+=ClassInfo; } else { data+=ClassDanger; }
+  if (pinState2) { data+=ClassInfo; } else { data+=ClassDanger; }
   data+=String(F("'><h4>"));
-  if (pinState2 == true) { data+=ON; } else { data+=OFF; }
+  if (pinState2) { data+=ON; } else { data+=OFF; }
   data+=String(F("</h4></td><td class='"));
   data+=mode2;    
   data+=String(F("'><h4>"));
@@ -3101,11 +3144,11 @@ void setup() {
   JConf.printConfig();
 
   pinMode(atoi(JConf.light_pin), OUTPUT);
-  pinMode(atoi(JConf.light_pin2), OUTPUT);
+  pinMode(atoi(JConf.light2_pin), OUTPUT);
   pinMode(atoi(JConf.motion_pin), INPUT);           // set pin to input
 
   digitalWrite(atoi(JConf.light_pin), LOW);
-  digitalWrite(atoi(JConf.light_pin2), LOW);
+  digitalWrite(atoi(JConf.light2_pin), LOW);
 
   #ifdef SHT21_ON
     myHTU21D.begin();
