@@ -8,6 +8,6 @@
 
 Плату заказывал по инструкции автора Vipeg [Ссылка](http://mysku.ru/blog/others/36157.html) , за что ему отдельное спасибо.
 
-### Дополнительная инфорамация в [Wiki](https://github.com/kmaximv/Wi-Fi-Sensor/wiki)
+#### Дополнительная инфорамация на [Wiki](https://github.com/kmaximv/Wi-Fi-Sensor/wiki)
 
 
