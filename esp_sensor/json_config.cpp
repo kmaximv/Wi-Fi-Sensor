@@ -11,9 +11,13 @@ bool JsonConf::saveConfig() {
 
 
   json["module_id"]                     = module_id                    ;                           
+  json["wifi_mode"]                     = wifi_mode                    ;                           
+  json["wifi_phy_mode"]                 = wifi_phy_mode                ;                           
+  json["wifi_channel"]                  = wifi_channel                 ;                           
+  json["wifi_auth"]                     = wifi_auth                    ;                           
   json["sta_ssid"]                      = sta_ssid                     ;                         
   json["sta_pwd"]                       = sta_pwd                      ;                       
-  json["static_ip_mode"]                = static_ip_mode               ;                                     
+  json["ap_pwd"]                        = ap_pwd                       ;                       
   json["static_ip"]                     = static_ip                    ;                           
   json["static_gateway"]                = static_gateway               ;                                     
   json["static_subnet"]                 = static_subnet                ;                                   
@@ -29,8 +33,12 @@ bool JsonConf::saveConfig() {
   json["command_pub_topic"]             = command_pub_topic            ;                                           
   json["light_pin"]                     = light_pin                    ;                           
   json["lightoff_delay"]                = lightoff_delay               ;                                     
-  json["light_pin2"]                    = light_pin2                   ;                             
+  json["lighton_lux"]                   = lighton_lux                  ;                                     
+  json["light_smooth"]                  = light_smooth                 ;                           
+  json["light2_pin"]                    = light2_pin                   ;                             
   json["light2off_delay"]               = light2off_delay              ;                                       
+  json["light2on_lux"]                  = light2on_lux                 ;                                       
+  json["light2_smooth"]                 = light2_smooth                ;                           
   json["motion_pin"]                    = motion_pin                   ;                             
   json["dht_pin"]                       = dht_pin                      ;                       
   json["get_data_delay"]                = get_data_delay               ;                                     
@@ -38,6 +46,7 @@ bool JsonConf::saveConfig() {
   json["subscribe_delay"]               = subscribe_delay              ;                                       
   json["motion_read_delay"]             = motion_read_delay            ;                                           
   json["reboot_delay"]                  = reboot_delay                 ;                                 
+/*
   json["uart_delay_analog_pin0"]        = uart_delay_analog_pin0       ;                                                     
   json["uart_delay_analog_pin1"]        = uart_delay_analog_pin1       ;                                                     
   json["uart_delay_analog_pin2"]        = uart_delay_analog_pin2       ;                                                     
@@ -51,9 +60,19 @@ bool JsonConf::saveConfig() {
   json["green_humidity_threshold_down"] = green_humidity_threshold_down;                                                                   
   json["green_humidity_sensor_pin"]     = green_humidity_sensor_pin    ;                                                           
   json["green_pump_pin"]                = green_pump_pin               ;                                     
+*/
+  json["static_ip_enable"]              = static_ip_enable             ;                                     
+  json["ntp_enable"]                    = ntp_enable                   ;                               
+  json["mqtt_enable"]                   = mqtt_enable                  ;                               
+  json["bme280_enable"]                 = bme280_enable                ;                               
+  json["sht21_enable"]                  = sht21_enable                 ;                               
+  json["bh1750_enable"]                 = bh1750_enable                ;                               
+  json["motion_sensor_enable"]          = motion_sensor_enable         ;                               
 
 
-  File configFile = SPIFFS.open("/config.json", "w");
+
+
+  File configFile = SPIFFS.open("/conf.json", "w");
   if (!configFile) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to open config file for writing"));
@@ -76,7 +95,7 @@ bool JsonConf::loadConfig() {
   Serial.print(F("loadConfig()"));  Serial.println();
 #endif
 
-  File configFile = SPIFFS.open("/config.json", "r");
+  File configFile = SPIFFS.open("/conf.json", "r");
   if (!configFile) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to open config file"));
@@ -85,11 +104,13 @@ bool JsonConf::loadConfig() {
     return false;
   }
 
+  //SPIFFS.remove("/conf.json");
+
   size_t size = configFile.size();
   if (size > 2048) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Config file size is too large"));
-    SPIFFS.remove("/config.json");
+    SPIFFS.remove("/conf.json");
     saveConfig();
 #endif
     return false;
@@ -109,7 +130,7 @@ bool JsonConf::loadConfig() {
   if (!json.success()) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to parse config file"));
-    SPIFFS.remove("/config.json");
+    SPIFFS.remove("/conf.json");
     saveConfig();
 #endif
     return false;
@@ -117,9 +138,13 @@ bool JsonConf::loadConfig() {
 
 
   if (json.containsKey("module_id"                     )) {  const char* module_id_char                     = json["module_id"                    ];    sprintf_P(module_id,                     ("%s"), module_id_char                    ); }
+  if (json.containsKey("wifi_mode"                     )) {  const char* wifi_mode_char                     = json["wifi_mode"                    ];    sprintf_P(wifi_mode,                     ("%s"), wifi_mode_char                    ); }
+  if (json.containsKey("wifi_phy_mode"                 )) {  const char* wifi_phy_mode_char                 = json["wifi_phy_mode"                ];    sprintf_P(wifi_phy_mode,                 ("%s"), wifi_phy_mode_char                ); }
+  if (json.containsKey("wifi_channel"                  )) {  const char* wifi_channel_char                  = json["wifi_channel"                 ];    sprintf_P(wifi_channel,                  ("%s"), wifi_channel_char                 ); }
+  if (json.containsKey("wifi_auth"                     )) {  const char* wifi_auth_char                     = json["wifi_auth"                    ];    sprintf_P(wifi_auth,                     ("%s"), wifi_auth_char                    ); }
   if (json.containsKey("sta_ssid"                      )) {  const char* sta_ssid_char                      = json["sta_ssid"                     ];    sprintf_P(sta_ssid,                      ("%s"), sta_ssid_char                     ); }
   if (json.containsKey("sta_pwd"                       )) {  const char* sta_pwd_char                       = json["sta_pwd"                      ];    sprintf_P(sta_pwd,                       ("%s"), sta_pwd_char                      ); }
-  if (json.containsKey("static_ip_mode"                )) {  const char* static_ip_mode_char                = json["static_ip_mode"               ];    sprintf_P(static_ip_mode,                ("%s"), static_ip_mode_char               ); }
+  if (json.containsKey("ap_pwd"                        )) {  const char* ap_pwd_char                        = json["ap_pwd"                       ];    sprintf_P(ap_pwd,                        ("%s"), ap_pwd_char                       ); }
   if (json.containsKey("static_ip"                     )) {  const char* static_ip_char                     = json["static_ip"                    ];    sprintf_P(static_ip,                     ("%s"), static_ip_char                    ); }
   if (json.containsKey("static_gateway"                )) {  const char* static_gateway_char                = json["static_gateway"               ];    sprintf_P(static_gateway,                ("%s"), static_gateway_char               ); }
   if (json.containsKey("static_subnet"                 )) {  const char* static_subnet_char                 = json["static_subnet"                ];    sprintf_P(static_subnet,                 ("%s"), static_subnet_char                ); }
@@ -135,8 +160,12 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("command_pub_topic"             )) {  const char* command_pub_topic_char             = json["command_pub_topic"            ];    sprintf_P(command_pub_topic,             ("%s"), command_pub_topic_char            ); }
   if (json.containsKey("light_pin"                     )) {  const char* light_pin_char                     = json["light_pin"                    ];    sprintf_P(light_pin,                     ("%s"), light_pin_char                    ); }
   if (json.containsKey("lightoff_delay"                )) {  const char* lightoff_delay_char                = json["lightoff_delay"               ];    sprintf_P(lightoff_delay,                ("%s"), lightoff_delay_char               ); }
-  if (json.containsKey("light_pin2"                    )) {  const char* light_pin2_char                    = json["light_pin2"                   ];    sprintf_P(light_pin2,                    ("%s"), light_pin2_char                   ); }
+  if (json.containsKey("lighton_lux"                   )) {  const char* lighton_lux_char                   = json["lighton_lux"                  ];    sprintf_P(lighton_lux,                   ("%s"), lighton_lux_char                  ); }
+  if (json.containsKey("light_smooth"                  )) {  const char* light_smooth_char                  = json["light_smooth"                 ];    sprintf_P(light_smooth,                  ("%s"), light_smooth_char                 ); }
+  if (json.containsKey("light2_pin"                    )) {  const char* light2_pin_char                    = json["light2_pin"                   ];    sprintf_P(light2_pin,                    ("%s"), light2_pin_char                   ); }
   if (json.containsKey("light2off_delay"               )) {  const char* light2off_delay_char               = json["light2off_delay"              ];    sprintf_P(light2off_delay,               ("%s"), light2off_delay_char              ); }
+  if (json.containsKey("light2on_lux"                  )) {  const char* light2on_lux_char                  = json["light2on_lux"                 ];    sprintf_P(light2on_lux,                  ("%s"), light2on_lux_char                 ); }
+  if (json.containsKey("light2_smooth"                 )) {  const char* light2_smooth_char                 = json["light2_smooth"                ];    sprintf_P(light2_smooth,                 ("%s"), light2_smooth_char                ); }
   if (json.containsKey("motion_pin"                    )) {  const char* motion_pin_char                    = json["motion_pin"                   ];    sprintf_P(motion_pin,                    ("%s"), motion_pin_char                   ); }
   if (json.containsKey("dht_pin"                       )) {  const char* dht_pin_char                       = json["dht_pin"                      ];    sprintf_P(dht_pin,                       ("%s"), dht_pin_char                      ); }
   if (json.containsKey("get_data_delay"                )) {  const char* get_data_delay_char                = json["get_data_delay"               ];    sprintf_P(get_data_delay,                ("%s"), get_data_delay_char               ); }
@@ -144,6 +173,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("subscribe_delay"               )) {  const char* subscribe_delay_char               = json["subscribe_delay"              ];    sprintf_P(subscribe_delay,               ("%s"), subscribe_delay_char              ); }
   if (json.containsKey("motion_read_delay"             )) {  const char* motion_read_delay_char             = json["motion_read_delay"            ];    sprintf_P(motion_read_delay,             ("%s"), motion_read_delay_char            ); }
   if (json.containsKey("reboot_delay"                  )) {  const char* reboot_delay_char                  = json["reboot_delay"                 ];    sprintf_P(reboot_delay,                  ("%s"), reboot_delay_char                 ); }
+/*
   if (json.containsKey("uart_delay_analog_pin0"        )) {  const char* uart_delay_analog_pin0_char        = json["uart_delay_analog_pin0"       ];    sprintf_P(uart_delay_analog_pin0,        ("%s"), uart_delay_analog_pin0_char       ); }
   if (json.containsKey("uart_delay_analog_pin1"        )) {  const char* uart_delay_analog_pin1_char        = json["uart_delay_analog_pin1"       ];    sprintf_P(uart_delay_analog_pin1,        ("%s"), uart_delay_analog_pin1_char       ); }
   if (json.containsKey("uart_delay_analog_pin2"        )) {  const char* uart_delay_analog_pin2_char        = json["uart_delay_analog_pin2"       ];    sprintf_P(uart_delay_analog_pin2,        ("%s"), uart_delay_analog_pin2_char       ); }
@@ -157,18 +187,36 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("green_humidity_threshold_down" )) {  const char* green_humidity_threshold_down_char = json["green_humidity_threshold_down"];    sprintf_P(green_humidity_threshold_down, ("%s"), green_humidity_threshold_down_char); }
   if (json.containsKey("green_humidity_sensor_pin"     )) {  const char* green_humidity_sensor_pin_char     = json["green_humidity_sensor_pin"    ];    sprintf_P(green_humidity_sensor_pin,     ("%s"), green_humidity_sensor_pin_char    ); }
   if (json.containsKey("green_pump_pin"                )) {  const char* green_pump_pin_char                = json["green_pump_pin"               ];    sprintf_P(green_pump_pin,                ("%s"), green_pump_pin_char               ); }
+*/
+  if (json.containsKey("static_ip_enable"              )) {  const char* static_ip_enable_char              = json["static_ip_enable"             ];    sprintf_P(static_ip_enable,              ("%s"), static_ip_enable_char             ); }
+  if (json.containsKey("ntp_enable"                    )) {  const char* ntp_enable_char                    = json["ntp_enable"                   ];    sprintf_P(ntp_enable,                    ("%s"), ntp_enable_char                   ); }
+  if (json.containsKey("mqtt_enable"                   )) {  const char* mqtt_enable_char                   = json["mqtt_enable"                  ];    sprintf_P(mqtt_enable,                   ("%s"), mqtt_enable_char                  ); }
+  if (json.containsKey("bme280_enable"                 )) {  const char* bme280_enable_char                 = json["bme280_enable"                ];    sprintf_P(bme280_enable,                 ("%s"), bme280_enable_char                ); }
+  if (json.containsKey("sht21_enable"                  )) {  const char* sht21_enable_char                  = json["sht21_enable"                 ];    sprintf_P(sht21_enable,                  ("%s"), sht21_enable_char                 ); }
+  if (json.containsKey("bh1750_enable"                 )) {  const char* bh1750_enable_char                 = json["bh1750_enable"                ];    sprintf_P(bh1750_enable,                 ("%s"), bh1750_enable_char                ); }
+  if (json.containsKey("motion_sensor_enable"          )) {  const char* motion_sensor_enable_char          = json["motion_sensor_enable"         ];    sprintf_P(motion_sensor_enable,          ("%s"), motion_sensor_enable_char         ); }
+
+
+
+
+
 
   configFile.close();
   return true;
 }
 
 
+
 bool JsonConf::printConfig() {
 
   Serial.print(F("module_id                    : "));   Serial.println(module_id                    );
+  Serial.print(F("wifi_mode                    : "));   Serial.println(wifi_mode                    );
+  Serial.print(F("wifi_phy_mode                : "));   Serial.println(wifi_phy_mode                );
+  Serial.print(F("wifi_channel                 : "));   Serial.println(wifi_channel                 );
+  Serial.print(F("wifi_auth                    : "));   Serial.println(wifi_auth                    );
   Serial.print(F("sta_ssid                     : "));   Serial.println(sta_ssid                     );
   Serial.print(F("sta_pwd                      : "));   Serial.println(sta_pwd                      );
-  Serial.print(F("static_ip_mode               : "));   Serial.println(static_ip_mode               );
+  Serial.print(F("ap_pwd                       : "));   Serial.println(ap_pwd                       );
   Serial.print(F("static_ip                    : "));   Serial.println(static_ip                    );
   Serial.print(F("static_gateway               : "));   Serial.println(static_gateway               );
   Serial.print(F("static_subnet                : "));   Serial.println(static_subnet                );
@@ -184,8 +232,12 @@ bool JsonConf::printConfig() {
   Serial.print(F("command_pub_topic            : "));   Serial.println(command_pub_topic            );
   Serial.print(F("light_pin                    : "));   Serial.println(light_pin                    );
   Serial.print(F("lightoff_delay               : "));   Serial.println(lightoff_delay               );
-  Serial.print(F("light_pin2                   : "));   Serial.println(light_pin2                   );
+  Serial.print(F("lighton_lux                  : "));   Serial.println(lighton_lux                  );
+  Serial.print(F("light_smooth                 : "));   Serial.println(light_smooth                 );
+  Serial.print(F("light2_pin                   : "));   Serial.println(light2_pin                   );
   Serial.print(F("light2off_delay              : "));   Serial.println(light2off_delay              );
+  Serial.print(F("light2on_lux                 : "));   Serial.println(light2on_lux                 );
+  Serial.print(F("light2_smooth                : "));   Serial.println(light2_smooth                );
   Serial.print(F("motion_pin                   : "));   Serial.println(motion_pin                   );
   Serial.print(F("dht_pin                      : "));   Serial.println(dht_pin                      );
   Serial.print(F("get_data_delay               : "));   Serial.println(get_data_delay               );
@@ -193,6 +245,7 @@ bool JsonConf::printConfig() {
   Serial.print(F("subscribe_delay              : "));   Serial.println(subscribe_delay              );
   Serial.print(F("motion_read_delay            : "));   Serial.println(motion_read_delay            );
   Serial.print(F("reboot_delay                 : "));   Serial.println(reboot_delay                 );
+/*
   Serial.print(F("uart_delay_analog_pin0       : "));   Serial.println(uart_delay_analog_pin0       );
   Serial.print(F("uart_delay_analog_pin1       : "));   Serial.println(uart_delay_analog_pin1       );
   Serial.print(F("uart_delay_analog_pin2       : "));   Serial.println(uart_delay_analog_pin2       );
@@ -206,4 +259,12 @@ bool JsonConf::printConfig() {
   Serial.print(F("green_humidity_threshold_down: "));   Serial.println(green_humidity_threshold_down);
   Serial.print(F("green_humidity_sensor_pin    : "));   Serial.println(green_humidity_sensor_pin    );
   Serial.print(F("green_pump_pin               : "));   Serial.println(green_pump_pin               );
+*/
+  Serial.print(F("static_ip_enable             : "));   Serial.println(static_ip_enable             );
+  Serial.print(F("ntp_enable                   : "));   Serial.println(ntp_enable                   );
+  Serial.print(F("mqtt_enable                  : "));   Serial.println(mqtt_enable                  );
+  Serial.print(F("bme280_enable                : "));   Serial.println(bme280_enable                );
+  Serial.print(F("sht21_enable                 : "));   Serial.println(sht21_enable                 );
+  Serial.print(F("bh1750_enable                : "));   Serial.println(bh1750_enable                );
+  Serial.print(F("motion_sensor_enable         : "));   Serial.println(motion_sensor_enable         );
 }
