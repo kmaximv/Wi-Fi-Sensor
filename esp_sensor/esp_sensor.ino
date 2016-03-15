@@ -244,7 +244,7 @@ setInterval('show()',5000);\
 </script>";
 
 const char div1P[] PROGMEM =
-"<div class='col-sm-10 col-md-8 col-lg-6'><h2>Control Pins</h2>\
+"<div class='col-sm-8 col-md-6 col-lg-5'><h2>Control Pins</h2>\
 <table class='table table-hover'>\
 <tbody>\
   <tr>\
@@ -255,7 +255,7 @@ const char div1P[] PROGMEM =
     <td class='active'><h4>Timer</h4></td>\
   </tr>\
   <tr>\
-    <td class='active'><h4>Led Strip 1</h4></td>\
+    <td class='active'><h4>Light1</h4></td>\
     <td class='active'><div onclick='Pin1();'><input id='OnOff' type='submit' class='btn btn-";
 
 const char javaScriptP[] PROGMEM = 
@@ -1859,8 +1859,6 @@ void WebWiFiConf(void) {
   String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
   String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
 
-  String title1 = panelHeaderName + String(F("ESP Configuration")) + panelHeaderEnd;
-  String data = title1 + network_html + inputBodyStart;
 
   bool config_changed = false;
   bool enable = false;
@@ -1945,6 +1943,10 @@ void WebWiFiConf(void) {
     JConf.saveConfig();
   }
 
+  String data = panelHeaderName + String(F("Wi-Fi Configuration")) + panelHeaderEnd;
+  data += inputBodyStart;
+
+
   data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
 
   data += String(F("<div class='form-group'><div class='input-group'><span class='input-group-addon'>AP type</span>"));
@@ -1999,6 +2001,10 @@ void WebWiFiConf(void) {
   }
 
   data += inputBodyEnd;
+  data += String(F("</div>"));
+
+  data += panelHeaderName + String(F("Scan AP")) + panelHeaderEnd;
+  data += network_html;
 
   WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 
@@ -2188,14 +2194,11 @@ void WebEspConf(void) {
   String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
   String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
 
-  String title1 = panelHeaderName + String(F("ESP Configuration")) + panelHeaderEnd;
-  String data = title1 + inputBodyStart;
 
   bool config_changed = false;
   bool enable_light_smooth = false;
   bool enable_light2_smooth = false;
   String payload = "";
-
 
 
   payload=WebServer.arg("light_pin");
@@ -2297,28 +2300,39 @@ void WebEspConf(void) {
     JConf.saveConfig();
   }
 
-  data += inputBodyName + String(F("Light Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.light_pin + inputBodyClose + inputBodyCloseDiv;
-  data += inputBodyName + String(F("Light Off Delay")) + inputBodyPOST + String(F("lightoff_delay")) + inputPlaceHolder + JConf.lightoff_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
-  data += inputBodyName + String(F("Light On Lux")) + inputBodyPOST + String(F("lighton_lux")) + inputPlaceHolder + JConf.lighton_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
+
+  String data = panelHeaderName + String(F("ESP Configuration")) + panelHeaderEnd;
+  data += inputBodyStart;
+
+
+  data += String(F("<h4>Light 1</h4>"));
+  data += inputBodyName + String(F("Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.light_pin + inputBodyClose + inputBodyCloseDiv;
+  data += inputBodyName + String(F("Off Delay")) + inputBodyPOST + String(F("lightoff_delay")) + inputPlaceHolder + JConf.lightoff_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
+  data += inputBodyName + String(F("On Lux")) + inputBodyPOST + String(F("lighton_lux")) + inputPlaceHolder + JConf.lighton_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
   if (atoi(JConf.light_smooth) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light_smooth' value='1' checked='true'>Light Smooth On</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light_smooth' value='1' checked='true'>Smooth Enable</label></div>"));
   } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light_smooth' value='1'>Light Smooth On</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light_smooth' value='1'>Smooth Enable</label></div>"));
   }
+  data += String(F("<hr>"));
 
-  data += inputBodyName + String(F("Light Pin 2")) + inputBodyPOST + String(F("light2_pin")) + inputPlaceHolder + JConf.light2_pin + inputBodyClose + inputBodyCloseDiv;
-  data += inputBodyName + String(F("Light2 Off Delay")) + inputBodyPOST + String(F("light2off_delay")) + inputPlaceHolder + JConf.light2off_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
-  data += inputBodyName + String(F("Light2 On Lux")) + inputBodyPOST + String(F("light2on_lux")) + inputPlaceHolder + JConf.light2on_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
+  data += String(F("<h4>Light 2</h4>"));
+  data += inputBodyName + String(F("Pin")) + inputBodyPOST + String(F("light2_pin")) + inputPlaceHolder + JConf.light2_pin + inputBodyClose + inputBodyCloseDiv;
+  data += inputBodyName + String(F("Off Delay")) + inputBodyPOST + String(F("light2off_delay")) + inputPlaceHolder + JConf.light2off_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
+  data += inputBodyName + String(F("On Lux")) + inputBodyPOST + String(F("light2on_lux")) + inputPlaceHolder + JConf.light2on_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
 
   if (atoi(JConf.light2_smooth) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light2_smooth' value='1' checked='true'>Light2 Smooth On</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light2_smooth' value='1' checked='true'>Smooth Enable</label></div>"));
   } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light2_smooth' value='1'>Light2 Smooth On</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light2_smooth' value='1'>Smooth Enable</label></div>"));
   }
+  data += String(F("<hr>"));
 
   data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + JConf.motion_pin + inputBodyClose + inputBodyCloseDiv;
   data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + JConf.dht_pin + inputBodyClose + inputBodyCloseDiv;
+  data += String(F("<br>"));
+
   data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + JConf.get_data_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
   data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + JConf.motion_read_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
   data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + JConf.reboot_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
@@ -2797,7 +2811,7 @@ void WebPinControlStatus(void) {
   data+=String(F("</h4></td></tr>"));
 
 
-  data+=String(F("<tr><td class='active'><h4>Led Strip 2</h4></td><td class='active'><div onclick='Pin2();'><input id='OnOff2' type='submit' class='btn btn-"));
+  data+=String(F("<tr><td class='active'><h4>Light2</h4></td><td class='active'><div onclick='Pin2();'><input id='OnOff2' type='submit' class='btn btn-"));
   if (lightState2 == AUTO) { data+=ClassDefault; } else if (pinState2) { data+=ClassDanger; } else { data+=ClassInfo; }
   data+=String(F("' value='"));
   if (pinState2) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
