@@ -1418,17 +1418,22 @@ bool MqttPubData() {
 
   Serial.print(F("MQTT data send"));  Serial.println();
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  lux, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, luxString.c_str());
+  if (atoi(JConf.bh1750_enable) == 1){
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  lux, JConf.mqtt_name);
+    mqttClient.publish(topic_buff, luxString.c_str());
+  }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, temperature, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, temperatureString.c_str());
+  if (atoi(JConf.bme280_enable) == 1  ||  atoi(JConf.sht21_enable) == 1){
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, temperature, JConf.mqtt_name);
+    mqttClient.publish(topic_buff, temperatureString.c_str());
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  humidity, JConf.mqtt_name);
+    mqttClient.publish(topic_buff, humidityString.c_str());
+  }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, pressure, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, pressureString.c_str());
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  humidity, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, humidityString.c_str());
+  if (atoi(JConf.bme280_enable) == 1){
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, pressure, JConf.mqtt_name);
+    mqttClient.publish(topic_buff, pressureString.c_str());
+  }
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  freeMemory, JConf.mqtt_name);
   mqttClient.publish(topic_buff, freeMemoryString.c_str());
