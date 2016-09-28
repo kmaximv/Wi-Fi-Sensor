@@ -1,7 +1,6 @@
 #include <ESP8266WiFi.h>
 //#include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
-
 extern "C" {
 #include "user_interface.h"
 }
@@ -40,7 +39,6 @@ HTU21D myHTU21D;
 
 #if defined(PZEM_ON)
 #include <PZEM004T.h>
-#include <SoftwareSerial.h>
 PZEM004T pzem(0,1);  // RX,TX
 IPAddress ip_pzem(192,168,1,1);
 #endif
@@ -66,6 +64,11 @@ const char *ip                 = "IP"                ;
 const char *mac                = "MAC"               ;        
 const char *errorsDHT          = "ErrorsDHT"         ;              
 const char *uptime             = "Uptime"            ;           
+const char *pzemVoltage        = "pzemVoltage"       ;           
+const char *pzemCurrent        = "pzemCurrent"       ;           
+const char *pzemPower          = "pzemPower"         ;           
+const char *pzemEnergy         = "pzemEnergy"        ;           
+
 
 const char sec[] PROGMEM = "sec";
 
@@ -81,6 +84,11 @@ String ntpTimeString =     "none";
 String freeMemoryString =  "none";
 String lightState =        "AUTO";
 String lightState2 =       "AUTO";
+String pzemVoltageString = "none";
+String pzemCurrentString = "none";
+String pzemPowerString =   "none";
+String pzemEnergyString =  "none";
+
 
 BH1750 lightSensor;
 PubSubClient mqttClient;
@@ -336,6 +344,23 @@ const char jsPressureP[] PROGMEM =
 "xmldoc = xmlResponse.getElementsByTagName('pressure');\
 message = xmldoc[0].firstChild.nodeValue;\
 document.getElementById('pressureId').innerHTML=message;";
+
+
+#if defined(PZEM_ON)
+const char jsPzemP[] PROGMEM = 
+"xmldoc = xmlResponse.getElementsByTagName('pzemVoltage');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('pzemVoltageId').innerHTML=message;\
+xmldoc = xmlResponse.getElementsByTagName('pzemCurrent');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('pzemCurrentId').innerHTML=message;\
+xmldoc = xmlResponse.getElementsByTagName('pzemPower');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('pzemPowerId').innerHTML=message;\
+xmldoc = xmlResponse.getElementsByTagName('pzemEnergy');\
+message = xmldoc[0].firstChild.nodeValue;\
+document.getElementById('pzemEnergyId').innerHTML=message;";
+#endif
 
 
 const char jsNtpP[] PROGMEM = 
@@ -1080,6 +1105,51 @@ void DHT22Sensor()
 
 
 
+#ifdef PZEM_ON
+void GetPzemSensorData()
+{ 
+  #ifdef DEBUG
+    unsigned long start_time = millis();
+    Serial.println(F("GetPzemSensorData() Start"));
+  #endif
+
+  float v = pzem.voltage(ip_pzem);
+  if (v < 0.0) v = 0.0;
+  pzemVoltageString = String(v);
+  #ifdef DEBUG 
+    Serial.print(F("Voltage: "));  Serial.print(pzemVoltageString);  Serial.println(F(" V"));
+  #endif
+
+  float i = pzem.current(ip_pzem);
+  if (i < 0.0) i = 0.0;
+  pzemCurrentString = String(i);
+  #ifdef DEBUG
+    Serial.print(F("Current: "));  Serial.print(pzemCurrentString);  Serial.println(F(" A"));
+  #endif
+
+  float p = pzem.power(ip_pzem);
+  if (p < 0.0) p = 0.0;
+  pzemPowerString = String(p);
+  #ifdef DEBUG
+    Serial.print(F("Power: "));  Serial.print(pzemPowerString);  Serial.println(F(" W"));
+  #endif
+
+  float e = pzem.energy(ip_pzem);
+  if (e < 0.0) e = 0.0;
+  pzemEnergyString = String(e);
+  #ifdef DEBUG
+    Serial.print(F("Energy: "));  Serial.print(pzemEnergyString);  Serial.println(F(" Wh"));
+  #endif
+
+  #ifdef DEBUG
+    unsigned long load_time = millis() - start_time;
+    Serial.print(F("GetPzemSensorData() Load Time: ")); Serial.println(load_time);
+  #endif
+}
+#endif
+
+
+
 void MotionDetect(){
 
   #ifdef DEBUG11
@@ -1382,6 +1452,21 @@ bool MqttPubData() {
     mqttClient.publish(topic_buff, value_buff);
   #endif
 
+  #ifdef PZEM_ON
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  pzemVoltage, JConf.mqtt_name);
+    mqttClient.publish(topic_buff, pzemVoltageString.c_str());
+
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  pzemCurrent, JConf.mqtt_name);
+    mqttClient.publish(topic_buff, pzemCurrentString.c_str());
+
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  pzemPower, JConf.mqtt_name);
+    mqttClient.publish(topic_buff, pzemPowerString.c_str());
+
+    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  pzemEnergy, JConf.mqtt_name);
+    mqttClient.publish(topic_buff, pzemEnergyString.c_str());
+  #endif
+
+
   #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
     Serial.print(F("MqttPubData() Load Time: ")); Serial.println(load_time);
@@ -1585,6 +1670,9 @@ void WebRoot(void) {
   String jsHumidity;            jsHumidity += FPSTR(jsHumidityP);
   String jsPressure;            jsPressure += FPSTR(jsPressureP);
   String jsIlluminance;         jsIlluminance += FPSTR(jsIlluminanceP);
+  #ifdef PZEM_ON
+  String jsPzem;                jsPzem += FPSTR(jsPzemP);
+  #endif
   String jsNtp;                 jsNtp += FPSTR(jsNtpP);
   String javaScriptEnd;         javaScriptEnd += FPSTR(javaScriptEndP);
   String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
@@ -1624,10 +1712,12 @@ void WebRoot(void) {
   #endif
 
   #ifdef PZEM_ON
-    title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Voltage"))    + panelBodyValue + String(F(">")) + String(pzem.voltage(ip_pzem)) + String(F(" V"))     + panelBodyEnd;
-    title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Current"))    + panelBodyValue + String(F(">")) + String(pzem.current(ip_pzem)) + String(F(" A"))     + panelBodyEnd;
-    title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Power"))    + panelBodyValue + String(F(">")) + String(pzem.power(ip_pzem)) + String(F(" W"))     + panelBodyEnd;
-    title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Energy"))    + panelBodyValue + String(F(">")) + String(pzem.energy(ip_pzem)) + String(F(" Wh"))     + panelBodyEnd;
+    if (atoi(JConf.pzem_enable) == 1){
+      title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Voltage"))    + panelBodyValue + String(F(" id='pzemVoltageId'")) + closingAngleBracket   + panelBodyEnd;
+      title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Current"))    + panelBodyValue + String(F(" id='pzemCurrentId'")) + closingAngleBracket   + panelBodyEnd;
+      title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Power"))      + panelBodyValue + String(F(" id='pzemPowerId'"))   + closingAngleBracket   + panelBodyEnd;
+      title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Energy"))     + panelBodyValue + String(F(" id='pzemEnergyId'"))  + closingAngleBracket   + panelBodyEnd;
+    }
   #endif
 
 
@@ -1662,6 +1752,13 @@ void WebRoot(void) {
   if (atoi(JConf.bh1750_enable) == 1) {
     data += jsIlluminance;
   }
+
+  #ifdef PZEM_ON
+    if (atoi(JConf.pzem_enable) == 1){
+      data += jsPzem;
+    }
+  #endif
+
   if (atoi(JConf.ntp_enable) == 1) {
     data += jsNtp;
   }
@@ -2084,6 +2181,7 @@ void WebSensorsConf(void) {
   bool sht21_enable = false;
   bool bh1750_enable = false;
   bool motion_sensor_enable = false;
+  bool pzem_enable = false;
 
   String payload = "";
 
@@ -2116,6 +2214,13 @@ void WebSensorsConf(void) {
     motion_sensor_enable = true;
   } 
 
+  payload=WebServer.arg("pzem_enable");
+  if (payload.length() > 0) {
+    payload.toCharArray(JConf.pzem_enable, sizeof(JConf.pzem_enable));
+    pzem_enable = true;
+  } 
+
+
   if (config_changed){
     if (!bme280_enable){
       JConf.bme280_enable[0] = '0';
@@ -2132,6 +2237,10 @@ void WebSensorsConf(void) {
     if (!motion_sensor_enable){
       JConf.motion_sensor_enable[0] = '0';
       JConf.motion_sensor_enable[1] = '\0';
+    }
+    if (!pzem_enable){
+      JConf.pzem_enable[0] = '0';
+      JConf.pzem_enable[1] = '\0';
     }
     JConf.saveConfig();
   }
@@ -2158,6 +2267,12 @@ void WebSensorsConf(void) {
     data += String(F("<div class='checkbox'><label><input type='checkbox' name='motion_sensor_enable' value='1' checked='true'>Motion Sensor Enable</label></div>"));
   } else {
     data += String(F("<div class='checkbox'><label><input type='checkbox' name='motion_sensor_enable' value='1'>Motion Sensor Enable</label></div>"));
+  }
+
+  if (atoi(JConf.pzem_enable) == 1){
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='pzem_enable' value='1' checked='true'>Energy Monitor Enable</label></div>"));
+  } else {
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='pzem_enable' value='1'>Energy Monitor Enable</label></div>"));
   }
 
   data += inputBodyEnd;
@@ -3050,6 +3165,29 @@ void handleXML(){
   XML+=luxString;
   XML+=String(F(" lux"));
   XML+=String(F("</illuminance>"));
+
+  #ifdef PZEM_ON
+  XML+=String(F("<pzemVoltage>"));
+  XML+=pzemVoltageString;
+  XML+=String(F(" V"));
+  XML+=String(F("</pzemVoltage>"));
+
+  XML+=String(F("<pzemCurrent>"));
+  XML+=pzemCurrentString;
+  XML+=String(F(" A"));
+  XML+=String(F("</pzemCurrent>"));
+
+  XML+=String(F("<pzemPower>"));
+  XML+=pzemPowerString;
+  XML+=String(F(" W"));
+  XML+=String(F("</pzemPower>"));
+
+  XML+=String(F("<pzemEnergy>"));
+  XML+=pzemEnergyString;
+  XML+=String(F(" Wh"));
+  XML+=String(F("</pzemEnergy>"));
+  #endif
+
   XML+=String(F("<uptime>"));
   XML+=uptimeString;
   XML+=String(F("</uptime>"));
@@ -3147,9 +3285,13 @@ void setup() {
 
   // Setup console
   #ifdef DEBUG
-    Serial.begin(9600);
+    Serial.begin(115200);
     delay(10);
     Serial.println();
+  #endif
+
+  #ifdef PZEM_ON
+    Serial.begin(9600);
   #endif
   
   if (!SPIFFS.begin()) {
@@ -3324,6 +3466,13 @@ void loop() {
       }
     #endif
 
+    #ifdef PZEM_ON
+      if (atoi(JConf.pzem_enable) == 1){
+        GetPzemSensorData();
+      }
+    #endif
+
+
     #ifdef DEBUG
       unsigned long load_time4 = millis() - start_time;
       if (load_time4 > 100){
@@ -3404,28 +3553,6 @@ void loop() {
     }
   }
 
-
-
-
-/*
-  if (WiFi.status() != WL_CONNECTED) {
-    #ifdef DEBUG
-    Serial.print(F("Connecting to "));
-    Serial.print(JConf.sta_ssid);
-    Serial.println(F("..."));
-    #endif
-    WiFi.mode(WIFI_AP_STA);
-    WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
-    delay(100);
-
-    if (WiFi.waitForConnectResult() != WL_CONNECTED)
-      return;
-    #ifdef DEBUG
-    Serial.println(F("WiFi connected"));
-    #endif
-  }
-*/
-
   if (WiFi.status() == WL_CONNECTED) {
 
     if (atoi(JConf.mqtt_enable) == 1) {
@@ -3456,24 +3583,6 @@ void loop() {
   #endif
 
   FadeSwitchLoop();
-
-/*
-  float v = pzem.voltage(ip_pzem);
-  if (v < 0.0) v = 0.0;
-  Serial.print(v);Serial.print("V; ");
-
-  float i = pzem.current(ip_pzem);
-  if(i >= 0.0){ Serial.print(i);Serial.print("A; "); }
-  
-  float p = pzem.power(ip_pzem);
-  if(p >= 0.0){ Serial.print(p);Serial.print("W; "); }
-  
-  float e = pzem.energy(ip_pzem);
-  if(e >= 0.0){ Serial.print(e);Serial.print("Wh; "); }
-
-  Serial.println();
-*/
-
 
   #ifdef DEBUG
     unsigned long load_time3 = millis() - start_time;

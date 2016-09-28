@@ -104,6 +104,7 @@ class JsonConf
     char sht21_enable                 [2]  = "0"                  ;
     char bh1750_enable                [2]  = "0"                  ;
     char motion_sensor_enable         [2]  = "0"                  ;
+    char pzem_enable                  [2]  = "0"                  ;
 
 
   private:

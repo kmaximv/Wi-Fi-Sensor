@@ -68,6 +68,7 @@ bool JsonConf::saveConfig() {
   json["sht21_enable"]                  = sht21_enable                 ;                               
   json["bh1750_enable"]                 = bh1750_enable                ;                               
   json["motion_sensor_enable"]          = motion_sensor_enable         ;                               
+  json["pzem_enable"]                   = pzem_enable                  ;                               
 
 
 
@@ -195,8 +196,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("sht21_enable"                  )) {  const char* sht21_enable_char                  = json["sht21_enable"                 ];    sprintf_P(sht21_enable,                  ("%s"), sht21_enable_char                 ); }
   if (json.containsKey("bh1750_enable"                 )) {  const char* bh1750_enable_char                 = json["bh1750_enable"                ];    sprintf_P(bh1750_enable,                 ("%s"), bh1750_enable_char                ); }
   if (json.containsKey("motion_sensor_enable"          )) {  const char* motion_sensor_enable_char          = json["motion_sensor_enable"         ];    sprintf_P(motion_sensor_enable,          ("%s"), motion_sensor_enable_char         ); }
-
-
+  if (json.containsKey("pzem_enable"                   )) {  const char* pzem_enable_char                   = json["pzem_enable"                  ];    sprintf_P(pzem_enable,                   ("%s"), pzem_enable_char                  ); }
 
 
 
@@ -267,4 +267,5 @@ bool JsonConf::printConfig() {
   Serial.print(F("sht21_enable                 : "));   Serial.println(sht21_enable                 );
   Serial.print(F("bh1750_enable                : "));   Serial.println(bh1750_enable                );
   Serial.print(F("motion_sensor_enable         : "));   Serial.println(motion_sensor_enable         );
+  Serial.print(F("pzem_enable                  : "));   Serial.println(pzem_enable                  );
 }
