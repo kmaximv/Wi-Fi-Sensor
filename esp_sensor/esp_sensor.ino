@@ -38,6 +38,13 @@ BME280 bmeSensor;
 HTU21D myHTU21D;
 #endif
 
+#if defined(PZEM_ON)
+#include <PZEM004T.h>
+#include <SoftwareSerial.h>
+PZEM004T pzem(0,1);  // RX,TX
+IPAddress ip_pzem(192,168,1,1);
+#endif
+
 ADC_MODE(ADC_VCC);
 float voltage_float;
 
@@ -117,6 +124,7 @@ int cycleEnd[ESP_PINS];
 
 unsigned long timerDigitalPin[ESP_PINS];
 int delayDigitalPin = 10;
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
@@ -1614,6 +1622,14 @@ void WebRoot(void) {
       title1         += panelBodySymbol + String(F("cloud"))         + panelBodyName + String(F("Pressure"))    + panelBodyValue + String(F(" id='pressureId'")) + closingAngleBracket      + panelBodyEnd;
     }
   #endif
+
+  #ifdef PZEM_ON
+    title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Voltage"))    + panelBodyValue + String(F(">")) + String(pzem.voltage(ip_pzem)) + String(F(" V"))     + panelBodyEnd;
+    title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Current"))    + panelBodyValue + String(F(">")) + String(pzem.current(ip_pzem)) + String(F(" A"))     + panelBodyEnd;
+    title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Power"))    + panelBodyValue + String(F(">")) + String(pzem.power(ip_pzem)) + String(F(" W"))     + panelBodyEnd;
+    title1         += panelBodySymbol + String(F("flash"))         + panelBodyName + String(F("Energy"))    + panelBodyValue + String(F(">")) + String(pzem.energy(ip_pzem)) + String(F(" Wh"))     + panelBodyEnd;
+  #endif
+
 
   if (atoi(JConf.bh1750_enable) == 1){
     title1           += panelBodySymbol + String(F("asterisk"))      + panelBodyName + String(F("illuminance")) + panelBodyValue + String(F(" id='illuminanceId'")) + closingAngleBracket   + panelBodyEnd;
@@ -3131,7 +3147,7 @@ void setup() {
 
   // Setup console
   #ifdef DEBUG
-    Serial.begin(115200);
+    Serial.begin(9600);
     delay(10);
     Serial.println();
   #endif
@@ -3166,6 +3182,11 @@ void setup() {
 
   digitalWrite(atoi(JConf.light_pin), LOW);
   digitalWrite(atoi(JConf.light2_pin), LOW);
+
+  #ifdef PZEM_ON
+    pzem.setAddress(ip_pzem);
+    pzem.setReadTimeout(500);
+  #endif
 
   #ifdef SHT21_ON
     myHTU21D.begin();
@@ -3435,6 +3456,24 @@ void loop() {
   #endif
 
   FadeSwitchLoop();
+
+/*
+  float v = pzem.voltage(ip_pzem);
+  if (v < 0.0) v = 0.0;
+  Serial.print(v);Serial.print("V; ");
+
+  float i = pzem.current(ip_pzem);
+  if(i >= 0.0){ Serial.print(i);Serial.print("A; "); }
+  
+  float p = pzem.power(ip_pzem);
+  if(p >= 0.0){ Serial.print(p);Serial.print("W; "); }
+  
+  float e = pzem.energy(ip_pzem);
+  if(e >= 0.0){ Serial.print(e);Serial.print("Wh; "); }
+
+  Serial.println();
+*/
+
 
   #ifdef DEBUG
     unsigned long load_time3 = millis() - start_time;

@@ -10,10 +10,10 @@
 #define BME280_ON
 //#define SHT21_ON
 
-#define DEBUG
-#define DEBUG_JSON_CONFIG
+//#define DEBUG
+//#define DEBUG_JSON_CONFIG
 
-
+#define PZEM_ON
 //#define REBOOT_ON
 
 //UART Settings    ------------------------------------------------------------
