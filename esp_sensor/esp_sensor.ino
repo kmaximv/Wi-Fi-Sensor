@@ -39,7 +39,7 @@ HTU21D myHTU21D;
 
 #if defined(PZEM_ON)
 #include <PZEM004T.h>
-PZEM004T pzem(0,1);  // RX,TX
+PZEM004T pzem(&Serial);  // RX,TX
 IPAddress ip_pzem(192,168,1,1);
 #endif
 
