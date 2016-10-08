@@ -1276,8 +1276,35 @@ void callback(char* topic, byte* payload, unsigned int length) {
       lightState = AUTO;
     }
 
+
     #ifdef DEBUG
       Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.print(F(" contains "));   Serial.print(lightState);
+    #endif
+
+    LightControl();
+  }
+
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, lightType2, JConf.mqtt_name);
+  if (strcmp (topic,topic_buff) == 0){
+
+    String AUTO;       AUTO += FPSTR(AUTOP);
+    String ON;         ON += FPSTR(ONP);
+    String OFF;        OFF += FPSTR(OFFP);
+
+    #ifdef DEBUG
+      Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
+    #endif
+    if (strncmp (value_buff,"1",1) == 0){
+      lightState2 = ON;
+    } else if (strncmp (value_buff,"0",1) == 0){
+      lightState2 = OFF;
+    } else if (strncmp (value_buff,"2",1) == 0){
+      lightState2 = AUTO;
+    }
+
+
+    #ifdef DEBUG
+      Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.print(F(" contains "));   Serial.print(lightState2);
     #endif
 
     LightControl();
@@ -3297,6 +3324,8 @@ void setup() {
 
   #ifdef PZEM_ON
     Serial.begin(9600);
+    delay(500);
+    Serial.println();
   #endif
   
   if (!SPIFFS.begin()) {
