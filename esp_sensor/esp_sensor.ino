@@ -39,8 +39,11 @@ HTU21D myHTU21D;
 
 #if defined(PZEM_ON)
 #include <PZEM004T.h>
-PZEM004T pzem(&Serial);  // RX,TX
+PZEM004T pzem(&Serial);
 IPAddress ip_pzem(192,168,1,1);
+float coil_ratio = 1.84; // Если используем разные катушки, подбираем коэффициент
+enum PZEM_ENUM {PZEM_VOLTAGE, PZEM_CURRENT, PZEM_POWER, PZEM_ENERGY};
+PZEM_ENUM pzem_current_read = PZEM_VOLTAGE;
 #endif
 
 ADC_MODE(ADC_VCC);
@@ -1113,33 +1116,75 @@ void GetPzemSensorData()
     Serial.println(F("GetPzemSensorData() Start"));
   #endif
 
-  float v = pzem.voltage(ip_pzem);
-  if (v < 0.0) v = 0.0;
-  pzemVoltageString = String(v);
-  #ifdef DEBUG 
-    Serial.print(F("Voltage: "));  Serial.print(pzemVoltageString);  Serial.println(F(" V"));
-  #endif
+  if (pzem_current_read == PZEM_VOLTAGE){
+    float v = pzem.voltage(ip_pzem);
+    if (v < 0.0){
+      v = 0.0;
+    }
+    pzemVoltageString = String(v);
 
-  float i = pzem.current(ip_pzem);
-  if (i < 0.0) i = 0.0;
-  pzemCurrentString = String(i);
-  #ifdef DEBUG
-    Serial.print(F("Current: "));  Serial.print(pzemCurrentString);  Serial.println(F(" A"));
-  #endif
+    pzem_current_read = PZEM_CURRENT;
 
-  float p = pzem.power(ip_pzem);
-  if (p < 0.0) p = 0.0;
-  pzemPowerString = String(p);
-  #ifdef DEBUG
-    Serial.print(F("Power: "));  Serial.print(pzemPowerString);  Serial.println(F(" W"));
-  #endif
+    #ifdef DEBUG 
+      Serial.print(F("Voltage: "));  Serial.print(pzemVoltageString);  Serial.println(F(" V"));
+    #endif
 
-  float e = pzem.energy(ip_pzem);
-  if (e < 0.0) e = 0.0;
-  pzemEnergyString = String(e);
-  #ifdef DEBUG
-    Serial.print(F("Energy: "));  Serial.print(pzemEnergyString);  Serial.println(F(" Wh"));
-  #endif
+    return;
+  }
+
+  if (pzem_current_read == PZEM_CURRENT){
+    float i = pzem.current(ip_pzem);
+    if (i < 0.0) {
+      i = 0.0;
+    } else {
+      i = i * coil_ratio;
+    }
+    pzemCurrentString = String(i);
+    
+    pzem_current_read = PZEM_POWER;
+
+    #ifdef DEBUG
+      Serial.print(F("Current: "));  Serial.print(pzemCurrentString);  Serial.println(F(" A"));
+    #endif
+
+    return;
+  }
+
+  if (pzem_current_read == PZEM_POWER){
+    float p = pzem.power(ip_pzem);
+    if (p < 0.0) {
+      p = 0.0;
+    } else {
+      p = p * coil_ratio / 1000;
+    }
+    pzemPowerString = String(p);
+
+    pzem_current_read = PZEM_ENERGY;
+
+    #ifdef DEBUG
+      Serial.print(F("Power: "));  Serial.print(pzemPowerString);  Serial.println(F(" kW"));
+    #endif
+
+    return;
+  }
+
+  if (pzem_current_read == PZEM_ENERGY){
+    float e = pzem.energy(ip_pzem);
+    if (e < 0.0) {
+      e = 0.0;
+    } else {
+      e = e * coil_ratio / 1000;
+    }
+    pzemEnergyString = String(e);
+
+    pzem_current_read = PZEM_VOLTAGE;
+
+    #ifdef DEBUG
+      Serial.print(F("Energy: "));  Serial.print(pzemEnergyString);  Serial.println(F(" kWh"));
+    #endif
+
+    return;
+  }
 
   #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
@@ -3211,12 +3256,12 @@ void handleXML(){
 
   XML+=String(F("<pzemPower>"));
   XML+=pzemPowerString;
-  XML+=String(F(" W"));
+  XML+=String(F(" kW"));
   XML+=String(F("</pzemPower>"));
 
   XML+=String(F("<pzemEnergy>"));
   XML+=pzemEnergyString;
-  XML+=String(F(" Wh"));
+  XML+=String(F(" kWh"));
   XML+=String(F("</pzemEnergy>"));
   #endif
 
