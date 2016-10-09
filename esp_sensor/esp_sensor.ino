@@ -1210,19 +1210,19 @@ void PzemResetEnergy() {
       lightState = ON;
       LightControl();
       pzem_reset_stage = PZEM_STAGE2;
-      timer.setTimeout(5500, PzemResetEnergy);
+      timer.setTimeout(6000, PzemResetEnergy);
       break;
     case PZEM_STAGE2:
       lightState = OFF;
       LightControl();
       pzem_reset_stage = PZEM_STAGE3;
-      timer.setTimeout(500, PzemResetEnergy);
+      timer.setTimeout(1000, PzemResetEnergy);
       break;
     case PZEM_STAGE3:
       lightState = ON;
       LightControl();
       pzem_reset_stage = PZEM_STAGE4;
-      timer.setTimeout(500, PzemResetEnergy);
+      timer.setTimeout(1000, PzemResetEnergy);
       break;
     case PZEM_STAGE4:
       lightState = OFF;
