@@ -13,6 +13,9 @@ extern "C" {
 #include "json_config.h"
 #include <ArduinoJson.h>
 
+#include "SimpleTimer.h"
+SimpleTimer timer;
+
 #if defined(UART_ON)
 #include "MY_ESP_UART.h"
 Espuart Uart;
@@ -44,6 +47,8 @@ IPAddress ip_pzem(192,168,1,1);
 float coil_ratio = 1.84; // Если используем разные катушки, подбираем коэффициент
 enum PZEM_ENUM {PZEM_VOLTAGE, PZEM_CURRENT, PZEM_POWER, PZEM_ENERGY};
 PZEM_ENUM pzem_current_read = PZEM_VOLTAGE;
+enum PZEM_RESET_ENUM {PZEM_STAGE1, PZEM_STAGE2, PZEM_STAGE3, PZEM_STAGE4};
+PZEM_RESET_ENUM pzem_reset_stage = PZEM_STAGE1;
 #endif
 
 ADC_MODE(ADC_VCC);
@@ -71,6 +76,7 @@ const char *pzemVoltage        = "pzemVoltage"       ;
 const char *pzemCurrent        = "pzemCurrent"       ;           
 const char *pzemPower          = "pzemPower"         ;           
 const char *pzemEnergy         = "pzemEnergy"        ;           
+const char *pzemReset          = "pzemReset"         ;           
 
 
 const char sec[] PROGMEM = "sec";
@@ -1191,6 +1197,42 @@ void GetPzemSensorData()
     Serial.print(F("GetPzemSensorData() Load Time: ")); Serial.println(load_time);
   #endif
 }
+
+
+
+void PzemResetEnergy() {
+
+  String ON;         ON += FPSTR(ONP);
+  String OFF;        OFF += FPSTR(OFFP);
+
+  switch (pzem_reset_stage) {
+    case PZEM_STAGE1:
+      lightState = ON;
+      LightControl();
+      pzem_reset_stage = PZEM_STAGE2;
+      timer.setTimeout(5500, PzemResetEnergy);
+      break;
+    case PZEM_STAGE2:
+      lightState = OFF;
+      LightControl();
+      pzem_reset_stage = PZEM_STAGE3;
+      timer.setTimeout(500, PzemResetEnergy);
+      break;
+    case PZEM_STAGE3:
+      lightState = ON;
+      LightControl();
+      pzem_reset_stage = PZEM_STAGE4;
+      timer.setTimeout(500, PzemResetEnergy);
+      break;
+    case PZEM_STAGE4:
+      lightState = OFF;
+      LightControl();
+      pzem_reset_stage = PZEM_STAGE1;
+      break;
+    default:
+      break;
+  }
+}
 #endif
 
 
@@ -1374,6 +1416,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
       JConf.saveConfig();
     }
 
+
+  #ifdef PZEM_ON
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, pzemReset, JConf.mqtt_name);
+    if (strcmp (topic,topic_buff) == 0){
+      #ifdef DEBUG
+        Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
+      #endif
+      if (strncmp (value_buff,"1",1) == 0){
+        PzemResetEnergy();
+      }
+    }
+  #endif
 
   #ifdef DEBUG
     Serial.print(F("topic: "));  Serial.println(topic);  Serial.print(F("value_buff: "));  Serial.println(value_buff);
@@ -1619,6 +1673,10 @@ bool MqttSubscribe(){
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.subscribe_topic, version, JConf.mqtt_name);
   MqttSubscribePrint(topic_buff);
 */
+  #ifdef PZEM_ON
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, pzemReset, JConf.mqtt_name);
+  MqttSubscribePrint(topic_buff);
+  #endif
 
   #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
@@ -3507,6 +3565,8 @@ void loop() {
 
   // handle web server
   WebServer.handleClient();
+
+  timer.run();
 
   #ifdef DEBUG
     unsigned long load_time1 = millis() - start_time;
