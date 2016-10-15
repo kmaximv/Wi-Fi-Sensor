@@ -6,22 +6,25 @@
 #include "FS.h"
 
 
+// --------------- Supported Sensors (Uncomment for Enable) -------------------
 //#define DHT_ON
-#define BME280_ON
+//#define BME280_ON
 //#define SHT21_ON
+//#define BH1750_ON
+//#define PZEM_ON
+//-----------------------------------------------------------------------------
 
 //#define DEBUG
 //#define DEBUG_JSON_CONFIG
 
-#define PZEM_ON
 //#define REBOOT_ON
+//#define NTP_ON
 
-//UART Settings    ------------------------------------------------------------
+// ----------------- UART Settings ---------------------------------------------
 
 //#define UART_ON
-
-#define DEBUG_ESP_UART
-#define CRC_ENABLE
+//#define DEBUG_ESP_UART
+//#define CRC_ENABLE
 
 #define DIGITAL_PINS 14   //Кол-во цифровых входов/выходов
 #define ANALOG_PINS 6     //Кол-во цифровых входов/выходов

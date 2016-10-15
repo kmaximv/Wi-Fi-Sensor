@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
 //#include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 extern "C" {
@@ -8,13 +9,17 @@ extern "C" {
 #include <PubSubClient.h>
 #include <Wire.h>
 #include "SPI.h"
-#include <BH1750.h>
-#include <NTPClient.h>
+
 #include "json_config.h"
 #include <ArduinoJson.h>
 
 #include "SimpleTimer.h"
 SimpleTimer timer;
+
+#if defined(NTP_ON)
+#include <NTPClient.h>
+NTPClient timeClient;
+#endif
 
 #if defined(UART_ON)
 #include "MY_ESP_UART.h"
@@ -28,6 +33,11 @@ JsonConf JConf;
 #define DHTTYPE DHT22
 DHT dht(atoi(JConf.dht_pin), DHTTYPE);
 int errorDHTdata = 0;  // количество ошибок чтения датчика DHT
+#endif
+
+#if defined(BH1750_ON)
+#include <BH1750.h>
+BH1750 lightSensor;
 #endif
 
 #if defined(BME280_ON)
@@ -99,7 +109,6 @@ String pzemPowerString =   "none";
 String pzemEnergyString =  "none";
 
 
-BH1750 lightSensor;
 PubSubClient mqttClient;
 
 long Day=0;
@@ -125,8 +134,6 @@ bool motionDetect = false;
 bool wifiSafeMode = false;
 
 WiFiClient espClient;
-
-NTPClient timeClient;
 
 char topic_buff[120];
 char value_buff[120];
@@ -989,6 +996,7 @@ void  WiFiSafeSetup()
 }
 
 
+#ifdef BH1750_ON
 void GetLightSensorData()
 {
   #ifdef DEBUG
@@ -1007,7 +1015,7 @@ void GetLightSensorData()
     Serial.print(F("GetLightSensorData() Load Time: ")); Serial.println(load_time);
   #endif
 }
-
+#endif
 
 
 #ifdef BME280_ON
@@ -3490,10 +3498,11 @@ void setup() {
   }
 
   //Wire.begin(4,5); //SDA=4, SCL=5
-
-  if (atoi(JConf.bh1750_enable) == 1) {
-    lightSensor.begin();
-  }
+  #ifdef BH1750_ON
+    if (atoi(JConf.bh1750_enable) == 1) {
+      lightSensor.begin();
+    }
+  #endif
 
   if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.bh1750_enable) == 1 || atoi(JConf.sht21_enable) == 1) {
     Wire.setClock(100000);
@@ -3549,10 +3558,11 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
 
 */
-
-  if (atoi(JConf.ntp_enable) == 1) {
-    timeClient.reconfigure(JConf.ntp_server, atoi(JConf.my_time_zone) * 60 * 60, 60000);
-  }
+  #ifdef NTP_ON
+    if (atoi(JConf.ntp_enable) == 1) {
+      timeClient.reconfigure(JConf.ntp_server, atoi(JConf.my_time_zone) * 60 * 60, 60000);
+    }
+  #endif
 }
 
 
@@ -3578,10 +3588,12 @@ void loop() {
   if (millis() - getDataTimer >= atoi(JConf.get_data_delay) * 1000){
     getDataTimer = millis();
 
-    if (atoi(JConf.ntp_enable) == 1) {
-      timeClient.update();
-      ntpTimeString = timeClient.getFormattedTime();
-    }
+    #ifdef NTP_ON
+      if (atoi(JConf.ntp_enable) == 1) {
+        timeClient.update();
+        ntpTimeString = timeClient.getFormattedTime();
+      }
+    #endif
 
     int voltage = ESP.getVcc();
     voltage_float = voltage / 1000.0;
@@ -3589,9 +3601,11 @@ void loop() {
       RebootESP();
     #endif
 
-    if (atoi(JConf.bh1750_enable) == 1){
-      GetLightSensorData();
-    }
+    #ifdef BH1750_ON
+      if (atoi(JConf.bh1750_enable) == 1){
+        GetLightSensorData();
+      }
+    #endif
 
     #ifdef BME280_ON
       if (atoi(JConf.bme280_enable) == 1){
