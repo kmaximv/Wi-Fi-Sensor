@@ -1,0 +1,13 @@
+import org.openhab.core.library.types.*
+import org.openhab.core.persistence.*
+import org.openhab.model.script.actions.*
+import org.openhab.core.library.items.*
+
+
+rule "Records last pzemVoltage_PzemFull update time"
+when
+  Item pzemVoltage_PzemFull received update
+then
+  postUpdate(pzemVoltage_PzemFull_LastUpdate, new DateTimeType())
+end
+

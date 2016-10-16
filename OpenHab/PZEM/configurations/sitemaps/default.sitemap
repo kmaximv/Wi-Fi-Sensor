@@ -1,0 +1,40 @@
+sitemap room label="Дом"
+{
+
+
+	Frame {
+		Text label="Электроэнергия [%.0f kW]" item=pzemPower_PzemFull icon="energy" {
+
+			Frame {
+				Text item=pzemVoltage_PzemFull valuecolor=[pzemVoltage_PzemFull_LastUpdate=="Uninitialized"="lightgray", pzemVoltage_PzemFull_LastUpdate>600="lightgray", >240="red",>200="green",<=200="blue"] {
+					Frame {
+						Switch item=pzemVoltage_PzemFull_Chart_Period mappings=[0="Hour", 1="Day", 2="Week"]
+						Chart item=pzemVoltage_PzemFull period=h refresh=6000 visibility=[pzemVoltage_PzemFull_Chart_Period==0, pzemVoltage_PzemFull_Chart_Period=="Uninitialized"]
+						Chart item=pzemVoltage_PzemFull period=D refresh=30000 visibility=[pzemVoltage_PzemFull_Chart_Period==1]
+						Chart item=pzemVoltage_PzemFull period=W refresh=30000 visibility=[pzemVoltage_PzemFull_Chart_Period==2]
+					}
+				}	
+
+				Text item=pzemCurrent_PzemFull valuecolor=[pzemVoltage_PzemFull_LastUpdate=="Uninitialized"="lightgray", pzemVoltage_PzemFull_LastUpdate>600="lightgray",>50="red",>40="orange",>5="green",<=5="blue"] {
+					Frame {
+						Switch item=pzemCurrent_PzemFull_Chart_Period mappings=[0="Hour", 1="Day", 2="Week"]
+						Chart item=pzemCurrent_PzemFull period=h refresh=6000 visibility=[pzemCurrent_PzemFull_Chart_Period==0, pzemCurrent_PzemFull_Chart_Period=="Uninitialized"]
+						Chart item=pzemCurrent_PzemFull period=D refresh=30000 visibility=[pzemCurrent_PzemFull_Chart_Period==1]
+						Chart item=pzemCurrent_PzemFull period=W refresh=30000 visibility=[pzemCurrent_PzemFull_Chart_Period==2]
+					}
+				}	
+
+				Text item=pzemPower_PzemFull valuecolor=[pzemVoltage_PzemFull_LastUpdate=="Uninitialized"="lightgray", pzemVoltage_PzemFull_LastUpdate>600="lightgray", >10="red", >9="orange", <9="green"] {
+					Frame {
+						Switch item=pzemPower_PzemFull_Chart_Period mappings=[0="Hour", 1="Day", 2="Week"]
+						Chart item=pzemPower_PzemFull period=h refresh=6000 visibility=[pzemPower_PzemFull_Chart_Period==0, pzemPower_PzemFull_Chart_Period=="Uninitialized"]
+						Chart item=pzemPower_PzemFull period=D refresh=30000 visibility=[pzemPower_PzemFull_Chart_Period==1]
+						Chart item=pzemPower_PzemFull period=W refresh=30000 visibility=[pzemPower_PzemFull_Chart_Period==2]
+					}
+				}	
+
+				Text item=pzemEnergy_PzemFull
+			}	
+		}
+	}
+}

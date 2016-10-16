@@ -1,0 +1,14 @@
+Group	All
+Group	gPersistPzem	(ALL)
+
+
+Number	pzemVoltage_PzemFull	"Voltage [%.0f V]"	<voltage>	(gPersistPzem)
+Number	pzemVoltage_PzemFull_Chart_Period	"Период графика"
+
+Number	pzemCurrent_PzemFull	"Current [%.2f A]"	<current>	(gPersistPzem)
+Number	pzemCurrent_PzemFull_Chart_Period	"Период графика"
+
+Number	pzemPower_PzemFull	"Power [%.2f kW]"	<power>	(gPersistPzem)
+Number	pzemPower_PzemFull_Chart_Period	"Период графика"
+
+Number	pzemEnergy_PzemFull	"Energy [%.0f kWh]"	<energy>
