@@ -1443,7 +1443,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       #ifdef DEBUG
         Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
       #endif
-      if (strncmp (value_buff,"1",1) == 0){
+      if (strncmp (value_buff,"ON",1) == 0){
         PzemResetEnergy();
       }
     }
