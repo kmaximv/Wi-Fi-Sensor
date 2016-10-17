@@ -18,7 +18,8 @@ SimpleTimer timer;
 
 #if defined(NTP_ON)
 #include <NTPClient.h>
-NTPClient timeClient;
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
 #endif
 
 #if defined(UART_ON)
@@ -1327,6 +1328,17 @@ void RebootESP()
     Serial.print(F("RebootESP() Load Time: ")); Serial.println(load_time);
   #endif
 }
+
+
+
+#ifdef NTP_ON
+void NTPSettingsUpdate(){
+  if (atoi(JConf.ntp_enable) == 1) {
+    timeClient.setUpdateServer(JConf.ntp_server);
+    timeClient.setTimeOffset(atoi(JConf.my_time_zone) * 60 * 60);
+  }
+}
+#endif
 
 
 
@@ -2870,6 +2882,9 @@ void WebNTPConf(void) {
       JConf.ntp_enable[1] = '\0';
     }
     JConf.saveConfig();
+    #ifdef NTP_ON
+      NTPSettingsUpdate();
+    #endif
   }
 
   if (atoi(JConf.ntp_enable) == 1){
@@ -3560,7 +3575,10 @@ void setup() {
 */
   #ifdef NTP_ON
     if (atoi(JConf.ntp_enable) == 1) {
-      timeClient.reconfigure(JConf.ntp_server, atoi(JConf.my_time_zone) * 60 * 60, 60000);
+      timeClient.setUpdateServer(JConf.ntp_server);
+      timeClient.setTimeOffset(atoi(JConf.my_time_zone) * 60 * 60);
+      timeClient.setUpdateInterval(60*60*1000);
+      timeClient.begin();
     }
   #endif
 }
