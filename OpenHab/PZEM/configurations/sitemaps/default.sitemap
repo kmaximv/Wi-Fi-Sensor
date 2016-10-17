@@ -34,6 +34,7 @@ sitemap room label="Дом"
 				}	
 
 				Text item=pzemEnergy_PzemFull
+				Switch item=pzemReset_PzemFull icon="clock-on"
 			}	
 		}
 	}

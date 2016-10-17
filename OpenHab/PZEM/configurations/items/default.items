@@ -12,3 +12,5 @@ Number	pzemPower_PzemFull	"Power [%.2f kW]"	<power>	(gPersistPzem)
 Number	pzemPower_PzemFull_Chart_Period	"Период графика"
 
 Number	pzemEnergy_PzemFull	"Energy [%.0f kWh]"	<energy>
+
+Switch  pzemReset_PzemFull "Reset Energy "
