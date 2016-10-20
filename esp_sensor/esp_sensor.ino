@@ -1,6 +1,5 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
-//#include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 extern "C" {
 #include "user_interface.h"
@@ -89,9 +88,7 @@ const char *pzemPower          = "pzemPower"         ;
 const char *pzemEnergy         = "pzemEnergy"        ;           
 const char *pzemReset          = "pzemReset"         ;           
 
-
 const char sec[] PROGMEM = "sec";
-
 
 String temperatureString = "none";
 String pressureString =    "none";
@@ -109,7 +106,6 @@ String pzemCurrentString = "none";
 String pzemPowerString =   "none";
 String pzemEnergyString =  "none";
 
-
 PubSubClient mqttClient;
 
 long Day=0;
@@ -119,19 +115,13 @@ int Second=0;
 int HighMillis=0;
 int Rollover=0;
 
-unsigned long getDataTimer = 0;
-unsigned long publishTimer = 2000;
-unsigned long motionTimer = 4000;
-unsigned long rebootTimer = 6000;
-unsigned long subscribeTimer = (atoi(JConf.subscribe_delay) *1000UL) - 5000UL;
+int rebootTimer = 0;
+int subscribeTimer = 0;
+
 unsigned long lightOffTimer = 0;
 unsigned long lightOffTimer2 = 0;
-unsigned long wifiSafeModeReconnectTimer = 0;
-
-unsigned long wifiSafeModeReconnectDelay=600000;
 
 bool motionDetect = false;
-
 bool wifiSafeMode = false;
 
 WiFiClient espClient;
@@ -143,7 +133,6 @@ String network_html;          // Список доступных Wi-Fi точе�
 
 ESP8266WebServer WebServer(80);
 
-
 int cycleNow[ESP_PINS];
 int cycleEnd[ESP_PINS];
 
@@ -151,57 +140,7 @@ unsigned long timerDigitalPin[ESP_PINS];
 int delayDigitalPin = 10;
 
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
-
-/*
-String headerStart;           headerStart += FPSTR(headerStartP);
-String headerRefreshStatus;   headerRefreshStatus += FPSTR(headerRefreshStatusP);
-String headerEnd;             headerEnd += FPSTR(headerEndP);
-String javaScript;            javaScript += FPSTR(javaScriptP);
-String javaScriptEnd;         javaScriptEnd += FPSTR(javaScriptEndP);
-String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
-String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-String navbarStart;           navbarStart += FPSTR(navbarStartP);
-String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
-String navbarActive;          navbarActive += FPSTR(navbarActiveP);
-String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-String containerStart;        containerStart += FPSTR(containerStartP);
-String containerEnd;          containerEnd += FPSTR(containerEndP);
-String siteEnd;               siteEnd += FPSTR(siteEndP);
-String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
-String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
-String panelEnd;              panelEnd += FPSTR(panelEndP);
-String panelBodySymbol;       panelBodySymbol += FPSTR(panelBodySymbolP);
-String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
-String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
-String closingAngleBracket;   closingAngleBracket += FPSTR(closingAngleBracketP);
-
-String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
-
-String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
-String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
-String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
-String inputPlaceHolder;      inputPlaceHolder += FPSTR(inputPlaceHolderP);
-String inputBodyClose;        inputBodyClose += FPSTR(inputBodyCloseP);
-String inputBodyCloseDiv;     inputBodyCloseDiv += FPSTR(inputBodyCloseDivP);
-String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
-String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
-String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
-
-String sketchUploadForm;      sketchUploadForm += FPSTR(sketchUploadFormP);
-
-String ClassInfo;       ClassInfo += FPSTR(ClassInfoP);
-String ClassDanger;     ClassDanger += FPSTR(ClassDangerP);
-String ClassDefault;    ClassDefault += FPSTR(ClassDefaultP);
-String ClassSuccess;    ClassSuccess += FPSTR(ClassSuccessP);
-
-String AUTO;       AUTO += FPSTR(AUTOP);
-String ON;         ON += FPSTR(ONP);
-String OFF;        OFF += FPSTR(OFFP);
-
-
-*/
 
 const char headerStartP[] PROGMEM = "<html lang='en'><head><title>";
 //JConf.module_id
@@ -508,6 +447,7 @@ static char* floatToChar(float charester)
 }
 
 
+
 void GetFreeMemory () {
 
   #ifdef DEBUG
@@ -803,6 +743,7 @@ void scanWiFi(void) {
 }
 
 
+
 bool WiFiSetup()
 {
   wifi_set_sleep_type ((sleep_type_t)NONE_SLEEP_T);   // NONE_SLEEP_T,LIGHT_SLEEP_T,MODEM_SLEEP_T
@@ -985,6 +926,7 @@ bool WiFiSetup()
 }
 
 
+
 void  WiFiSafeSetup()
 {
   WiFi.disconnect();
@@ -995,6 +937,15 @@ void  WiFiSafeSetup()
   Serial.println(F("Safe mode started"));
   wifiSafeMode = true;
 }
+
+
+
+void wifiSafeModeReconnect() {
+  if (wifiSafeMode == true && WiFiSetup()) {
+    wifiSafeMode = false; 
+  }
+}
+
 
 
 #ifdef BH1750_ON
@@ -1017,6 +968,7 @@ void GetLightSensorData()
   #endif
 }
 #endif
+
 
 
 #ifdef BME280_ON
@@ -1122,83 +1074,46 @@ void DHT22Sensor()
 #endif
 
 
+#if defined(PZEM_ON)
+void GetPzemData(float data, String val) {
+  if (data < 0.0){
+    data = 0.0;
+  } else if (pzem_current_read == PZEM_POWER || pzem_current_read == PZEM_ENERGY) {
+    data = data * coil_ratio / 1000;
+  } else if (pzem_current_read == PZEM_CURRENT) {
+    data = data * coil_ratio;
+  } 
+  val = String(data);
+}
 
-#ifdef PZEM_ON
-void GetPzemSensorData()
+
+
+void GetPzemSerialRead()
 { 
   #ifdef DEBUG
     unsigned long start_time = millis();
     Serial.println(F("GetPzemSensorData() Start"));
   #endif
 
-  if (pzem_current_read == PZEM_VOLTAGE){
-    float v = pzem.voltage(ip_pzem);
-    if (v < 0.0){
-      v = 0.0;
-    }
-    pzemVoltageString = String(v);
-
-    pzem_current_read = PZEM_CURRENT;
-
-    #ifdef DEBUG 
-      Serial.print(F("Voltage: "));  Serial.print(pzemVoltageString);  Serial.println(F(" V"));
-    #endif
-
-    return;
-  }
-
-  if (pzem_current_read == PZEM_CURRENT){
-    float i = pzem.current(ip_pzem);
-    if (i < 0.0) {
-      i = 0.0;
-    } else {
-      i = i * coil_ratio;
-    }
-    pzemCurrentString = String(i);
-    
-    pzem_current_read = PZEM_POWER;
-
-    #ifdef DEBUG
-      Serial.print(F("Current: "));  Serial.print(pzemCurrentString);  Serial.println(F(" A"));
-    #endif
-
-    return;
-  }
-
-  if (pzem_current_read == PZEM_POWER){
-    float p = pzem.power(ip_pzem);
-    if (p < 0.0) {
-      p = 0.0;
-    } else {
-      p = p * coil_ratio / 1000;
-    }
-    pzemPowerString = String(p);
-
-    pzem_current_read = PZEM_ENERGY;
-
-    #ifdef DEBUG
-      Serial.print(F("Power: "));  Serial.print(pzemPowerString);  Serial.println(F(" kW"));
-    #endif
-
-    return;
-  }
-
-  if (pzem_current_read == PZEM_ENERGY){
-    float e = pzem.energy(ip_pzem);
-    if (e < 0.0) {
-      e = 0.0;
-    } else {
-      e = e * coil_ratio / 1000;
-    }
-    pzemEnergyString = String(e);
-
-    pzem_current_read = PZEM_VOLTAGE;
-
-    #ifdef DEBUG
-      Serial.print(F("Energy: "));  Serial.print(pzemEnergyString);  Serial.println(F(" kWh"));
-    #endif
-
-    return;
+  switch (pzem_current_read) {
+    case PZEM_VOLTAGE:
+      GetPzemData(pzem.voltage(ip_pzem), pzemVoltageString);
+      pzem_current_read = PZEM_CURRENT;
+      break;
+    case PZEM_CURRENT:
+      GetPzemData(pzem.current(ip_pzem), pzemCurrentString);
+      pzem_current_read = PZEM_POWER;
+      break;
+    case PZEM_POWER:
+      GetPzemData(pzem.power(ip_pzem), pzemPowerString);
+      pzem_current_read = PZEM_ENERGY;
+      break;
+    case PZEM_ENERGY:
+      GetPzemData(pzem.energy(ip_pzem), pzemEnergyString);
+      pzem_current_read = PZEM_VOLTAGE;
+      break;
+    default:
+      pzem_current_read = PZEM_VOLTAGE;
   }
 
   #ifdef DEBUG
@@ -1245,10 +1160,9 @@ void PzemResetEnergy() {
 #endif
 
 
-
 void MotionDetect(){
 
-  #ifdef DEBUG11
+  #ifdef DEBUG
     unsigned long start_time = millis();
     Serial.println(F("MotionDetect() Start"));
   #endif
@@ -1265,9 +1179,11 @@ void MotionDetect(){
         mqttClient.publish(topic_buff, "ON");
       }
     }
+  } else {
+    motionDetect = false;
   }
 
-  #ifdef DEBUG11
+  #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
     Serial.print(F("MotionDetect() Load Time: ")); Serial.println(load_time);
   #endif
@@ -1312,25 +1228,6 @@ String GetUptimeData(){
 
 
 
-void RebootESP()
-{
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("RebootESP() Start"));
-  #endif
-
-  if (millis() - rebootTimer >= atoi(JConf.reboot_delay) * 1000){
-  ESP.restart();
-  }
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("RebootESP() Load Time: ")); Serial.println(load_time);
-  #endif
-}
-
-
-
 #ifdef NTP_ON
 void NTPSettingsUpdate(){
   if (atoi(JConf.ntp_enable) == 1) {
@@ -1350,8 +1247,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println(F("callback() Start"));
   #endif
 
-  subscribeTimer = millis();
-  rebootTimer = millis();
+  timer.restartTimer(subscribeTimer);
+
+  #ifdef REBOOT_ON
+    timer.restartTimer(rebootTimer);
+  #endif
 
   size_t i=0;
   // create character buffer with ending null terminator (string)
@@ -1689,10 +1589,7 @@ bool MqttSubscribe(){
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.subscribe_topic, uptime, JConf.mqtt_name);
   MqttSubscribePrint(topic_buff);
-/*
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.subscribe_topic, version, JConf.mqtt_name);
-  MqttSubscribePrint(topic_buff);
-*/
+
   #ifdef PZEM_ON
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, pzemReset, JConf.mqtt_name);
   MqttSubscribePrint(topic_buff);
@@ -2095,7 +1992,6 @@ void WebWiFiConf(void) {
     Serial.println(F("WebWiFiConf() Start"));
   #endif
 
-
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
   String headerEnd;             headerEnd += FPSTR(headerEndP);
@@ -2129,7 +2025,6 @@ void WebWiFiConf(void) {
   String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
   String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
   String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
-
 
   bool config_changed = false;
   bool enable = false;
@@ -2216,7 +2111,6 @@ void WebWiFiConf(void) {
 
   String data = panelHeaderName + String(F("Wi-Fi Configuration")) + panelHeaderEnd;
   data += inputBodyStart;
-
 
   data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
 
@@ -2483,12 +2377,10 @@ void WebEspConf(void) {
   String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
   String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
 
-
   bool config_changed = false;
   bool enable_light_smooth = false;
   bool enable_light2_smooth = false;
   String payload = "";
-
 
   payload=WebServer.arg("light_pin");
   if (payload.length() > 0 ) {
@@ -2576,7 +2468,6 @@ void WebEspConf(void) {
     config_changed = true;
   }
 
-
   if (config_changed){
     if (!enable_light_smooth){
       JConf.light_smooth[0] = '0';
@@ -2589,10 +2480,8 @@ void WebEspConf(void) {
     JConf.saveConfig();
   }
 
-
   String data = panelHeaderName + String(F("ESP Configuration")) + panelHeaderEnd;
   data += inputBodyStart;
-
 
   data += String(F("<h4>Light 1</h4>"));
   data += inputBodyName + String(F("Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.light_pin + inputBodyClose + inputBodyCloseDiv;
@@ -2685,7 +2574,6 @@ void WebMqttConf(void) {
   bool enable = false;
   String payload = "";
 
-
   payload=WebServer.arg("mqtt_enable");
   if (payload.length() > 0) {
     payload.toCharArray(JConf.mqtt_enable, sizeof(JConf.mqtt_enable));
@@ -2761,7 +2649,6 @@ void WebMqttConf(void) {
     config_changed = true;
   }
 
-
   if (config_changed){
     if (!enable){
       JConf.mqtt_enable[0] = '0';
@@ -2769,7 +2656,6 @@ void WebMqttConf(void) {
     }
     JConf.saveConfig();
   }
-
 
   if (atoi(JConf.mqtt_enable) == 1){
 
@@ -2856,7 +2742,6 @@ void WebNTPConf(void) {
   bool enable = false;
   String payload = "";
 
-
   payload=WebServer.arg("ntp_enable");
   if (payload.length() > 0) {
     payload.toCharArray(JConf.ntp_enable, sizeof(JConf.ntp_enable));
@@ -2888,7 +2773,6 @@ void WebNTPConf(void) {
   }
 
   if (atoi(JConf.ntp_enable) == 1){
-    //data += String(F("<div><input type='hidden' name='ntp_enable' value='0'></div>"));
     data += String(F("<div class='checkbox'><label><input type='checkbox' name='ntp_enable' value='1' checked='true'>NTP Enable</label></div>"));
 
     data += inputBodyName + String(F("Server NTP")) + inputBodyPOST + String(F("ntp_server")) + inputPlaceHolder + JConf.ntp_server + inputBodyClose + inputBodyCloseDiv;
@@ -3032,22 +2916,17 @@ void WebPinControlStatus(void) {
   String ON;              ON += FPSTR(ONP);
   String OFF;             OFF += FPSTR(OFFP);
 
-
-
-
   if (cycleEnd[atoi(JConf.light_pin)] != 0){
     pinState = true;
   } else {
     pinState = false;
   }
 
-
   if (cycleEnd[atoi(JConf.light2_pin)] != 0){
     pinState2 = true;
   } else {
     pinState2 = false;
   }
-
 
   String mode;
   if (lightState == AUTO){
@@ -3067,7 +2946,6 @@ void WebPinControlStatus(void) {
     mode2 = ClassDanger;
   }
 
-
   unsigned long timeOff = 0;
   if (millis() - lightOffTimer < atoi(JConf.lightoff_delay) * 60 * 1000){
     timeOff = atoi(JConf.lightoff_delay) * 60 * 1000 - (millis() - lightOffTimer);
@@ -3082,7 +2960,6 @@ void WebPinControlStatus(void) {
 
   String data;    data += FPSTR(div1P);
   
-
   if (lightState == AUTO) { data+=ClassDefault; } else if (pinState) { data+=ClassDanger; } else { data+=ClassInfo; }
   data+=String(F("' value='"));
   if (pinState) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
@@ -3101,7 +2978,6 @@ void WebPinControlStatus(void) {
   data+=String(F("'><h4>"));
   data+=String(timeOff);
   data+=String(F("</h4></td></tr>"));
-
 
   data+=String(F("<tr><td class='active'><h4>Light2</h4></td><td class='active'><div onclick='Pin2();'><input id='OnOff2' type='submit' class='btn btn-"));
   if (lightState2 == AUTO) { data+=ClassDefault; } else if (pinState2) { data+=ClassDanger; } else { data+=ClassInfo; }
@@ -3123,7 +2999,6 @@ void WebPinControlStatus(void) {
   data+=String(timeOff2);
   data+=String(F("</h4></td></tr>"));
   data+=String(F("</tbody></table></div>"));
-
 
   WebServer.send ( 200, "text/html", data);
 
@@ -3285,7 +3160,6 @@ void WebGreenhouse(void) {
 
   data += inputBodyEnd;
 
-
   JConf.saveConfig();
 
   WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
@@ -3398,18 +3272,12 @@ void WebServerInit()
   WebServer.on("/update", WebUpdate);
   WebServer.onFileUpload(WebFileUpload);
   WebServer.on("/upload_sketch", WebUploadSketch);
-  //WebServer.on("/upload_sketch", HTTP_POST, WebFileUpload);
-
-
   WebServer.on("/wificonf", WebWiFiConf);
-
   WebServer.on("/sensorsconf", WebSensorsConf);
   WebServer.on("/espconf", WebEspConf);
   WebServer.on("/mqttconf", WebMqttConf);
   WebServer.on("/ntpconf", WebNTPConf);
-
   WebServer.on("/control", handleControl);
-
   WebServer.on("/pincontrol", WebPinControl);
   WebServer.on("/controlstatus", WebPinControlStatus);
 
@@ -3439,9 +3307,76 @@ void WebServerInit()
 
 
 
+void getData(){
+
+  #ifdef NTP_ON
+    if (atoi(JConf.ntp_enable) == 1) {
+      timeClient.update();
+      ntpTimeString = timeClient.getFormattedTime();
+    }
+  #endif
+
+  int voltage = ESP.getVcc();
+  voltage_float = voltage / 1000.0;
+
+  #ifdef BH1750_ON
+    if (atoi(JConf.bh1750_enable) == 1){
+      GetLightSensorData();
+    }
+  #endif
+
+  #ifdef BME280_ON
+    if (atoi(JConf.bme280_enable) == 1){
+      GetBmeSensorData();
+    }
+  #endif
+
+  #ifdef SHT21_ON
+    if (atoi(JConf.sht21_enable) == 1){
+      GetSHT21SensorData();
+    }
+  #endif
+
+  #ifdef PZEM_ON
+    if (atoi(JConf.pzem_enable) == 1){
+      GetPzemSerialRead();
+    }
+  #endif
+
+  GetUptimeData();
+  GetFreeMemory();
+  GetMacString();
+
+  #ifdef DHT_ON
+    DHT22Sensor();
+  #endif
+
+  #ifdef DEBUG
+    TestSystemPrint();
+  #endif
+
+  #ifdef UART_ON
+  for (int i = 0; i < ANALOG_PINS; i++){
+    if (millis() - Uart.timerAnalogPin[i] >= 60000){
+      Uart.valueAnalogPin[i] = 0;
+      Uart.SetAnalogReadCycle(i, 10, "s");
+    } else {
+
+    }
+  }
+  #endif
+}
+
+
+
+void restartESP() {
+  ESP.restart();
+}
+
+
+
 void setup() {
 
-  // Setup console
   #ifdef DEBUG
     Serial.begin(115200);
     delay(10);
@@ -3456,8 +3391,9 @@ void setup() {
   
   if (!SPIFFS.begin()) {
     #ifdef DEBUG
-    Serial.println(F("Failed to mount file system"));
+      Serial.println(F("Failed to mount file system"));
     #endif
+
     return;
   }
 /*
@@ -3469,11 +3405,11 @@ void setup() {
 */
   if (!JConf.loadConfig()) {
     #ifdef DEBUG
-    Serial.println(F("Failed to load config"));
+      Serial.println(F("Failed to load config"));
     #endif
   } else {
     #ifdef DEBUG
-    Serial.println(F("Config loaded"));
+      Serial.println(F("Config loaded"));
     #endif
   }
   JConf.printConfig();
@@ -3490,29 +3426,24 @@ void setup() {
     pzem.setReadTimeout(500);
   #endif
 
-  #ifdef SHT21_ON
-    myHTU21D.begin();
-  #endif
-
   #ifdef DHT_ON
     dht.begin();
   #endif
 
+  #ifdef BME280_ON
   if (atoi(JConf.bme280_enable) == 1) {
-    #ifdef BME280_ON
-      bmeSensor.settings.commInterface = I2C_MODE;
-      bmeSensor.settings.I2CAddress = 0x76;
-      bmeSensor.settings.runMode = 3;
-      bmeSensor.settings.tStandby = 0;
-      bmeSensor.settings.filter = 4;
-      bmeSensor.settings.tempOverSample = 5;
-      bmeSensor.settings.pressOverSample = 5;
-      bmeSensor.settings.humidOverSample = 5;
-      bmeSensor.begin();
-    #endif
+    bmeSensor.settings.commInterface = I2C_MODE;
+    bmeSensor.settings.I2CAddress = 0x76;
+    bmeSensor.settings.runMode = 3;
+    bmeSensor.settings.tStandby = 0;
+    bmeSensor.settings.filter = 4;
+    bmeSensor.settings.tempOverSample = 5;
+    bmeSensor.settings.pressOverSample = 5;
+    bmeSensor.settings.humidOverSample = 5;
+    bmeSensor.begin();
   }
+  #endif
 
-  //Wire.begin(4,5); //SDA=4, SCL=5
   #ifdef BH1750_ON
     if (atoi(JConf.bh1750_enable) == 1) {
       lightSensor.begin();
@@ -3523,15 +3454,16 @@ void setup() {
     Wire.setClock(100000);
   }
 
-  // scan Access Points
-  scanWiFi();
+  #ifdef SHT21_ON
+    myHTU21D.begin(4, 5);  //SDA=4, SCL=5
+  #endif
 
+  scanWiFi();  // scan Access Points
 
   if (!WiFiSetup()) {
     WiFiSafeSetup();
   }
   delay(1000);
-
 
   if (atoi(JConf.mqtt_enable) == 1) {
     mqttClient.setClient(espClient);
@@ -3546,33 +3478,8 @@ void setup() {
     mqttClient.setCallback (callback);
   }
 
-
   WebServerInit();
 
-
-  #ifdef DEBUG
-  Serial.println();  Serial.println(F("Server started"));
-  #endif
-
-/*
-  // start mDNS responder
-  if (!MDNS.begin(JConf.module_id)) {
-    #ifdef DEBUG
-    Serial.println();  Serial.println(F("Error setting up MDNS responder!"));
-    #endif
-    while (1) {
-      delay(1000);
-      yield();
-    }
-  }
-  #ifdef DEBUG
-  Serial.println();  Serial.println(F("mDNS responder started"));
-  #endif
-
-  // Add service to MDNS-SD
-  MDNS.addService("http", "tcp", 80);
-
-*/
   #ifdef NTP_ON
     if (atoi(JConf.ntp_enable) == 1) {
       timeClient.setUpdateServer(JConf.ntp_server);
@@ -3581,120 +3488,28 @@ void setup() {
       timeClient.begin();
     }
   #endif
+
+  timer.setInterval(atoi(JConf.get_data_delay) * 1000, getData);
+  timer.setInterval(atoi(JConf.publish_delay) * 1000, MqttPubData);
+  timer.setInterval(atoi(JConf.motion_read_delay) * 1000, MotionDetect);
+  subscribeTimer = timer.setInterval(atoi(JConf.subscribe_delay) * 1000, MqttSubscribe);
+  timer.setInterval(600000, wifiSafeModeReconnect);
+
+  #ifdef REBOOT_ON
+    rebootTimer = timer.setInterval(atoi(JConf.reboot_delay) * 1000, restartESP);
+  #endif
 }
 
 
 
 void loop() {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-  #endif
-
-  // handle web server
-  WebServer.handleClient();
+  WebServer.handleClient();  // handle web server
 
   timer.run();
 
-  #ifdef DEBUG
-    unsigned long load_time1 = millis() - start_time;
-    if (load_time1 > 100){
-      Serial.print(F("WebServer.handleClient() Load Time:             ")); Serial.println(load_time1);
-    }
-  #endif
-
-  if (millis() - getDataTimer >= atoi(JConf.get_data_delay) * 1000){
-    getDataTimer = millis();
-
-    #ifdef NTP_ON
-      if (atoi(JConf.ntp_enable) == 1) {
-        timeClient.update();
-        ntpTimeString = timeClient.getFormattedTime();
-      }
-    #endif
-
-    int voltage = ESP.getVcc();
-    voltage_float = voltage / 1000.0;
-    #ifdef REBOOT_ON
-      RebootESP();
-    #endif
-
-    #ifdef BH1750_ON
-      if (atoi(JConf.bh1750_enable) == 1){
-        GetLightSensorData();
-      }
-    #endif
-
-    #ifdef BME280_ON
-      if (atoi(JConf.bme280_enable) == 1){
-        GetBmeSensorData();
-      }
-    #endif
-
-    #ifdef SHT21_ON
-      if (atoi(JConf.sht21_enable) == 1){
-        GetSHT21SensorData();
-      }
-    #endif
-
-    #ifdef PZEM_ON
-      if (atoi(JConf.pzem_enable) == 1){
-        GetPzemSensorData();
-      }
-    #endif
-
-
-    #ifdef DEBUG
-      unsigned long load_time4 = millis() - start_time;
-      if (load_time4 > 100){
-        Serial.print(F("Get Sensors Load Time:                          ")); Serial.println(load_time4);
-      }
-    #endif
-
-
-    GetUptimeData();
-    GetFreeMemory();
-
-    GetMacString();
-
-    #ifdef DHT_ON
-      DHT22Sensor();
-    #endif
-
-    #ifdef DEBUG
-      TestSystemPrint();
-    #endif
-
-    #ifdef UART_ON
-    for (int i = 0; i < ANALOG_PINS; i++){
-      if (millis() - Uart.timerAnalogPin[i] >= 60000){
-        Uart.valueAnalogPin[i] = 0;
-        Uart.SetAnalogReadCycle(i, 10, "s");
-      } else {
-
-      }
-    }
-    #endif
-  }
-
-  #ifdef DEBUG
-    unsigned long load_time2 = millis() - start_time;
-    if (load_time2 > 100){
-      Serial.print(F("Get Data Load Time:                             ")); Serial.println(load_time2);
-    }
-  #endif
-
-
-  if (atoi(JConf.motion_sensor_enable) == 1){
-    if (motionDetect == false){
-      MotionDetect();
-    }  
-
-    if (millis() - motionTimer >= atoi(JConf.motion_read_delay) * 1000){
-      motionTimer = millis();
-      motionDetect = false;
-      MotionDetect();
-    }
+  if (atoi(JConf.motion_sensor_enable) == 1 && motionDetect == false){
+    MotionDetect();
   }
 
   String AUTO;   AUTO += FPSTR(AUTOP);
@@ -3702,26 +3517,13 @@ void loop() {
     LightControl();
   }
 
-
   if (WiFi.status() != WL_CONNECTED && atoi(JConf.wifi_mode) != AP && wifiSafeMode == false) {
     #ifdef DEBUG
-    Serial.print(F("Connecting "));
-    Serial.println(F("..."));
+      Serial.print(F("Connecting "));
+      Serial.println(F("..."));
     #endif
 
     WiFiSetup();
-
-/*
-    if (WiFi.waitForConnectResult() != WL_CONNECTED)
-      return;
-*/
-  }
-
-  if (wifiSafeMode == true && millis() - wifiSafeModeReconnectTimer >= wifiSafeModeReconnectDelay ) {
-    wifiSafeModeReconnectTimer = millis();
-    if ( WiFiSetup() ) {
-      wifiSafeMode = false; 
-    }
   }
 
   if (WiFi.status() == WL_CONNECTED) {
@@ -3736,29 +3538,13 @@ void loop() {
         }
       } else {
         mqttClient.loop();
-        if (millis() - subscribeTimer >= atoi(JConf.subscribe_delay) * 1000) {
-          subscribeTimer = millis();
-          MqttSubscribe();
-        }
-      }
-
-      if (millis() - publishTimer >= atoi(JConf.publish_delay) * 1000){
-        publishTimer = millis();
-        MqttPubData();
       }
     }
   }
 
   #ifdef UART_ON
-  Uart.serialEvent();
+    Uart.serialEvent();
   #endif
 
   FadeSwitchLoop();
-
-  #ifdef DEBUG
-    unsigned long load_time3 = millis() - start_time;
-    if (load_time3 > 100){
-      Serial.print(F("loop() Load Time:                               ")); Serial.println(load_time3);
-    }
-  #endif
 }
