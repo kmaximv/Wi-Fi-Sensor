@@ -1075,7 +1075,7 @@ void DHT22Sensor()
 
 
 #if defined(PZEM_ON)
-void GetPzemData(float data, String val) {
+void GetPzemData(float data, String *val) {
   if (data < 0.0){
     data = 0.0;
   } else if (pzem_current_read == PZEM_POWER || pzem_current_read == PZEM_ENERGY) {
@@ -1083,7 +1083,7 @@ void GetPzemData(float data, String val) {
   } else if (pzem_current_read == PZEM_CURRENT) {
     data = data * coil_ratio;
   } 
-  val = String(data);
+  *val = String(data);
 }
 
 
@@ -1097,19 +1097,19 @@ void GetPzemSerialRead()
 
   switch (pzem_current_read) {
     case PZEM_VOLTAGE:
-      GetPzemData(pzem.voltage(ip_pzem), pzemVoltageString);
+      GetPzemData(pzem.voltage(ip_pzem), &pzemVoltageString);
       pzem_current_read = PZEM_CURRENT;
       break;
     case PZEM_CURRENT:
-      GetPzemData(pzem.current(ip_pzem), pzemCurrentString);
+      GetPzemData(pzem.current(ip_pzem), &pzemCurrentString);
       pzem_current_read = PZEM_POWER;
       break;
     case PZEM_POWER:
-      GetPzemData(pzem.power(ip_pzem), pzemPowerString);
+      GetPzemData(pzem.power(ip_pzem), &pzemPowerString);
       pzem_current_read = PZEM_ENERGY;
       break;
     case PZEM_ENERGY:
-      GetPzemData(pzem.energy(ip_pzem), pzemEnergyString);
+      GetPzemData(pzem.energy(ip_pzem), &pzemEnergyString);
       pzem_current_read = PZEM_VOLTAGE;
       break;
     default:
