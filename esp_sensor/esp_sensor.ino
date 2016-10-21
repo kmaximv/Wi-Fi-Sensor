@@ -428,7 +428,7 @@ const char OFFP[] PROGMEM  = "OFF";
  
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         ROOT 
 
-
+/*
 static char* floatToChar(float charester)
 {
   #ifdef DEBUG
@@ -445,7 +445,7 @@ static char* floatToChar(float charester)
 
  return value_buff;
 }
-
+*/
 
 
 void GetFreeMemory () {
@@ -465,7 +465,7 @@ void GetFreeMemory () {
 
 
 
-String GetIpString (IPAddress ip) {
+String GetIpString (IPAddress* ip) {
 
   #ifdef DEBUG
     unsigned long start_time = millis();
@@ -493,10 +493,9 @@ void GetMacString () {
 
   uint8_t macData[6];
   WiFi.macAddress(macData);
-  sprintf_P(value_buff, (const char *)F("%x:%x:%x:%x:%x:%x"), macData[0],  macData[1], macData[2], macData[3], macData[4], macData[5]);
-  if (macString != String(value_buff)){  
-    macString = String(value_buff);
-  }
+  sprintf_P(value_buff, (const char *)F("%x:%x:%x:%x:%x:%x"), macData[0], macData[1], macData[2], macData[3], macData[4], macData[5]);
+  
+  macString = String(value_buff);
 
   #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
@@ -548,7 +547,7 @@ IPAddress stringToIp (String strIp) {
 
 
 
-bool isIPValid(const char * IP){
+bool isIPValid(const char * IP) {
 
   #ifdef DEBUG
     unsigned long start_time = millis();
@@ -562,38 +561,36 @@ bool isIPValid(const char * IP){
   char c;
 
   if (strlen(IP)>15 || strlen(IP)==0) {
-      return false;
+    return false;
   }
   //cannot start with .
   if (IP[0]=='.') {
-      return false;
+    return false;
   }
   //only letter and digit
   for (int i=0; i < strlen(IP); i++) {
-      c = IP[i];
-      if (isdigit(c)) {
-          //only 3 digit at once
-          internalcount++;
-          previouswasdot=false;
-          if (internalcount>3) {
-              return false;
-          }
-      } else if(c=='.') {
-          //cannot have 2 dots side by side
-          if (previouswasdot) {
-              return false;
-          }
-          previouswasdot=true;
-          internalcount=0;
-          dotcount++;
-      }//if not a dot neither a digit it is wrong
-      else {
-          return false;
+    c = IP[i];
+    if (isdigit(c)) {
+      //only 3 digit at once
+      internalcount++;
+      previouswasdot=false;
+      if (internalcount>3) {
+        return false;
       }
-  }
-  //if not 3 dots then it is wrong
-  if (dotcount!=3) {
+    } else if(c=='.') {
+      if (previouswasdot) {   //cannot have 2 dots side by side
+        return false;
+      }
+      previouswasdot=true;
+      internalcount=0;
+      dotcount++;
+    } else {    //if not a dot neither a digit it is wrong
       return false;
+    }
+  }
+  
+  if (dotcount!=3) {    //if not 3 dots then it is wrong
+    return false;
   }
   //cannot have the last dot as last char
   if (IP[strlen(IP)-1]=='.') {
@@ -610,7 +607,7 @@ bool isIPValid(const char * IP){
 
 
 
-void PWMChange(int pin, int bright){
+void PWMChange(int pin, int bright) {
   cycleEnd[pin] = bright;
 
   if ( ( atoi(JConf.light_smooth) == 0 && pin == atoi(JConf.light_pin) )   ||   ( atoi(JConf.light2_smooth) == 0 && pin == atoi(JConf.light2_pin) ) ){
@@ -704,24 +701,22 @@ void scanWiFi(void) {
   #endif
 
   int founds = WiFi.scanNetworks();
+
   #ifdef DEBUG
-  Serial.println();  Serial.println(F("scan done"));
-  #endif
-  if (founds == 0) {
-    #ifdef DEBUG
-    Serial.println(F("no networks found"));
-    #endif
-  } else {
-    #ifdef DEBUG
-    Serial.print(founds);  Serial.println(F(" networks found"));
-    for (size_t i = 0; i < founds; ++i) {
-      // Print SSID and RSSI for each network found
-      Serial.print(i + 1);  Serial.print(F(": "));  Serial.print(WiFi.SSID(i));  Serial.print(F(" ("));  Serial.print(WiFi.RSSI(i));  Serial.print(F(")"));
-      Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? F(" ") : F("*"));
-      delay(10);
+    Serial.println();  Serial.println(F("scan done"));
+    if (founds == 0) {
+      Serial.println(F("no networks found"));
+    } else {
+      Serial.print(founds);  Serial.println(F(" networks found"));
+      for (size_t i = 0; i < founds; ++i) {
+        // Print SSID and RSSI for each network found
+        Serial.print(i + 1);  Serial.print(F(": "));  Serial.print(WiFi.SSID(i));  Serial.print(F(" ("));  Serial.print(WiFi.RSSI(i));  Serial.print(F(")"));
+        Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? F(" ") : F("*"));
+        delay(10);
+      }
     }
-    #endif
-  }
+  #endif
+
   network_html = String(F("<blockquote>"));
   for (size_t i = 0; i < founds; ++i)
   {
@@ -744,174 +739,132 @@ void scanWiFi(void) {
 
 
 
+void wifiAPSettings(){
+  if (atoi(JConf.wifi_auth) == OPEN){
+    WiFi.softAP(JConf.module_id);
+  } else {
+    WiFi.softAP(JConf.module_id, JConf.ap_pwd);
+  }
+
+  //setup PHY_MODE
+  if (atoi(JConf.wifi_phy_mode) == B){
+    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11B);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
+  } else if (atoi(JConf.wifi_phy_mode) == G){
+    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);
+  } else {
+    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);
+  }
+
+  //get current config
+  struct softap_config apconfig;
+  wifi_softap_get_config(&apconfig);
+  //set the chanel
+  apconfig.channel=atoi(JConf.wifi_channel);
+
+  //set Authentification type                      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
+  if (atoi(JConf.wifi_auth) == OPEN){
+    apconfig.authmode=(AUTH_MODE)AUTH_OPEN;
+  } else if (atoi(JConf.wifi_auth) == WPA_PSK){
+    apconfig.authmode=(AUTH_MODE)AUTH_WPA_PSK;
+  } else if (atoi(JConf.wifi_auth) == WPA2_PSK){
+    apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;
+  } else {
+    apconfig.authmode=(AUTH_MODE)AUTH_WPA_WPA2_PSK;
+  }
+
+  //set the visibility of SSID
+  apconfig.ssid_hidden=0;
+  //no need to add these settings to configuration just use default ones
+  //apconfig.max_connection=2;
+  //apconfig.beacon_interval=100;
+  //apply settings to current and to default
+  if (!wifi_softap_set_config(&apconfig) || !wifi_softap_set_config_current(&apconfig)) {
+      Serial.println(F("Error Wifi AP_STA!"));
+      delay(1000);
+  }
+}
+
+
+
+bool wifiTryConnect(){
+  byte i=0;
+  while (WiFi.status() != WL_CONNECTED && i<40) {  //try to connect
+    switch(WiFi.status()) {
+    case 1:
+      Serial.println(F("No SSID found!"));
+      break;
+    case 4:
+      Serial.println(F("No Connection!"));
+      break;
+    default:
+      Serial.println(F("Connecting..."));
+      break;
+    }
+    delay(500);
+    i++;
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    return false;
+  }
+  return true;  
+}
+
+
+
+void wifiAP() {
+  WiFi.mode(WIFI_AP);   //setup Soft AP
+  wifiAPSettings();
+}
+
+
+
+void wifiSTA() {
+  WiFi.mode(WIFI_STA);                            //setup station mode
+  WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
+  delay(500);
+  
+  wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);    //setup PHY_MODE
+
+  wifiTryConnect();
+
+  WiFi.hostname(JConf.module_id);
+}
+
+
+
+void wifiAP_STA() {
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
+
+  wifiTryConnect();
+
+  wifiAPSettings();
+}
+
+
+
 bool WiFiSetup()
 {
   wifi_set_sleep_type ((sleep_type_t)NONE_SLEEP_T);   // NONE_SLEEP_T,LIGHT_SLEEP_T,MODEM_SLEEP_T
-  //disconnect if connected
   WiFi.disconnect();
-  //this is AP mode
+
   if (atoi(JConf.wifi_mode) == AP) {
-    //setup Soft AP
-    WiFi.mode(WIFI_AP);
-
-    if (atoi(JConf.wifi_auth) == OPEN){
-      WiFi.softAP(JConf.module_id);
-    } else {
-      WiFi.softAP(JConf.module_id, JConf.ap_pwd);
-    }
-
-    //setup PHY_MODE
-    if (atoi(JConf.wifi_phy_mode) == B){
-      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11B);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
-    } else if (atoi(JConf.wifi_phy_mode) == G){
-      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);
-    } else {
-      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);
-    }
-
-    //get current config
-    struct softap_config apconfig;
-    wifi_softap_get_config(&apconfig);
-    //set the chanel
-    apconfig.channel=atoi(JConf.wifi_channel);
-
-    //set Authentification type                      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
-    if (atoi(JConf.wifi_auth) == OPEN){
-      apconfig.authmode=(AUTH_MODE)AUTH_OPEN;
-    } else if (atoi(JConf.wifi_auth) == WPA_PSK){
-      apconfig.authmode=(AUTH_MODE)AUTH_WPA_PSK;
-    } else if (atoi(JConf.wifi_auth) == WPA2_PSK){
-      apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;
-    } else {
-      apconfig.authmode=(AUTH_MODE)AUTH_WPA_WPA2_PSK;
-    }
-
-    //set the visibility of SSID
-    apconfig.ssid_hidden=0;
-    //no need to add these settings to configuration just use default ones
-    //apconfig.max_connection=2;
-    //apconfig.beacon_interval=100;
-    //apply settings to current and to default
-    if (!wifi_softap_set_config(&apconfig) || !wifi_softap_set_config_current(&apconfig)) {
-        Serial.println(F("Error Wifi AP!"));
-        delay(1000);
-    }
-    
+    wifiAP();
   } else if (atoi(JConf.wifi_mode) == STA) {
-    //setup station mode
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
-    delay(500);
-    //setup PHY_MODE
-    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);
-    delay(500);
-    byte i=0;
-    //try to connect
-    while (WiFi.status() != WL_CONNECTED && i<40) {
-        switch(WiFi.status()) {
-        case 1:
-            Serial.println(F("No SSID found!"));
-            break;
-
-        case 4:
-            Serial.println(F("No Connection!"));
-            break;
-
-        default:
-            Serial.println(F("Connecting..."));
-            break;
-        }
-        delay(500);
-        i++;
-    }
-    if (WiFi.status() != WL_CONNECTED) {
-        return false;
-    }
-    WiFi.hostname(JConf.module_id);
+    wifiSTA();
   } else if (atoi(JConf.wifi_mode) == AP_STA) {
-    WiFi.mode(WIFI_AP_STA);
-    WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
-
-    delay(500);
-    byte i=0;
-    //try to connect
-    while (WiFi.status() != WL_CONNECTED && i<40) {
-        switch(WiFi.status()) {
-        case 1:
-            Serial.println(F("No SSID found!"));
-            break;
-
-        case 4:
-            Serial.println(F("No Connection!"));
-            break;
-
-        default:
-            Serial.println(F("Connecting..."));
-            break;
-        }
-        delay(500);
-        i++;
-    }
-    if (WiFi.status() != WL_CONNECTED) {
-        return false;
-    }
-
-
-    if (atoi(JConf.wifi_auth) == OPEN){
-      WiFi.softAP(JConf.module_id);
-    } else {
-      WiFi.softAP(JConf.module_id, JConf.ap_pwd);
-    }
-
-    //setup PHY_MODE
-    if (atoi(JConf.wifi_phy_mode) == B){
-      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11B);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
-    } else if (atoi(JConf.wifi_phy_mode) == G){
-      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);
-    } else {
-      wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);
-    }
-
-    //get current config
-    struct softap_config apconfig;
-    wifi_softap_get_config(&apconfig);
-    //set the chanel
-    apconfig.channel=atoi(JConf.wifi_channel);
-
-    //set Authentification type                      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
-    if (atoi(JConf.wifi_auth) == OPEN){
-      apconfig.authmode=(AUTH_MODE)AUTH_OPEN;
-    } else if (atoi(JConf.wifi_auth) == WPA_PSK){
-      apconfig.authmode=(AUTH_MODE)AUTH_WPA_PSK;
-    } else if (atoi(JConf.wifi_auth) == WPA2_PSK){
-      apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;
-    } else {
-      apconfig.authmode=(AUTH_MODE)AUTH_WPA_WPA2_PSK;
-    }
-
-    //set the visibility of SSID
-    apconfig.ssid_hidden=0;
-    //no need to add these settings to configuration just use default ones
-    //apconfig.max_connection=2;
-    //apconfig.beacon_interval=100;
-    //apply settings to current and to default
-    if (!wifi_softap_set_config(&apconfig) || !wifi_softap_set_config_current(&apconfig)) {
-        Serial.println(F("Error Wifi AP_STA!"));
-        delay(1000);
-    }
+    wifiAP_STA();
   }
 
   //DHCP or Static IP ?
   if (atoi(JConf.static_ip_enable) == 1) {
-
-      IPAddress staticIP = stringToIp(JConf.static_ip);
-      IPAddress staticGateway = stringToIp(JConf.static_gateway);
-      IPAddress staticSubnet = stringToIp(JConf.static_subnet);
-
-      //apply according active wifi mode
-      if (wifi_get_opmode()==WIFI_STA || wifi_get_opmode()==WIFI_AP_STA) {
-        WiFi.config(staticIP, staticGateway, staticSubnet);
-      }
+    IPAddress staticIP = stringToIp(JConf.static_ip);
+    IPAddress staticGateway = stringToIp(JConf.static_gateway);
+    IPAddress staticSubnet = stringToIp(JConf.static_subnet);
+    //apply according active wifi mode
+    if (wifi_get_opmode()==WIFI_STA || wifi_get_opmode()==WIFI_AP_STA) {
+      WiFi.config(staticIP, staticGateway, staticSubnet);
+    }
   }
   //Get IP
   IPAddress espIP;
@@ -920,7 +873,7 @@ bool WiFiSetup()
   } else {
       espIP=WiFi.softAPIP();
   }
-  ipString = GetIpString(espIP);
+  ipString = GetIpString(& espIP);
 
   return true;
 }
@@ -1075,38 +1028,41 @@ void DHT22Sensor()
 
 
 #if defined(PZEM_ON)
-void GetPzemData(float data, String *val) {
+bool GetPzemData(float data, String *val) {
   if (data < 0.0){
-    data = 0.0;
+    return false;
   } else if (pzem_current_read == PZEM_POWER || pzem_current_read == PZEM_ENERGY) {
     data = data * coil_ratio / 1000;
   } else if (pzem_current_read == PZEM_CURRENT) {
     data = data * coil_ratio;
   } 
   *val = String(data);
+  return true;
 }
 
 
 
-void GetPzemSerialRead()
-{ 
+void GetPzemSerialRead() { 
   #ifdef DEBUG
     unsigned long start_time = millis();
-    Serial.println(F("GetPzemSensorData() Start"));
+    Serial.println(F("GetPzemSerialRead() Start"));
   #endif
 
   switch (pzem_current_read) {
     case PZEM_VOLTAGE:
-      GetPzemData(pzem.voltage(ip_pzem), &pzemVoltageString);
-      pzem_current_read = PZEM_CURRENT;
+      if (GetPzemData(pzem.voltage(ip_pzem), &pzemVoltageString)) {
+        pzem_current_read = PZEM_CURRENT;
+      }
       break;
     case PZEM_CURRENT:
-      GetPzemData(pzem.current(ip_pzem), &pzemCurrentString);
-      pzem_current_read = PZEM_POWER;
+      if (GetPzemData(pzem.current(ip_pzem), &pzemCurrentString)) {
+        pzem_current_read = PZEM_POWER;
+      }
       break;
     case PZEM_POWER:
-      GetPzemData(pzem.power(ip_pzem), &pzemPowerString);
-      pzem_current_read = PZEM_ENERGY;
+      if (GetPzemData(pzem.power(ip_pzem), &pzemPowerString)) {
+        pzem_current_read = PZEM_ENERGY;
+      }
       break;
     case PZEM_ENERGY:
       GetPzemData(pzem.energy(ip_pzem), &pzemEnergyString);
@@ -1118,7 +1074,7 @@ void GetPzemSerialRead()
 
   #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetPzemSensorData() Load Time: ")); Serial.println(load_time);
+    Serial.print(F("GetPzemSerialRead() Load Time: ")); Serial.println(load_time);
   #endif
 }
 
