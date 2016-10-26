@@ -1,16 +1,16 @@
 #ifndef JSON_CONFIG_H
 #define JSON_CONFIG_H
 
-#include <Arduino.h>
-#include <ArduinoJson.h>
+#include "Arduino.h"
+#include "ArduinoJson.h"
 #include "FS.h"
 
 
 // --------------- Supported Sensors (Uncomment for Enable) -------------------
-//#define DHT_ON
-//#define BME280_ON
-//#define SHT21_ON
-//#define BH1750_ON
+#define DHT_ON
+#define BME280_ON
+#define SHT21_ON
+#define BH1750_ON
 //#define PZEM_ON
 //-----------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ enum WIFI_MODE_ENUM {AP, STA, AP_STA};
 enum WIFI_PHY_MODE_ENUM {B, G, N};
 enum WIFI_AUTH_ENUM {OPEN, WPA_PSK, WPA2_PSK, WPA_WPA2_PSK};
 
-
+const String ConfigFileName = "/conf.json";
 
 class JsonConf
 {
@@ -103,6 +103,7 @@ class JsonConf
     char static_ip_enable             [2]  = "0"                  ;
     char ntp_enable                   [2]  = "0"                  ;
     char mqtt_enable                  [2]  = "0"                  ;
+    char dht_enable                   [2]  = "0"                  ;
     char bme280_enable                [2]  = "0"                  ;
     char sht21_enable                 [2]  = "0"                  ;
     char bh1750_enable                [2]  = "0"                  ;

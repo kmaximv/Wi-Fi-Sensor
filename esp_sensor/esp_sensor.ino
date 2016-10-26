@@ -1,22 +1,19 @@
-#include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
-#include <ESP8266WebServer.h>
+#include "ESP8266WiFi.h"
+#include "WiFiUdp.h"
+#include "ESP8266WebServer.h"
 extern "C" {
 #include "user_interface.h"
 }
 
-#include <PubSubClient.h>
-#include <Wire.h>
-#include "SPI.h"
-
+#include "PubSubClient.h"
 #include "json_config.h"
-#include <ArduinoJson.h>
+#include "ArduinoJson.h"
 
 #include "SimpleTimer.h"
 SimpleTimer timer;
 
 #if defined(NTP_ON)
-#include <NTPClient.h>
+#include "NTPClient.h"
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
 #endif
@@ -36,7 +33,7 @@ int errorDHTdata = 0;  // количество ошибок чтения дат�
 #endif
 
 #if defined(BH1750_ON)
-#include <BH1750.h>
+#include "BH1750.h"
 BH1750 lightSensor;
 #endif
 
@@ -51,7 +48,7 @@ HTU21D myHTU21D;
 #endif
 
 #if defined(PZEM_ON)
-#include <PZEM004T.h>
+#include "PZEM004T.h"
 PZEM004T pzem(&Serial);
 IPAddress ip_pzem(192,168,1,1);
 float coil_ratio = 1.84; // Если используем разные катушки, подбираем коэффициент
@@ -1125,7 +1122,7 @@ void MotionDetect(){
 
   if (digitalRead(atoi(JConf.motion_pin)) == HIGH) {
     #ifdef DEBUG
-      Serial.println(F("MotionSensor moove detected"));
+      Serial.println(F("MotionSensor: movement detected"));
     #endif
     motionDetect = true;
     LightControl();
@@ -1425,7 +1422,7 @@ bool MqttPubData() {
     mqttClient.publish(topic_buff, luxString.c_str());
   }
 
-  if (atoi(JConf.bme280_enable) == 1  ||  atoi(JConf.sht21_enable) == 1){
+  if (atoi(JConf.bme280_enable) == 1  ||  atoi(JConf.sht21_enable) == 1 ||  atoi(JConf.dht_enable) == 1){
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, temperature, JConf.mqtt_name);
     mqttClient.publish(topic_buff, temperatureString.c_str());
     sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  humidity, JConf.mqtt_name);
@@ -1708,7 +1705,8 @@ void WebRoot(void) {
 
   String title1       = panelHeaderName + String(F("Sensor Data"))   + panelHeaderEnd;
 
-  if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.sht21_enable) == 1){
+  if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.sht21_enable) == 1 || atoi(JConf.dht_enable) == 1 ){
+
     title1           += panelBodySymbol + String(F("fire"))          + panelBodyName + String(F("Temperature")) + panelBodyValue + String(F(" id='temperatureId'")) + closingAngleBracket   + panelBodyEnd;
     title1           += panelBodySymbol + String(F("tint"))          + panelBodyName + String(F("Humidity"))    + panelBodyValue + String(F(" id='humidityId'")) + closingAngleBracket      + panelBodyEnd;
   }
@@ -1751,7 +1749,7 @@ void WebRoot(void) {
 
   String data = headerStart + JConf.module_id + headerStart2 + headerEnd + javaScript;
 
-  if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.sht21_enable) == 1) {
+  if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.sht21_enable) == 1 || atoi(JConf.dht_enable) == 1) {
     data += jsTemperature + jsHumidity;
   }
   if (atoi(JConf.bme280_enable) == 1) {
@@ -2182,6 +2180,7 @@ void WebSensorsConf(void) {
 
   bool config_changed = false;
 
+  bool dht_enable = false;
   bool bme280_enable = false;
   bool sht21_enable = false;
   bool bh1750_enable = false;
@@ -2205,6 +2204,12 @@ void WebSensorsConf(void) {
   if (payload.length() > 0) {
     payload.toCharArray(JConf.sht21_enable, sizeof(JConf.sht21_enable));
     sht21_enable = true;
+  } 
+
+  payload=WebServer.arg("dht_enable");
+  if (payload.length() > 0) {
+    payload.toCharArray(JConf.dht_enable, sizeof(JConf.dht_enable));
+    dht_enable = true;
   } 
 
   payload=WebServer.arg("bh1750_enable");
@@ -2235,6 +2240,10 @@ void WebSensorsConf(void) {
       JConf.sht21_enable[0] = '0';
       JConf.sht21_enable[1] = '\0';
     }
+    if (!dht_enable){
+      JConf.dht_enable[0] = '0';
+      JConf.dht_enable[1] = '\0';
+    }
     if (!bh1750_enable){
       JConf.bh1750_enable[0] = '0';
       JConf.bh1750_enable[1] = '\0';
@@ -2260,6 +2269,12 @@ void WebSensorsConf(void) {
     data += String(F("<div class='checkbox'><label><input type='checkbox' name='sht21_enable' value='1' checked='true'>SHT21 Enable</label></div>"));
   } else {
     data += String(F("<div class='checkbox'><label><input type='checkbox' name='sht21_enable' value='1'>SHT21 Enable</label></div>"));
+  }
+
+  if (atoi(JConf.dht_enable) == 1){
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='dht_enable' value='1' checked='true'>DHT Enable</label></div>"));
+  } else {
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='dht_enable' value='1'>DHT Enable</label></div>"));
   }
 
   if (atoi(JConf.bh1750_enable) == 1){
@@ -3293,6 +3308,10 @@ void getData(){
     }
   #endif
 
+  #ifdef DHT_ON
+    DHT22Sensor();
+  #endif
+
   #ifdef PZEM_ON
     if (atoi(JConf.pzem_enable) == 1){
       GetPzemSerialRead();
@@ -3302,10 +3321,6 @@ void getData(){
   GetUptimeData();
   GetFreeMemory();
   GetMacString();
-
-  #ifdef DHT_ON
-    DHT22Sensor();
-  #endif
 
   #ifdef DEBUG
     TestSystemPrint();

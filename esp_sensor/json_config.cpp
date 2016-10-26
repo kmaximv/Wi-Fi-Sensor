@@ -64,6 +64,7 @@ bool JsonConf::saveConfig() {
   json["static_ip_enable"]              = static_ip_enable             ;                                     
   json["ntp_enable"]                    = ntp_enable                   ;                               
   json["mqtt_enable"]                   = mqtt_enable                  ;                               
+  json["dht_enable"]                    = dht_enable                   ;                               
   json["bme280_enable"]                 = bme280_enable                ;                               
   json["sht21_enable"]                  = sht21_enable                 ;                               
   json["bh1750_enable"]                 = bh1750_enable                ;                               
@@ -73,7 +74,7 @@ bool JsonConf::saveConfig() {
 
 
 
-  File configFile = SPIFFS.open("/conf.json", "w");
+  File configFile = SPIFFS.open(ConfigFileName, "w");
   if (!configFile) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to open config file for writing"));
@@ -96,7 +97,7 @@ bool JsonConf::loadConfig() {
   Serial.print(F("loadConfig()"));  Serial.println();
 #endif
 
-  File configFile = SPIFFS.open("/conf.json", "r");
+  File configFile = SPIFFS.open(ConfigFileName, "r");
   if (!configFile) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to open config file"));
@@ -105,13 +106,13 @@ bool JsonConf::loadConfig() {
     return false;
   }
 
-  //SPIFFS.remove("/conf.json");
+  //SPIFFS.remove(ConfigFileName);
 
   size_t size = configFile.size();
   if (size > 2048) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Config file size is too large"));
-    SPIFFS.remove("/conf.json");
+    SPIFFS.remove(ConfigFileName);
     saveConfig();
 #endif
     return false;
@@ -131,7 +132,7 @@ bool JsonConf::loadConfig() {
   if (!json.success()) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to parse config file"));
-    SPIFFS.remove("/conf.json");
+    SPIFFS.remove(ConfigFileName);
     saveConfig();
 #endif
     return false;
@@ -197,6 +198,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("bh1750_enable"                 )) {  const char* bh1750_enable_char                 = json["bh1750_enable"                ];    sprintf_P(bh1750_enable,                 ("%s"), bh1750_enable_char                ); }
   if (json.containsKey("motion_sensor_enable"          )) {  const char* motion_sensor_enable_char          = json["motion_sensor_enable"         ];    sprintf_P(motion_sensor_enable,          ("%s"), motion_sensor_enable_char         ); }
   if (json.containsKey("pzem_enable"                   )) {  const char* pzem_enable_char                   = json["pzem_enable"                  ];    sprintf_P(pzem_enable,                   ("%s"), pzem_enable_char                  ); }
+  if (json.containsKey("dht_enable"                    )) {  const char* dht_enable_char                    = json["dht_enable"                   ];    sprintf_P(dht_enable,                    ("%s"), dht_enable_char                   ); }
 
 
 
@@ -268,4 +270,5 @@ bool JsonConf::printConfig() {
   Serial.print(F("bh1750_enable                : "));   Serial.println(bh1750_enable                );
   Serial.print(F("motion_sensor_enable         : "));   Serial.println(motion_sensor_enable         );
   Serial.print(F("pzem_enable                  : "));   Serial.println(pzem_enable                  );
+  Serial.print(F("dht_enable                   : "));   Serial.println(dht_enable                   );
 }

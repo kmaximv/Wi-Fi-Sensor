@@ -16,7 +16,6 @@
 #ifndef MY_ESP_UART_H
 #define MY_ESP_UART_H
 
-#include <Arduino.h>
 #include "json_config.h"
 
 
