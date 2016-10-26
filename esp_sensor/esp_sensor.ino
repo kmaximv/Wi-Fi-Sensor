@@ -1126,11 +1126,9 @@ void MotionDetect(){
     #endif
     motionDetect = true;
     LightControl();
-    if (atoi(JConf.mqtt_enable) == 1) {
-      if (mqttClient.connected()) {
-        sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  motionSensor, JConf.mqtt_name);
-        mqttClient.publish(topic_buff, "ON");
-      }
+    if (atoi(JConf.mqtt_enable) == 1 && mqttClient.connected()) {
+      sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  motionSensor, JConf.mqtt_name);
+      mqttClient.publish(topic_buff, "ON");
     }
   } else {
     motionDetect = false;
@@ -3462,7 +3460,11 @@ void setup() {
 
   timer.setInterval(atoi(JConf.get_data_delay) * 1000, getData);
   timer.setInterval(atoi(JConf.publish_delay) * 1000, MqttPubData);
-  timer.setInterval(atoi(JConf.motion_read_delay) * 1000, MotionDetect);
+
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    timer.setInterval(atoi(JConf.motion_read_delay) * 1000, MotionDetect);
+  }
+
   subscribeTimer = timer.setInterval(atoi(JConf.subscribe_delay) * 1000, MqttSubscribe);
   timer.setInterval(600000, wifiSafeModeReconnect);
 
