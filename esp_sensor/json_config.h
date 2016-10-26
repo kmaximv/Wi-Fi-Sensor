@@ -17,6 +17,7 @@
 //#define DEBUG
 //#define DEBUG_JSON_CONFIG
 
+#define RESET_BUTTON_ON   //Функционал сброса конфига по кнопке при загрузке модуля
 //#define REBOOT_ON
 //#define NTP_ON
 
@@ -47,6 +48,7 @@ class JsonConf
   public:
     bool saveConfig();
     bool loadConfig();
+    void deleteConfig();
     bool printConfig();
 
     char module_id                    [32] = "ESP8266"            ;
@@ -78,6 +80,7 @@ class JsonConf
     char light2off_delay              [32] = "5"                  ;
     char light2on_lux                 [6]  = "10"                 ; // Значение в люксах, ниже которого будет включаться нагрузка
     char light2_smooth                [2]  = "0"                  ;
+    char reset_pin                    [3]  = "2"                  ;
     char motion_pin                   [3]  = "14"                 ;
     char dht_pin                      [3] =  "2"                  ;
     char get_data_delay               [32] = "10"                 ;

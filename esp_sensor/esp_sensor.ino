@@ -462,7 +462,7 @@ void GetFreeMemory () {
 
 
 
-String GetIpString (IPAddress* ip) {
+String GetIpString (IPAddress ip) {
 
   #ifdef DEBUG
     unsigned long start_time = millis();
@@ -870,7 +870,7 @@ bool WiFiSetup()
   } else {
       espIP=WiFi.softAPIP();
   }
-  ipString = GetIpString(& espIP);
+  ipString = GetIpString(espIP);
 
   return true;
 }
@@ -3307,7 +3307,9 @@ void getData(){
   #endif
 
   #ifdef DHT_ON
-    DHT22Sensor();
+    if (atoi(JConf.dht_enable) == 1){
+      DHT22Sensor();
+    }
   #endif
 
   #ifdef PZEM_ON
@@ -3344,6 +3346,21 @@ void restartESP() {
 
 
 
+void deleteConfigFile() {
+  pinMode(atoi(JConf.reset_pin), INPUT); 
+  if (digitalRead(atoi(JConf.reset_pin)) == LOW) {
+    delay(3000);
+    if (digitalRead(atoi(JConf.reset_pin)) == LOW) {
+      #ifdef DEBUG
+        Serial.println(F("Reset pin pressed. Delete config file."));
+      #endif
+      JConf.deleteConfig();
+    }
+  } 
+}
+
+
+
 void setup() {
 
   #ifdef DEBUG
@@ -3364,6 +3381,10 @@ void setup() {
     #endif
 
     return;
+  } else {
+    #ifdef RESET_BUTTON_ON
+      deleteConfigFile();
+    #endif
   }
 /*
   if (!JConf.saveConfig()) {
@@ -3385,7 +3406,7 @@ void setup() {
 
   pinMode(atoi(JConf.light_pin), OUTPUT);
   pinMode(atoi(JConf.light2_pin), OUTPUT);
-  pinMode(atoi(JConf.motion_pin), INPUT);           // set pin to input
+  pinMode(atoi(JConf.motion_pin), INPUT);
 
   digitalWrite(atoi(JConf.light_pin), LOW);
   digitalWrite(atoi(JConf.light2_pin), LOW);

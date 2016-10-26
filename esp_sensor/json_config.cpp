@@ -39,6 +39,7 @@ bool JsonConf::saveConfig() {
   json["light2off_delay"]               = light2off_delay              ;                                       
   json["light2on_lux"]                  = light2on_lux                 ;                                       
   json["light2_smooth"]                 = light2_smooth                ;                           
+  json["reset_pin"]                     = reset_pin                    ;                             
   json["motion_pin"]                    = motion_pin                   ;                             
   json["dht_pin"]                       = dht_pin                      ;                       
   json["get_data_delay"]                = get_data_delay               ;                                     
@@ -106,8 +107,6 @@ bool JsonConf::loadConfig() {
     return false;
   }
 
-  //SPIFFS.remove(ConfigFileName);
-
   size_t size = configFile.size();
   if (size > 2048) {
 #ifdef DEBUG_JSON_CONFIG
@@ -168,6 +167,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("light2off_delay"               )) {  const char* light2off_delay_char               = json["light2off_delay"              ];    sprintf_P(light2off_delay,               ("%s"), light2off_delay_char              ); }
   if (json.containsKey("light2on_lux"                  )) {  const char* light2on_lux_char                  = json["light2on_lux"                 ];    sprintf_P(light2on_lux,                  ("%s"), light2on_lux_char                 ); }
   if (json.containsKey("light2_smooth"                 )) {  const char* light2_smooth_char                 = json["light2_smooth"                ];    sprintf_P(light2_smooth,                 ("%s"), light2_smooth_char                ); }
+  if (json.containsKey("reset_pin"                     )) {  const char* reset_pin_char                     = json["reset_pin"                    ];    sprintf_P(reset_pin,                     ("%s"), reset_pin_char                    ); }
   if (json.containsKey("motion_pin"                    )) {  const char* motion_pin_char                    = json["motion_pin"                   ];    sprintf_P(motion_pin,                    ("%s"), motion_pin_char                   ); }
   if (json.containsKey("dht_pin"                       )) {  const char* dht_pin_char                       = json["dht_pin"                      ];    sprintf_P(dht_pin,                       ("%s"), dht_pin_char                      ); }
   if (json.containsKey("get_data_delay"                )) {  const char* get_data_delay_char                = json["get_data_delay"               ];    sprintf_P(get_data_delay,                ("%s"), get_data_delay_char               ); }
@@ -200,13 +200,14 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("pzem_enable"                   )) {  const char* pzem_enable_char                   = json["pzem_enable"                  ];    sprintf_P(pzem_enable,                   ("%s"), pzem_enable_char                  ); }
   if (json.containsKey("dht_enable"                    )) {  const char* dht_enable_char                    = json["dht_enable"                   ];    sprintf_P(dht_enable,                    ("%s"), dht_enable_char                   ); }
 
-
-
-
   configFile.close();
   return true;
 }
 
+
+void JsonConf::deleteConfig() {
+  SPIFFS.remove(ConfigFileName);
+}
 
 
 bool JsonConf::printConfig() {
@@ -240,6 +241,7 @@ bool JsonConf::printConfig() {
   Serial.print(F("light2off_delay              : "));   Serial.println(light2off_delay              );
   Serial.print(F("light2on_lux                 : "));   Serial.println(light2on_lux                 );
   Serial.print(F("light2_smooth                : "));   Serial.println(light2_smooth                );
+  Serial.print(F("reset_pin                    : "));   Serial.println(reset_pin                    );
   Serial.print(F("motion_pin                   : "));   Serial.println(motion_pin                   );
   Serial.print(F("dht_pin                      : "));   Serial.println(dht_pin                      );
   Serial.print(F("get_data_delay               : "));   Serial.println(get_data_delay               );

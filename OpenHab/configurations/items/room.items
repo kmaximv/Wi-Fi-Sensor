@@ -23,6 +23,7 @@ Number	Light_BedM	"Общее освещение "	(gPersistMotionSensor)
 Number	LightType_BedM	<whites>
 Number	MotionSensorTimer_BedM	"Задержка [%d m]"	<clock>
 
+Switch		BedM_Settings "Info"
 DateTime	Temp_BedM_LastUpdate	"Temp Last Update [%1$ta %1$tR]"	<clock>
 DateTime	Humidity_BedM_LastUpdate	"Humidity Last Update [%1$ta %1$tR]"	<clock>
 DateTime	Lux_BedM_LastUpdate	"Lux Last Update [%1$ta %1$tR]"	<clock>
