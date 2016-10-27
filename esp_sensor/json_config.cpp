@@ -41,7 +41,6 @@ bool JsonConf::saveConfig() {
   json["light2_smooth"]                 = light2_smooth                ;                           
   json["reset_pin"]                     = reset_pin                    ;                             
   json["motion_pin"]                    = motion_pin                   ;                             
-  json["dht_pin"]                       = dht_pin                      ;                       
   json["get_data_delay"]                = get_data_delay               ;                                     
   json["publish_delay"]                 = publish_delay                ;                                   
   json["subscribe_delay"]               = subscribe_delay              ;                                       
@@ -169,7 +168,6 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("light2_smooth"                 )) {  const char* light2_smooth_char                 = json["light2_smooth"                ];    sprintf_P(light2_smooth,                 ("%s"), light2_smooth_char                ); }
   if (json.containsKey("reset_pin"                     )) {  const char* reset_pin_char                     = json["reset_pin"                    ];    sprintf_P(reset_pin,                     ("%s"), reset_pin_char                    ); }
   if (json.containsKey("motion_pin"                    )) {  const char* motion_pin_char                    = json["motion_pin"                   ];    sprintf_P(motion_pin,                    ("%s"), motion_pin_char                   ); }
-  if (json.containsKey("dht_pin"                       )) {  const char* dht_pin_char                       = json["dht_pin"                      ];    sprintf_P(dht_pin,                       ("%s"), dht_pin_char                      ); }
   if (json.containsKey("get_data_delay"                )) {  const char* get_data_delay_char                = json["get_data_delay"               ];    sprintf_P(get_data_delay,                ("%s"), get_data_delay_char               ); }
   if (json.containsKey("publish_delay"                 )) {  const char* publish_delay_char                 = json["publish_delay"                ];    sprintf_P(publish_delay,                 ("%s"), publish_delay_char                ); }
   if (json.containsKey("subscribe_delay"               )) {  const char* subscribe_delay_char               = json["subscribe_delay"              ];    sprintf_P(subscribe_delay,               ("%s"), subscribe_delay_char              ); }
@@ -243,7 +241,6 @@ bool JsonConf::printConfig() {
   Serial.print(F("light2_smooth                : "));   Serial.println(light2_smooth                );
   Serial.print(F("reset_pin                    : "));   Serial.println(reset_pin                    );
   Serial.print(F("motion_pin                   : "));   Serial.println(motion_pin                   );
-  Serial.print(F("dht_pin                      : "));   Serial.println(dht_pin                      );
   Serial.print(F("get_data_delay               : "));   Serial.println(get_data_delay               );
   Serial.print(F("publish_delay                : "));   Serial.println(publish_delay                );
   Serial.print(F("subscribe_delay              : "));   Serial.println(subscribe_delay              );

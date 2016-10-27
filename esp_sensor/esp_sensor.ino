@@ -112,6 +112,7 @@ int Second=0;
 int HighMillis=0;
 int Rollover=0;
 
+int wifiReconnectTimer = 0;
 int rebootTimer = 0;
 int subscribeTimer = 0;
 
@@ -803,7 +804,7 @@ bool wifiTryConnect(){
   if (WiFi.status() != WL_CONNECTED) {
     return false;
   }
-  return true;  
+  return true;
 }
 
 
@@ -815,27 +816,44 @@ void wifiAP() {
 
 
 
-void wifiSTA() {
+bool wifiSTA() {
   WiFi.mode(WIFI_STA);                            //setup station mode
   WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
   delay(500);
   
   wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);    //setup PHY_MODE
 
-  wifiTryConnect();
-
+  if (!wifiTryConnect()) {
+    return false;
+  }
   WiFi.hostname(JConf.module_id);
+  return true; 
 }
 
 
 
-void wifiAP_STA() {
+bool wifiAP_STA() {
   WiFi.mode(WIFI_AP_STA);
   WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
 
-  wifiTryConnect();
-
+  if (!wifiTryConnect()) {
+    return false;
+  }
   wifiAPSettings();
+  return true;
+}
+
+
+
+void wifiReconnect() {
+  if (WiFi.status() != WL_CONNECTED && atoi(JConf.wifi_mode) != AP && wifiSafeMode == false) {
+    #ifdef DEBUG
+      Serial.print(F("Connecting "));
+      Serial.println(F("..."));
+    #endif
+
+    WiFiSetup();
+  }
 }
 
 
@@ -847,10 +865,10 @@ bool WiFiSetup()
 
   if (atoi(JConf.wifi_mode) == AP) {
     wifiAP();
-  } else if (atoi(JConf.wifi_mode) == STA) {
-    wifiSTA();
-  } else if (atoi(JConf.wifi_mode) == AP_STA) {
-    wifiAP_STA();
+  } else if (atoi(JConf.wifi_mode) == STA && !wifiSTA()) {
+    return false;
+  } else if (atoi(JConf.wifi_mode) == AP_STA && !wifiAP_STA()) {
+    return false;
   }
 
   //DHCP or Static IP ?
@@ -1449,9 +1467,11 @@ bool MqttPubData() {
 
  
   #ifdef DHT_ON
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  errorsDHT, JConf.mqtt_name);
-    sprintf_P(value_buff, (const char *)F("%d"), errorDHTdata);  
-    mqttClient.publish(topic_buff, value_buff);
+    if (atoi(JConf.dht_enable) == 1){
+      sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  errorsDHT, JConf.mqtt_name);
+      sprintf_P(value_buff, (const char *)F("%d"), errorDHTdata);  
+      mqttClient.publish(topic_buff, value_buff);
+    }
   #endif
 
   #ifdef PZEM_ON
@@ -1530,6 +1550,9 @@ bool MqttSubscribe(){
   }
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, motionsensortimer, JConf.mqtt_name);
+  MqttSubscribePrint(topic_buff);
+
+  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, motionsensortimer2, JConf.mqtt_name);
   MqttSubscribePrint(topic_buff);
 
   sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, lightType, JConf.mqtt_name);
@@ -2058,6 +2081,7 @@ void WebWiFiConf(void) {
       JConf.static_ip_enable[0] = '0';
       JConf.static_ip_enable[1] = '\0';
     }
+    timer.deleteTimer(wifiReconnectTimer);
     JConf.saveConfig();
   }
 
@@ -3479,6 +3503,7 @@ void setup() {
     }
   #endif
 
+  wifiReconnectTimer = timer.setInterval(10000, wifiReconnect);
   timer.setInterval(atoi(JConf.get_data_delay) * 1000, getData);
   timer.setInterval(atoi(JConf.publish_delay) * 1000, MqttPubData);
 
@@ -3509,15 +3534,6 @@ void loop() {
   String AUTO;   AUTO += FPSTR(AUTOP);
   if (lightState == AUTO){
     LightControl();
-  }
-
-  if (WiFi.status() != WL_CONNECTED && atoi(JConf.wifi_mode) != AP && wifiSafeMode == false) {
-    #ifdef DEBUG
-      Serial.print(F("Connecting "));
-      Serial.println(F("..."));
-    #endif
-
-    WiFiSetup();
   }
 
   if (WiFi.status() == WL_CONNECTED) {

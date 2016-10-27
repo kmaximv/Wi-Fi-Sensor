@@ -17,7 +17,7 @@
 //#define DEBUG
 //#define DEBUG_JSON_CONFIG
 
-#define RESET_BUTTON_ON   //Функционал сброса конфига по кнопке при загрузке модуля
+//#define RESET_BUTTON_ON   //Функционал сброса конфига по кнопке при загрузке модуля
 //#define REBOOT_ON
 //#define NTP_ON
 
