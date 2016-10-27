@@ -44,16 +44,14 @@ sitemap room label="Моя комната"
 		}	
 	}
 
-
-
 	Frame label="Управление освещением"{
-		Switch item=LightType_BedM label="Свет" mappings=[2=Auto, 1=On, 0=Off]
-		Switch item=Light_BedM mappings=[1=On, 0=Off]
-		Switch item=MotionSensor_BedM	visibility=[LightType_BedM==2]
-		Switch item=MotionState_BedM		visibility=[LightType_BedM==2] mappings=[1=On, 0=Off]
-		Setpoint item=MotionSensorTimer_BedM minValue=1 maxValue=20 step=1	visibility=[LightType_BedM==2]
+		Switch item=LightType_BedM label="Свет 1" mappings=[2=Auto, 1=On, 0=Off]
+		Setpoint item=MotionSensorTimer_BedM label="Задержка выключения [%d m]" minValue=1 maxValue=20 step=1	visibility=[LightType_BedM==2]
 	}
-
+	Frame {
+		Switch item=LightType2_BedM label="Свет 2" mappings=[2=Auto, 1=On, 0=Off]
+		Setpoint item=MotionSensorTimer2_BedM label="Задержка выключения [%d m]" minValue=1 maxValue=20 step=1	visibility=[LightType2_BedM==2]
+	}
 
 	Frame label="Дополнительно"{
 	Switch item=BedM_Settings
@@ -68,5 +66,4 @@ sitemap room label="Моя комната"
 	Text item=Pressure_BedM_LastUpdate visibility=[BedM_Settings==ON] valuecolor=[Pressure_BedM_LastUpdate>300="red", Pressure_BedM_LastUpdate>120="orange", Pressure_BedM_LastUpdate<60="green"]
 
 	}
-
 }

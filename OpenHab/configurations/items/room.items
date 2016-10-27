@@ -17,11 +17,10 @@ Number	Lux_BedM_Chart_Period	"Период графика"
 Number	Pressure_BedM	"Давление [%.2f mm]"	<climate>	(gPersistPressure)	
 Number	Pressure_BedM_Chart_Period	"Период графика"
 
-Switch	MotionSensor_BedM	"Эмулятор движения"
-Number	MotionState_BedM	"Датчик движения [%d]"	(gPersistMotionSensor)	
-Number	Light_BedM	"Общее освещение "	(gPersistMotionSensor)	
 Number	LightType_BedM	<whites>
-Number	MotionSensorTimer_BedM	"Задержка [%d m]"	<clock>
+Number	LightType2_BedM	<whites>
+Number	MotionSensorTimer_BedM		<clock>
+Number	MotionSensorTimer2_BedM		<clock>
 
 Switch		BedM_Settings "Info"
 DateTime	Temp_BedM_LastUpdate	"Temp Last Update [%1$ta %1$tR]"	<clock>
@@ -34,4 +33,3 @@ String	IP_BedM	"IP [%s]"
 String	MAC_BedM	"MAC [%s]"
 String	Uptime_BedM	"Uptime [%s]"
 Number	FreeMemory_BedM	"Free Memory [%d]"
-Number	ErrorsDHT_BedM	"Ошибки DHT [%d]"
