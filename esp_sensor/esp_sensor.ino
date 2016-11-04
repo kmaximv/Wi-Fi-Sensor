@@ -163,7 +163,34 @@ Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf
 char topic_buff[120];
 char value_buff[120];
 
+char lightType_buff[50];
+char lightType2_buff[50];
+char motionSensor_buff[50];
+char motionsensortimer_buff[50];
+char motionsensortimer2_buff[50];
+char lux_buff[50];
+char temperature_buff[50];
+char humidity_buff[50];
+char pressure_buff[50];
+char errorsDHT_buff[50];
+char pzemVoltage_buff[50];
+char pzemCurrent_buff[50];
+char pzemPower_buff[50];
+char pzemEnergy_buff[50];
+char freeMemory_buff[50];
+char uptime_buff[50];
+char version_buff[50];
+char ip_buff[50];
 char mac_buff[50];
+
+char motionsensortimer_buff_sub[50];
+char motionsensortimer2_buff_sub[50];
+char lightType_buff_sub[50];
+char lightType2_buff_sub[50];
+char uptime_buff_sub[50];
+
+
+
 
 
 String network_html;          // Список доступных Wi-Fi точек
@@ -1401,63 +1428,61 @@ void MQTT_connect() {
 
 
 
-
-
 void MqttInit() {
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, lightType, JConf.mqtt_name);
-  pubTopicLightType = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(lightType_buff, "%s%s%s", JConf.publish_topic, lightType, JConf.mqtt_name);
+  pubTopicLightType = Adafruit_MQTT_Publish(&mqtt, lightType_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, lightType2, JConf.mqtt_name);
-  pubTopicLightType2 = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(lightType2_buff, "%s%s%s", JConf.publish_topic, lightType2, JConf.mqtt_name);
+  pubTopicLightType2 = Adafruit_MQTT_Publish(&mqtt, lightType2_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, motionSensor, JConf.mqtt_name);
-  pubTopicMotionSensor = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(motionSensor_buff, "%s%s%s", JConf.publish_topic, motionSensor, JConf.mqtt_name);
+  pubTopicMotionSensor = Adafruit_MQTT_Publish(&mqtt, motionSensor_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, motionsensortimer, JConf.mqtt_name);
-  pubTopicMotionSensorTimer = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(motionsensortimer_buff, "%s%s%s", JConf.publish_topic, motionsensortimer, JConf.mqtt_name);
+  pubTopicMotionSensorTimer = Adafruit_MQTT_Publish(&mqtt, motionsensortimer_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, motionsensortimer2, JConf.mqtt_name);
-  pubTopicMotionSensorTimer2 = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(motionsensortimer2_buff, "%s%s%s", JConf.publish_topic, motionsensortimer2, JConf.mqtt_name);
+  pubTopicMotionSensorTimer2 = Adafruit_MQTT_Publish(&mqtt, motionsensortimer2_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, lux, JConf.mqtt_name);
-  pubTopicLux = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(lux_buff, "%s%s%s", JConf.publish_topic, lux, JConf.mqtt_name);
+  pubTopicLux = Adafruit_MQTT_Publish(&mqtt, lux_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, temperature, JConf.mqtt_name);
-  pubTopicTemperature = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(temperature_buff, "%s%s%s", JConf.publish_topic, temperature, JConf.mqtt_name);
+  pubTopicTemperature = Adafruit_MQTT_Publish(&mqtt, temperature_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, humidity, JConf.mqtt_name);
-  pubTopicHumidity = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(humidity_buff, "%s%s%s", JConf.publish_topic, humidity, JConf.mqtt_name);
+  pubTopicHumidity = Adafruit_MQTT_Publish(&mqtt, humidity_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, pressure, JConf.mqtt_name);
-  pubTopicPressure = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(pressure_buff, "%s%s%s", JConf.publish_topic, pressure, JConf.mqtt_name);
+  pubTopicPressure = Adafruit_MQTT_Publish(&mqtt, pressure_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, errorsDHT, JConf.mqtt_name);
-  pubTopicErrorsDHT = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(errorsDHT_buff, "%s%s%s", JConf.publish_topic, errorsDHT, JConf.mqtt_name);
+  pubTopicErrorsDHT = Adafruit_MQTT_Publish(&mqtt, errorsDHT_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, pzemVoltage, JConf.mqtt_name);
-  pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(pzemVoltage_buff, "%s%s%s", JConf.publish_topic, pzemVoltage, JConf.mqtt_name);
+  pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, pzemVoltage_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, pzemCurrent, JConf.mqtt_name);
-  pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(pzemCurrent_buff, "%s%s%s", JConf.publish_topic, pzemCurrent, JConf.mqtt_name);
+  pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, pzemCurrent_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, pzemPower, JConf.mqtt_name);
-  pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(pzemPower_buff, "%s%s%s", JConf.publish_topic, pzemPower, JConf.mqtt_name);
+  pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, pzemPower_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, pzemEnergy, JConf.mqtt_name);
-  pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(pzemEnergy_buff, "%s%s%s", JConf.publish_topic, pzemEnergy, JConf.mqtt_name);
+  pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, pzemEnergy_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, freeMemory, JConf.mqtt_name);
-  pubTopicFreeMemory = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(freeMemory_buff, "%s%s%s", JConf.publish_topic, freeMemory, JConf.mqtt_name);
+  pubTopicFreeMemory = Adafruit_MQTT_Publish(&mqtt, freeMemory_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, uptime, JConf.mqtt_name);
-  pubTopicUptime = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(uptime_buff, "%s%s%s", JConf.publish_topic, uptime, JConf.mqtt_name);
+  pubTopicUptime = Adafruit_MQTT_Publish(&mqtt, uptime_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, version, JConf.mqtt_name);
-  pubTopicVersion = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(version_buff, "%s%s%s", JConf.publish_topic, version, JConf.mqtt_name);
+  pubTopicVersion = Adafruit_MQTT_Publish(&mqtt, version_buff);
 
-  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, ip, JConf.mqtt_name);
-  pubTopicIp = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+  sprintf(ip_buff, "%s%s%s", JConf.publish_topic, ip, JConf.mqtt_name);
+  pubTopicIp = Adafruit_MQTT_Publish(&mqtt, ip_buff);
 
   sprintf(mac_buff, "%s%s%s", JConf.publish_topic, mac, JConf.mqtt_name);
   pubTopicMac = Adafruit_MQTT_Publish(&mqtt, mac_buff);
@@ -1477,9 +1502,6 @@ void MqttInit() {
 
   sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, uptime, JConf.mqtt_name);
   subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
-
-  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, motionsensortimer, JConf.mqtt_name);
-  subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
 */
 }
 
