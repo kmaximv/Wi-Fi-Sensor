@@ -5,7 +5,8 @@ extern "C" {
 #include "user_interface.h"
 }
 
-#include "PubSubClient.h"
+#include "Adafruit_MQTT.h"
+#include "Adafruit_MQTT_Client.h"
 #include "json_config.h"
 #include "ArduinoJson.h"
 
@@ -103,8 +104,6 @@ String pzemCurrentString = "none";
 String pzemPowerString =   "none";
 String pzemEnergyString =  "none";
 
-PubSubClient mqttClient;
-
 long Day=0;
 int Hour =0;
 int Minute=0;
@@ -124,8 +123,48 @@ bool wifiSafeMode = false;
 
 WiFiClient espClient;
 
+Adafruit_MQTT_Client mqtt = Adafruit_MQTT_Client(&espClient, JConf.mqtt_server, atoi(JConf.mqtt_port), JConf.mqtt_user, JConf.mqtt_pwd);
+
+Adafruit_MQTT_Publish pubTopicLightType = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicLightType2 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicMotionSensor = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicMotionSensorTimer = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicMotionSensorTimer2 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+Adafruit_MQTT_Publish pubTopicLux = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicTemperature = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicHumidity = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicPressure = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicErrorsDHT = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+Adafruit_MQTT_Publish pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+Adafruit_MQTT_Publish pubTopicFreeMemory = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicUptime = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicVersion = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicIp = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicMac = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+
+Adafruit_MQTT_Subscribe subTopicMotionsensortimer = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+Adafruit_MQTT_Subscribe subTopicMotionsensortimer2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+
+Adafruit_MQTT_Subscribe subTopicLightType = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+Adafruit_MQTT_Subscribe subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+
+Adafruit_MQTT_Subscribe subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+
+Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+
+
 char topic_buff[120];
 char value_buff[120];
+
+char mac_buff[50];
+
 
 String network_html;          // Список доступных Wi-Fi точек
 
@@ -444,6 +483,9 @@ static char* floatToChar(float charester)
  return value_buff;
 }
 */
+
+void MQTT_connect();
+
 
 
 void GetFreeMemory () {
@@ -1144,9 +1186,8 @@ void MotionDetect(){
     #endif
     motionDetect = true;
     LightControl();
-    if (atoi(JConf.mqtt_enable) == 1 && mqttClient.connected()) {
-      sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  motionSensor, JConf.mqtt_name);
-      mqttClient.publish(topic_buff, "ON");
+    if (atoi(JConf.mqtt_enable) == 1 && mqtt.connected()) {
+      pubTopicMotionSensor.publish("ON");
     }
   } else {
     motionDetect = false;
@@ -1207,7 +1248,7 @@ void NTPSettingsUpdate(){
 #endif
 
 
-
+/*
 // handles message arrived on subscribed topic(s)
 void callback(char* topic, byte* payload, unsigned int length) {
 
@@ -1328,6 +1369,119 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print(F("callback() Load Time: ")); Serial.println(load_time);
   #endif
 }
+*/
+
+
+
+void MQTT_connect() {
+  int8_t ret;
+
+  // Stop if already connected.
+  if (mqtt.connected()) {
+    return;
+  }
+
+  Serial.print("Connecting to MQTT... ");
+
+  uint8_t retries = 3;
+  while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
+       Serial.println(mqtt.connectErrorString(ret));
+       Serial.println("Retrying MQTT connection in 5 seconds...");
+       mqtt.disconnect();
+       delay(500);  // wait 5 seconds
+       retries--;
+       if (retries == 0) {
+         return;
+         // basically die and wait for WDT to reset me
+         while (1);
+       }
+  }
+  Serial.println("MQTT Connected!");
+}
+
+
+
+
+
+void MqttInit() {
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, lightType, JConf.mqtt_name);
+  pubTopicLightType = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, lightType2, JConf.mqtt_name);
+  pubTopicLightType2 = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, motionSensor, JConf.mqtt_name);
+  pubTopicMotionSensor = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, motionsensortimer, JConf.mqtt_name);
+  pubTopicMotionSensorTimer = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, motionsensortimer2, JConf.mqtt_name);
+  pubTopicMotionSensorTimer2 = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, lux, JConf.mqtt_name);
+  pubTopicLux = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, temperature, JConf.mqtt_name);
+  pubTopicTemperature = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, humidity, JConf.mqtt_name);
+  pubTopicHumidity = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, pressure, JConf.mqtt_name);
+  pubTopicPressure = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, errorsDHT, JConf.mqtt_name);
+  pubTopicErrorsDHT = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, pzemVoltage, JConf.mqtt_name);
+  pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, pzemCurrent, JConf.mqtt_name);
+  pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, pzemPower, JConf.mqtt_name);
+  pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, pzemEnergy, JConf.mqtt_name);
+  pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, freeMemory, JConf.mqtt_name);
+  pubTopicFreeMemory = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, uptime, JConf.mqtt_name);
+  pubTopicUptime = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, version, JConf.mqtt_name);
+  pubTopicVersion = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.publish_topic, ip, JConf.mqtt_name);
+  pubTopicIp = Adafruit_MQTT_Publish(&mqtt, topic_buff);
+
+  sprintf(mac_buff, "%s%s%s", JConf.publish_topic, mac, JConf.mqtt_name);
+  pubTopicMac = Adafruit_MQTT_Publish(&mqtt, mac_buff);
+
+/*
+  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, motionsensortimer, JConf.mqtt_name);
+  subTopicMotionsensortimer = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, motionsensortimer2, JConf.mqtt_name);
+  subTopicMotionsensortimer2 = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, lightType, JConf.mqtt_name);
+  subTopicLightType = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, lightType2, JConf.mqtt_name);
+  subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, uptime, JConf.mqtt_name);
+  subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
+
+  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, motionsensortimer, JConf.mqtt_name);
+  subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
+*/
+}
 
 
 
@@ -1338,7 +1492,7 @@ bool MqttPubLightState(){
     Serial.println(F("MqttPubLightState() Start"));
   #endif
 
-  if (!mqttClient.connected()){
+  if (!mqtt.connected()){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
       unsigned long load_time = millis() - start_time;
@@ -1350,7 +1504,6 @@ bool MqttPubLightState(){
   String ON;         ON += FPSTR(ONP);
   String OFF;        OFF += FPSTR(OFFP);
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  lightType, JConf.mqtt_name);
   String lightStateNum;
   if (lightState == ON){
     lightStateNum = String(F("1"));
@@ -1359,9 +1512,8 @@ bool MqttPubLightState(){
   } else {
     lightStateNum = String(F("2"));
   }
-  mqttClient.publish(topic_buff, lightStateNum.c_str());
+  pubTopicLightType.publish(lightStateNum.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  lightType2, JConf.mqtt_name);
   if (lightState2 == ON){
     lightStateNum = String(F("1"));
   } else if (lightState2 == OFF){
@@ -1369,7 +1521,7 @@ bool MqttPubLightState(){
   } else {
     lightStateNum = String(F("2"));
   }
-  mqttClient.publish(topic_buff, lightStateNum.c_str());
+  pubTopicLightType2.publish(lightStateNum.c_str());
 
   #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
@@ -1389,7 +1541,7 @@ bool MqttPubLightOffDelay() {
   #endif
 
 
-  if (!mqttClient.connected()){
+  if (!mqtt.connected()){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
       unsigned long load_time = millis() - start_time;
@@ -1399,11 +1551,9 @@ bool MqttPubLightOffDelay() {
     return false;
   }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  motionsensortimer, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, JConf.lightoff_delay);
+  pubTopicMotionSensorTimer.publish(JConf.lightoff_delay);
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  motionsensortimer2, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, JConf.light2off_delay);
+  pubTopicMotionSensorTimer2.publish(JConf.light2off_delay);
 
   #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
@@ -1422,7 +1572,7 @@ bool MqttPubData() {
     Serial.println(F("MqttPubData() Start"));
   #endif
 
-  if (mqttClient.state() != 0){
+  if (!mqtt.connected()){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
       unsigned long load_time = millis() - start_time;
@@ -1434,100 +1584,42 @@ bool MqttPubData() {
   Serial.print(F("MQTT data send"));  Serial.println();
 
   if (atoi(JConf.bh1750_enable) == 1){
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  lux, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, luxString.c_str());
+    pubTopicLux.publish(luxString.c_str());
   }
 
   if (atoi(JConf.bme280_enable) == 1  ||  atoi(JConf.sht21_enable) == 1 ||  atoi(JConf.dht_enable) == 1){
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, temperature, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, temperatureString.c_str());
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  humidity, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, humidityString.c_str());
+    pubTopicTemperature.publish(temperatureString.c_str());
+    pubTopicHumidity.publish(humidityString.c_str());
   }
 
   if (atoi(JConf.bme280_enable) == 1){
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, pressure, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, pressureString.c_str());
+    pubTopicPressure.publish(pressureString.c_str());
   }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  freeMemory, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, freeMemoryString.c_str());
+  pubTopicFreeMemory.publish(freeMemoryString.c_str());
+  pubTopicUptime.publish(uptimeString.c_str());
+  pubTopicVersion.publish(ver);
+  pubTopicIp.publish(ipString.c_str());
+  pubTopicMac.publish(macString.c_str());
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic, uptime, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, uptimeString.c_str());
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  version, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, ver);
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  ip, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, ipString.c_str());
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  mac, JConf.mqtt_name);
-  mqttClient.publish(topic_buff, macString.c_str());
-
- 
   #ifdef DHT_ON
     if (atoi(JConf.dht_enable) == 1){
-      sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  errorsDHT, JConf.mqtt_name);
       sprintf_P(value_buff, (const char *)F("%d"), errorDHTdata);  
-      mqttClient.publish(topic_buff, value_buff);
+      pubTopicErrorsDHT.publish(value_buff);
     }
   #endif
 
   #ifdef PZEM_ON
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  pzemVoltage, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, pzemVoltageString.c_str());
-
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  pzemCurrent, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, pzemCurrentString.c_str());
-
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  pzemPower, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, pzemPowerString.c_str());
-
-    sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.publish_topic,  pzemEnergy, JConf.mqtt_name);
-    mqttClient.publish(topic_buff, pzemEnergyString.c_str());
+    pubTopicPzemVoltage.publish(pzemVoltageString.c_str());
+    pubTopicPzemCurrent.publish(pzemCurrentString.c_str());
+    pubTopicPzemPower.publish(pzemPowerString.c_str());
+    pubTopicPzemEnergy.publish(pzemEnergyString.c_str());
   #endif
 
 
   #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
     Serial.print(F("MqttPubData() Load Time: ")); Serial.println(load_time);
-  #endif
-
-  return true;
-}
-
-
-
-bool MqttSubscribePrint(char *sub_buff)
-{
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("MqttSubscribePrint() Start"));
-  #endif
-
-  delay(50);
-  if (!mqttClient.connected()){
-    #ifdef DEBUG
-      Serial.print(F("MQTT server not connected"));  Serial.println();
-    #endif
-    return false;
-  }
-
-  if (mqttClient.subscribe(sub_buff)) {
-    #ifdef DEBUG
-      Serial.print(F("subscribe: "));  Serial.println(sub_buff);
-    #endif
-  } else {
-    #ifdef DEBUG
-      mqttClient.disconnect();
-      Serial.print(F("ERROR subscribe: "));  Serial.println(sub_buff);
-    #endif
-  }
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("MqttSubscribePrint() Load Time: ")); Serial.println(load_time);
   #endif
 
   return true;
@@ -1542,31 +1634,21 @@ bool MqttSubscribe(){
     Serial.println(F("MqttSubscribe() Start"));
   #endif
 
-  if (!mqttClient.connected()){
+  if (!mqtt.connected()){
     #ifdef DEBUG
       Serial.print(F("MQTT server not connected"));  Serial.println();
     #endif
     return false;
   }
 
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, motionsensortimer, JConf.mqtt_name);
-  MqttSubscribePrint(topic_buff);
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, motionsensortimer2, JConf.mqtt_name);
-  MqttSubscribePrint(topic_buff);
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, lightType, JConf.mqtt_name);
-  MqttSubscribePrint(topic_buff);
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, lightType2, JConf.mqtt_name);
-  MqttSubscribePrint(topic_buff);
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.subscribe_topic, uptime, JConf.mqtt_name);
-  MqttSubscribePrint(topic_buff);
+  mqtt.subscribe(&subTopicMotionsensortimer);
+  mqtt.subscribe(&subTopicMotionsensortimer2);
+  mqtt.subscribe(&subTopicLightType);
+  mqtt.subscribe(&subTopicLightType2);
+  mqtt.subscribe(&subTopicUptime);
 
   #ifdef PZEM_ON
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, pzemReset, JConf.mqtt_name);
-  MqttSubscribePrint(topic_buff);
+    mqtt.subscribe(&subTopicPzemReset);
   #endif
 
   #ifdef DEBUG
@@ -1579,54 +1661,6 @@ bool MqttSubscribe(){
 
 
 
-void TestMQTTPrint()
-{
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("TestMQTTPrint() Start"));
-  #endif
-
-  int state = mqttClient.state();
-
-  switch (state) {
-    case -4:
-      Serial.println(F("MQTT_CONNECTION_TIMEOUT - the server didn't respond within the keepalive time"));
-      break;
-    case -3:
-      Serial.println(F("MQTT_CONNECTION_LOST - the network connection was broken"));
-      break;
-    case -2:
-      Serial.println(F("MQTT_CONNECT_FAILED - the network connection failed"));
-      break;
-    case -1:
-      Serial.println(F("MQTT_DISCONNECTED - the client is disconnected cleanly"));
-      break;
-    case 0:
-      Serial.println(F("MQTT_CONNECTED - the cient is connected"));    
-      break;
-    case 1:
-      Serial.println(F("MQTT_CONNECT_BAD_PROTOCOL - the server doesn't support the requested version of MQTT"));    
-      break;
-    case 2:
-      Serial.println(F("MQTT_CONNECT_BAD_CLIENT_ID - the server rejected the client identifier"));    
-      break;
-    case 3:
-      Serial.println(F("MQTT_CONNECT_UNAVAILABLE - the server was unable to accept the connection"));    
-      break;
-    case 4:
-      Serial.println(F("MQTT_CONNECT_BAD_CREDENTIALS - the username/password were rejected"));    
-      break;
-    case 5:
-      Serial.println(F("MQTT_CONNECT_UNAUTHORIZED - the client was not authorized to connect"));    
-      break;
-  }
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("TestMQTTPrint() Load Time: ")); Serial.println(load_time);
-  #endif
-}
-
 
 
 void TestSystemPrint()
@@ -1637,10 +1671,6 @@ void TestSystemPrint()
   #endif
 
   Serial.println(F("----------------"));
-
-  if (atoi(JConf.mqtt_enable) == 1){
-    TestMQTTPrint();
-  }
 
   Serial.println(__TIMESTAMP__);
 
@@ -3480,16 +3510,13 @@ void setup() {
   delay(1000);
 
   if (atoi(JConf.mqtt_enable) == 1) {
-    mqttClient.setClient(espClient);
-
-    if (isIPValid(JConf.mqtt_server)){
-      IPAddress mqtt_ip = stringToIp(JConf.mqtt_server);
-      mqttClient.setServer(mqtt_ip, atoi(JConf.mqtt_port));
+    if (JConf.mqtt_user != "" && JConf.mqtt_pwd != ""){
+      mqtt = Adafruit_MQTT_Client(&espClient, JConf.mqtt_server, atoi(JConf.mqtt_port), JConf.mqtt_user, JConf.mqtt_pwd);
     } else {
-      mqttClient.setServer(JConf.mqtt_server, atoi(JConf.mqtt_port));
+      mqtt = Adafruit_MQTT_Client(&espClient, JConf.mqtt_server, atoi(JConf.mqtt_port));
     }
-    
-    mqttClient.setCallback (callback);
+    MqttInit();
+    MqttSubscribe();
   }
 
   WebServerInit();
@@ -3536,20 +3563,8 @@ void loop() {
     LightControl();
   }
 
-  if (WiFi.status() == WL_CONNECTED) {
-
-    if (atoi(JConf.mqtt_enable) == 1) {
-
-      if (!mqttClient.connected()) {
-        if (JConf.mqtt_user != "" && JConf.mqtt_pwd != ""){
-          mqttClient.connect(JConf.mqtt_name, JConf.mqtt_user, JConf.mqtt_pwd);
-        } else {
-          mqttClient.connect(JConf.mqtt_name);
-        }
-      } else {
-        mqttClient.loop();
-      }
-    }
+  if (WiFi.status() == WL_CONNECTED && atoi(JConf.mqtt_enable) == 1) {
+    MQTT_connect();
   }
 
   #ifdef UART_ON

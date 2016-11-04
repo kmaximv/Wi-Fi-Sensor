@@ -14,7 +14,7 @@
 //#define PZEM_ON
 //-----------------------------------------------------------------------------
 
-//#define DEBUG
+#define DEBUG
 //#define DEBUG_JSON_CONFIG
 
 //#define RESET_BUTTON_ON   //Функционал сброса конфига по кнопке при загрузке модуля
