@@ -14,49 +14,49 @@ extern "C" {
 SimpleTimer timer;
 
 #if defined(NTP_ON)
-#include "NTPClient.h"
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP);
+  #include "NTPClient.h"
+  WiFiUDP ntpUDP;
+  NTPClient timeClient(ntpUDP);
 #endif
 
 #if defined(UART_ON)
-#include "MY_ESP_UART.h"
-Espuart Uart;
+  #include "MY_ESP_UART.h"
+  Espuart Uart;
 #endif
 
 JsonConf JConf;
 
 #if defined(DHT_ON)
-#include "DHT.h"
-#define DHTTYPE DHT22
-DHT dht(atoi(JConf.dht_pin), DHTTYPE);
-int errorDHTdata = 0;  // количество ошибок чтения датчика DHT
+  #include "DHT.h"
+  #define DHTTYPE DHT22
+  DHT dht(atoi(JConf.dht_pin), DHTTYPE);
+  int errorDHTdata = 0;  // количество ошибок чтения датчика DHT
 #endif
 
 #if defined(BH1750_ON)
-#include "BH1750.h"
-BH1750 lightSensor;
+  #include "BH1750.h"
+  BH1750 lightSensor;
 #endif
 
 #if defined(BME280_ON)
-#include "SparkFunBME280.h"
-BME280 bmeSensor;
+  #include "SparkFunBME280.h"
+  BME280 bmeSensor;
 #endif
 
 #if defined(SHT21_ON)
-#include "HTU21D.h"
-HTU21D myHTU21D;
+  #include "HTU21D.h"
+  HTU21D myHTU21D;
 #endif
 
 #if defined(PZEM_ON)
-#include "PZEM004T.h"
-PZEM004T pzem(&Serial);
-IPAddress ip_pzem(192,168,1,1);
-float coil_ratio = 1.84; // Если используем разные катушки, подбираем коэффициент
-enum PZEM_ENUM {PZEM_VOLTAGE, PZEM_CURRENT, PZEM_POWER, PZEM_ENERGY};
-PZEM_ENUM pzem_current_read = PZEM_VOLTAGE;
-enum PZEM_RESET_ENUM {PZEM_STAGE1, PZEM_STAGE2, PZEM_STAGE3, PZEM_STAGE4};
-PZEM_RESET_ENUM pzem_reset_stage = PZEM_STAGE1;
+  #include "PZEM004T.h"
+  PZEM004T pzem(&Serial);
+  IPAddress ip_pzem(192,168,1,1);
+  float coil_ratio = 1.84; // Если используем разные катушки, подбираем коэффициент
+  enum PZEM_ENUM {PZEM_VOLTAGE, PZEM_CURRENT, PZEM_POWER, PZEM_ENERGY};
+  PZEM_ENUM pzem_current_read = PZEM_VOLTAGE;
+  enum PZEM_RESET_ENUM {PZEM_STAGE1, PZEM_STAGE2, PZEM_STAGE3, PZEM_STAGE4};
+  PZEM_RESET_ENUM pzem_reset_stage = PZEM_STAGE1;
 #endif
 
 ADC_MODE(ADC_VCC);
@@ -72,8 +72,8 @@ const char *humidity           = "Humidity"          ;
 const char *pressure           = "Pressure"          ;             
 const char *altitude           = "Altitude"          ;             
 const char *motionSensor       = "MotionSensor"      ;                 
-const char *motionsensortimer  = "MotionSensorTimer" ;                      
-const char *motionsensortimer2 = "MotionSensorTimer2";                       
+const char *motionSensorTimer  = "MotionSensorTimer" ;                      
+const char *motionSensorTimer2 = "MotionSensorTimer2";                       
 const char *version            = "Version"           ;            
 const char *freeMemory         = "FreeMemory"        ;               
 const char *ip                 = "IP"                ;       
@@ -149,8 +149,8 @@ Adafruit_MQTT_Publish pubTopicIp = Adafruit_MQTT_Publish(&mqtt, JConf.publish_to
 Adafruit_MQTT_Publish pubTopicMac = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 
 
-Adafruit_MQTT_Subscribe subTopicMotionsensortimer = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-Adafruit_MQTT_Subscribe subTopicMotionsensortimer2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+Adafruit_MQTT_Subscribe subTopicMotionSensorTimer = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+Adafruit_MQTT_Subscribe subTopicMotionSensorTimer2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 
 Adafruit_MQTT_Subscribe subTopicLightType = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 Adafruit_MQTT_Subscribe subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
@@ -166,8 +166,8 @@ char value_buff[120];
 char lightType_buff[50];
 char lightType2_buff[50];
 char motionSensor_buff[50];
-char motionsensortimer_buff[50];
-char motionsensortimer2_buff[50];
+char motionSensorTimer_buff[50];
+char motionSensorTimer2_buff[50];
 char lux_buff[50];
 char temperature_buff[50];
 char humidity_buff[50];
@@ -183,12 +183,12 @@ char version_buff[50];
 char ip_buff[50];
 char mac_buff[50];
 
-char motionsensortimer_buff_sub[50];
-char motionsensortimer2_buff_sub[50];
+char motionSensorTimer_buff_sub[50];
+char motionSensorTimer2_buff_sub[50];
 char lightType_buff_sub[50];
 char lightType2_buff_sub[50];
 char uptime_buff_sub[50];
-
+char pzemReset_buff_sub[50];
 
 
 
@@ -511,7 +511,7 @@ static char* floatToChar(float charester)
 }
 */
 
-void MQTT_connect();
+bool MQTT_connect();
 
 
 
@@ -1275,161 +1275,30 @@ void NTPSettingsUpdate(){
 #endif
 
 
-/*
-// handles message arrived on subscribed topic(s)
-void callback(char* topic, byte* payload, unsigned int length) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("callback() Start"));
-  #endif
-
-  timer.restartTimer(subscribeTimer);
-
-  #ifdef REBOOT_ON
-    timer.restartTimer(rebootTimer);
-  #endif
-
-  size_t i=0;
-  // create character buffer with ending null terminator (string)
-  for(i=0; i<length; i++) {
-    value_buff[i] = payload[i];
-  }
-  value_buff[i] = '\0';
-
-  #ifdef DEBUG
-  Serial.print(F("callback: "));  Serial.print(topic);  Serial.print(F(" payload "));  Serial.println(value_buff);
-  #endif
-
-  // Обрабатываем данные о состоянии светодиодной ленты (AUTO, ON, OFF)
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, lightType, JConf.mqtt_name);
-  if (strcmp (topic,topic_buff) == 0){
-
-    String AUTO;       AUTO += FPSTR(AUTOP);
-    String ON;         ON += FPSTR(ONP);
-    String OFF;        OFF += FPSTR(OFFP);
-
-    #ifdef DEBUG
-      Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
-    #endif
-    if (strncmp (value_buff,"1",1) == 0){
-      lightState = ON;
-    } else if (strncmp (value_buff,"0",1) == 0){
-      lightState = OFF;
-    } else if (strncmp (value_buff,"2",1) == 0){
-      lightState = AUTO;
-    }
-
-
-    #ifdef DEBUG
-      Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.print(F(" contains "));   Serial.print(lightState);
-    #endif
-
-    LightControl();
-  }
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, lightType2, JConf.mqtt_name);
-  if (strcmp (topic,topic_buff) == 0){
-
-    String AUTO;       AUTO += FPSTR(AUTOP);
-    String ON;         ON += FPSTR(ONP);
-    String OFF;        OFF += FPSTR(OFFP);
-
-    #ifdef DEBUG
-      Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
-    #endif
-    if (strncmp (value_buff,"1",1) == 0){
-      lightState2 = ON;
-    } else if (strncmp (value_buff,"0",1) == 0){
-      lightState2 = OFF;
-    } else if (strncmp (value_buff,"2",1) == 0){
-      lightState2 = AUTO;
-    }
-
-
-    #ifdef DEBUG
-      Serial.print(F("value_buff: "));  Serial.print(value_buff);  Serial.print(F(" contains "));   Serial.print(lightState2);
-    #endif
-
-    LightControl();
-  }
-
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, motionsensortimer, JConf.mqtt_name);
-    if (strcmp (topic,topic_buff) == 0){
-      #ifdef DEBUG
-        Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
-      #endif
-      sprintf_P(JConf.lightoff_delay, (const char *)F("%s"), value_buff);
-      JConf.saveConfig();
-    }
-
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, motionsensortimer2, JConf.mqtt_name);
-    if (strcmp (topic,topic_buff) == 0){
-      #ifdef DEBUG
-        Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
-      #endif
-      sprintf_P(JConf.light2off_delay, (const char *)F("%s"), value_buff);
-      JConf.saveConfig();
-    }
-
-
-  #ifdef PZEM_ON
-  sprintf_P(topic_buff, (const char *)F("%s%s%s"), JConf.command_pub_topic, pzemReset, JConf.mqtt_name);
-    if (strcmp (topic,topic_buff) == 0){
-      #ifdef DEBUG
-        Serial.print(F("topic: "));  Serial.print(topic);  Serial.print(F(" equals "));  Serial.println(topic_buff);
-      #endif
-      if (strncmp (value_buff,"ON",1) == 0){
-        PzemResetEnergy();
-      }
-    }
-  #endif
-
-  #ifdef DEBUG
-    Serial.print(F("topic: "));  Serial.println(topic);  Serial.print(F("value_buff: "));  Serial.println(value_buff);
-    Serial.println();
-  #endif
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("callback() Load Time: ")); Serial.println(load_time);
-  #endif
-}
-*/
-
-
-
-void MQTT_connect() {
+bool MQTT_connect() {
   int8_t ret;
 
   // Stop if already connected.
   if (mqtt.connected()) {
-    return;
+    return true;
   }
 
   Serial.print("Connecting to MQTT... ");
 
-  uint8_t retries = 3;
-  while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-       Serial.println(mqtt.connectErrorString(ret));
-       Serial.println("Retrying MQTT connection in 5 seconds...");
-       mqtt.disconnect();
-       delay(500);  // wait 5 seconds
-       retries--;
-       if (retries == 0) {
-         return;
-         // basically die and wait for WDT to reset me
-         while (1);
-       }
+  if ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
+    Serial.println(mqtt.connectErrorString(ret));
+    mqtt.disconnect();
+    return false;
   }
   Serial.println("MQTT Connected!");
+  return true;
 }
 
 
 
 void MqttInit() {
-
+  //Publish Topics
   sprintf(lightType_buff, "%s%s%s", JConf.publish_topic, lightType, JConf.mqtt_name);
   pubTopicLightType = Adafruit_MQTT_Publish(&mqtt, lightType_buff);
 
@@ -1439,11 +1308,11 @@ void MqttInit() {
   sprintf(motionSensor_buff, "%s%s%s", JConf.publish_topic, motionSensor, JConf.mqtt_name);
   pubTopicMotionSensor = Adafruit_MQTT_Publish(&mqtt, motionSensor_buff);
 
-  sprintf(motionsensortimer_buff, "%s%s%s", JConf.publish_topic, motionsensortimer, JConf.mqtt_name);
-  pubTopicMotionSensorTimer = Adafruit_MQTT_Publish(&mqtt, motionsensortimer_buff);
+  sprintf(motionSensorTimer_buff, "%s%s%s", JConf.publish_topic, motionSensorTimer, JConf.mqtt_name);
+  pubTopicMotionSensorTimer = Adafruit_MQTT_Publish(&mqtt, motionSensorTimer_buff);
 
-  sprintf(motionsensortimer2_buff, "%s%s%s", JConf.publish_topic, motionsensortimer2, JConf.mqtt_name);
-  pubTopicMotionSensorTimer2 = Adafruit_MQTT_Publish(&mqtt, motionsensortimer2_buff);
+  sprintf(motionSensorTimer2_buff, "%s%s%s", JConf.publish_topic, motionSensorTimer2, JConf.mqtt_name);
+  pubTopicMotionSensorTimer2 = Adafruit_MQTT_Publish(&mqtt, motionSensorTimer2_buff);
 
   sprintf(lux_buff, "%s%s%s", JConf.publish_topic, lux, JConf.mqtt_name);
   pubTopicLux = Adafruit_MQTT_Publish(&mqtt, lux_buff);
@@ -1487,22 +1356,24 @@ void MqttInit() {
   sprintf(mac_buff, "%s%s%s", JConf.publish_topic, mac, JConf.mqtt_name);
   pubTopicMac = Adafruit_MQTT_Publish(&mqtt, mac_buff);
 
-/*
-  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, motionsensortimer, JConf.mqtt_name);
-  subTopicMotionsensortimer = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
+  //Subscribe Topics
+  sprintf(motionSensorTimer_buff_sub, "%s%s%s", JConf.command_pub_topic, motionSensorTimer, JConf.mqtt_name);
+  subTopicMotionSensorTimer = Adafruit_MQTT_Subscribe(&mqtt, motionSensorTimer_buff_sub);
 
-  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, motionsensortimer2, JConf.mqtt_name);
-  subTopicMotionsensortimer2 = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
+  sprintf(motionSensorTimer2_buff_sub, "%s%s%s", JConf.command_pub_topic, motionSensorTimer2, JConf.mqtt_name);
+  subTopicMotionSensorTimer2 = Adafruit_MQTT_Subscribe(&mqtt, motionSensorTimer2_buff_sub);
 
-  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, lightType, JConf.mqtt_name);
-  subTopicLightType = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
+  sprintf(lightType_buff_sub, "%s%s%s", JConf.command_pub_topic, lightType, JConf.mqtt_name);
+  subTopicLightType = Adafruit_MQTT_Subscribe(&mqtt, lightType_buff_sub);
 
-  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, lightType2, JConf.mqtt_name);
-  subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
+  sprintf(lightType2_buff_sub, "%s%s%s", JConf.command_pub_topic, lightType2, JConf.mqtt_name);
+  subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, lightType2_buff_sub);
 
-  sprintf(topic_buff, "%s%s%s", JConf.command_pub_topic, uptime, JConf.mqtt_name);
-  subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, topic_buff);
-*/
+  sprintf(uptime_buff_sub, "%s%s%s", JConf.command_pub_topic, uptime, JConf.mqtt_name);
+  subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, uptime_buff_sub);
+
+  sprintf(pzemReset_buff_sub, "%s%s%s", JConf.command_pub_topic, pzemReset, JConf.mqtt_name);
+  subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, pzemReset_buff_sub);
 }
 
 
@@ -1649,27 +1520,127 @@ bool MqttPubData() {
 
 
 
-bool MqttSubscribe(){
+void CallbackMotionSensorTimer(char *data, uint16_t len) {
+  #ifdef DEBUG
+    Serial.print(F("CallbackMotionSensorTimer: "));
+    Serial.println(data);
+  #endif
+
+  sprintf_P(JConf.lightoff_delay, (const char *)F("%s"), data);
+  JConf.saveConfig();
+}
+
+
+
+void CallbackMotionSensorTimer2(char *data, uint16_t len) {
+  #ifdef DEBUG
+    Serial.print(F("CallbackMotionSensorTimer2: "));
+    Serial.println(data);
+  #endif
+
+  sprintf_P(JConf.light2off_delay, (const char *)F("%s"), data);
+  JConf.saveConfig();
+}
+
+
+
+void CallbackLightType(char *data, uint16_t len) {
+  #ifdef DEBUG
+    Serial.print(F("CallbackLightType: "));
+    Serial.println(data);
+  #endif
+
+  String AUTO;       AUTO += FPSTR(AUTOP);
+  String ON;         ON += FPSTR(ONP);
+  String OFF;        OFF += FPSTR(OFFP);
+
+  if (strncmp (data,"1",1) == 0){
+    lightState = ON;
+  } else if (strncmp (data,"0",1) == 0){
+    lightState = OFF;
+  } else if (strncmp (data,"2",1) == 0){
+    lightState = AUTO;
+  }
+
+  LightControl();
+}
+
+
+
+void CallbackLightType2(char *data, uint16_t len) {
+  #ifdef DEBUG
+    Serial.print(F("CallbackLightType2: "));
+    Serial.println(data);
+  #endif
+
+  String AUTO;       AUTO += FPSTR(AUTOP);
+  String ON;         ON += FPSTR(ONP);
+  String OFF;        OFF += FPSTR(OFFP);
+
+  if (strncmp (data,"1",1) == 0){
+    lightState2 = ON;
+  } else if (strncmp (data,"0",1) == 0){
+    lightState2 = OFF;
+  } else if (strncmp (data,"2",1) == 0){
+    lightState2 = AUTO;
+  }
+
+  LightControl();
+}
+
+
+
+#ifdef PZEM_ON
+void CallbackPzemReset(char *data, uint16_t len) {
+  #ifdef DEBUG
+    Serial.print(F("CallbackPzemReset: "));
+    Serial.println(data);
+  #endif
+
+  if (strncmp (data,"ON",1) == 0){
+    PzemResetEnergy();
+  }
+}
+#endif
+
+
+
+void CallbackUptime(char *data, uint16_t len) {
+  #ifdef DEBUG
+    Serial.print(F("CallbackUptime: "));
+    Serial.println(data);
+  #endif
+
+  timer.restartTimer(subscribeTimer);
+
+  #ifdef REBOOT_ON
+    timer.restartTimer(rebootTimer);
+  #endif
+}
+
+
+
+void MqttSubscribe(){
 
   #ifdef DEBUG
     unsigned long start_time = millis();
     Serial.println(F("MqttSubscribe() Start"));
   #endif
 
-  if (!mqtt.connected()){
-    #ifdef DEBUG
-      Serial.print(F("MQTT server not connected"));  Serial.println();
-    #endif
-    return false;
-  }
+  subTopicMotionSensorTimer.setCallback(CallbackMotionSensorTimer);
+  subTopicMotionSensorTimer2.setCallback(CallbackMotionSensorTimer2);
+  subTopicLightType.setCallback(CallbackLightType);
+  subTopicLightType2.setCallback(CallbackLightType2);
+  subTopicUptime.setCallback(CallbackUptime);
 
-  mqtt.subscribe(&subTopicMotionsensortimer);
-  mqtt.subscribe(&subTopicMotionsensortimer2);
+  mqtt.subscribe(&subTopicMotionSensorTimer);
+  mqtt.subscribe(&subTopicMotionSensorTimer2);
   mqtt.subscribe(&subTopicLightType);
   mqtt.subscribe(&subTopicLightType2);
   mqtt.subscribe(&subTopicUptime);
 
   #ifdef PZEM_ON
+    subTopicPzemReset.setCallback(CallbackPzemReset);
     mqtt.subscribe(&subTopicPzemReset);
   #endif
 
@@ -1677,11 +1648,7 @@ bool MqttSubscribe(){
     unsigned long load_time = millis() - start_time;
     Serial.print(F("MqttSubscribe() Load Time: ")); Serial.println(load_time);
   #endif
-
-  return true;
 }
-
-
 
 
 
@@ -3539,6 +3506,7 @@ void setup() {
     }
     MqttInit();
     MqttSubscribe();
+    MQTT_connect();
   }
 
   WebServerInit();
@@ -3554,6 +3522,8 @@ void setup() {
 
   wifiReconnectTimer = timer.setInterval(10000, wifiReconnect);
   timer.setInterval(atoi(JConf.get_data_delay) * 1000, getData);
+
+  timer.setInterval(60000, MQTT_connect);
   timer.setInterval(atoi(JConf.publish_delay) * 1000, MqttPubData);
 
   if (atoi(JConf.motion_sensor_enable) == 1){
@@ -3586,7 +3556,9 @@ void loop() {
   }
 
   if (WiFi.status() == WL_CONNECTED && atoi(JConf.mqtt_enable) == 1) {
-    MQTT_connect();
+    if (mqtt.connected()){
+      mqtt.processPackets(100);
+    }
   }
 
   #ifdef UART_ON

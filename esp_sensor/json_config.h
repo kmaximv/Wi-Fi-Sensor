@@ -7,7 +7,7 @@
 
 
 // --------------- Supported Sensors (Uncomment for Enable) -------------------
-#define DHT_ON
+//#define DHT_ON
 #define BME280_ON
 #define SHT21_ON
 #define BH1750_ON
@@ -19,7 +19,7 @@
 
 //#define RESET_BUTTON_ON   //Функционал сброса конфига по кнопке при загрузке модуля
 //#define REBOOT_ON
-//#define NTP_ON
+#define NTP_ON
 
 // ----------------- UART Settings ---------------------------------------------
 
