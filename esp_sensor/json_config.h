@@ -7,14 +7,14 @@
 
 
 // --------------- Supported Sensors (Uncomment for Enable) -------------------
-//#define DHT_ON
+#define DHT_ON
 #define BME280_ON
 #define SHT21_ON
 #define BH1750_ON
-//#define PZEM_ON
+#define PZEM_ON
 //-----------------------------------------------------------------------------
 
-#define DEBUG
+//#define DEBUG
 //#define DEBUG_JSON_CONFIG
 
 //#define RESET_BUTTON_ON   //Функционал сброса конфига по кнопке при загрузке модуля

@@ -28,9 +28,7 @@ JsonConf JConf;
 
 #if defined(DHT_ON)
   #include "DHT.h"
-  #define DHTTYPE DHT22
-  DHT dht(atoi(JConf.dht_pin), DHTTYPE);
-  int errorDHTdata = 0;  // количество ошибок чтения датчика DHT
+  DHT dht;
 #endif
 
 #if defined(BH1750_ON)
@@ -62,7 +60,7 @@ JsonConf JConf;
 ADC_MODE(ADC_VCC);
 float voltage_float;
 
-const char *ver                = "1.08"              ;         
+const char *ver                = "1.09"              ;         
 
 const char *lux                = "Lux"               ;        
 const char *lightType          = "LightType"         ;              
@@ -78,7 +76,6 @@ const char *version            = "Version"           ;
 const char *freeMemory         = "FreeMemory"        ;               
 const char *ip                 = "IP"                ;       
 const char *mac                = "MAC"               ;        
-const char *errorsDHT          = "ErrorsDHT"         ;              
 const char *uptime             = "Uptime"            ;           
 const char *pzemVoltage        = "pzemVoltage"       ;           
 const char *pzemCurrent        = "pzemCurrent"       ;           
@@ -135,7 +132,6 @@ Adafruit_MQTT_Publish pubTopicLux = Adafruit_MQTT_Publish(&mqtt, JConf.publish_t
 Adafruit_MQTT_Publish pubTopicTemperature = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopicHumidity = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopicPressure = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicErrorsDHT = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 
 Adafruit_MQTT_Publish pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
@@ -172,7 +168,6 @@ char lux_buff[50];
 char temperature_buff[50];
 char humidity_buff[50];
 char pressure_buff[50];
-char errorsDHT_buff[50];
 char pzemVoltage_buff[50];
 char pzemCurrent_buff[50];
 char pzemPower_buff[50];
@@ -1087,16 +1082,15 @@ void DHT22Sensor()
     Serial.println(F("DHT22Sensor() Start"));
   #endif
 
-  float temperatureData = dht.readTemperature();
-  float humidityData = dht.readHumidity();
+  float temperatureData = dht.getTemperature();
+  float humidityData = dht.getHumidity();
   #ifdef DEBUG
     Serial.print(F("Humidity "));  Serial.println(humidityData);
     Serial.print(F("Temperature "));  Serial.println(temperatureData);
   #endif
   if (isnan(humidityData) || isnan(temperatureData)) {
-    errorDHTdata++;
     #ifdef DEBUG
-      Serial.print(F("Failed to read from DHT. Number errors: "));  Serial.println(errorDHTdata);
+      Serial.println(F("Failed to read from DHT"));
     #endif
   } else {
     temperatureString = String(temperatureData);
@@ -1278,20 +1272,27 @@ void NTPSettingsUpdate(){
 
 bool MQTT_connect() {
   int8_t ret;
-
   // Stop if already connected.
   if (mqtt.connected()) {
     return true;
   }
 
-  Serial.print("Connecting to MQTT... ");
+  #ifdef DEBUG
+    Serial.print("Connecting to MQTT... ");
+  #endif
 
   if ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-    Serial.println(mqtt.connectErrorString(ret));
+    #ifdef DEBUG
+      Serial.println(mqtt.connectErrorString(ret));
+    #endif
     mqtt.disconnect();
     return false;
   }
-  Serial.println("MQTT Connected!");
+
+  #ifdef DEBUG
+    Serial.println("MQTT Connected!");
+  #endif
+
   return true;
 }
 
@@ -1325,9 +1326,6 @@ void MqttInit() {
 
   sprintf(pressure_buff, "%s%s%s", JConf.publish_topic, pressure, JConf.mqtt_name);
   pubTopicPressure = Adafruit_MQTT_Publish(&mqtt, pressure_buff);
-
-  sprintf(errorsDHT_buff, "%s%s%s", JConf.publish_topic, errorsDHT, JConf.mqtt_name);
-  pubTopicErrorsDHT = Adafruit_MQTT_Publish(&mqtt, errorsDHT_buff);
 
   sprintf(pzemVoltage_buff, "%s%s%s", JConf.publish_topic, pzemVoltage, JConf.mqtt_name);
   pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, pzemVoltage_buff);
@@ -1474,8 +1472,6 @@ bool MqttPubData() {
     return false;
   }
 
-  Serial.print(F("MQTT data send"));  Serial.println();
-
   if (atoi(JConf.bh1750_enable) == 1){
     pubTopicLux.publish(luxString.c_str());
   }
@@ -1495,18 +1491,13 @@ bool MqttPubData() {
   pubTopicIp.publish(ipString.c_str());
   pubTopicMac.publish(macString.c_str());
 
-  #ifdef DHT_ON
-    if (atoi(JConf.dht_enable) == 1){
-      sprintf_P(value_buff, (const char *)F("%d"), errorDHTdata);  
-      pubTopicErrorsDHT.publish(value_buff);
-    }
-  #endif
-
   #ifdef PZEM_ON
-    pubTopicPzemVoltage.publish(pzemVoltageString.c_str());
-    pubTopicPzemCurrent.publish(pzemCurrentString.c_str());
-    pubTopicPzemPower.publish(pzemPowerString.c_str());
-    pubTopicPzemEnergy.publish(pzemEnergyString.c_str());
+    if (atoi(JConf.pzem_enable) == 1){
+      pubTopicPzemVoltage.publish(pzemVoltageString.c_str());
+      pubTopicPzemCurrent.publish(pzemCurrentString.c_str());
+      pubTopicPzemPower.publish(pzemPowerString.c_str());
+      pubTopicPzemEnergy.publish(pzemEnergyString.c_str());
+    }
   #endif
 
 
@@ -1640,8 +1631,10 @@ void MqttSubscribe(){
   mqtt.subscribe(&subTopicUptime);
 
   #ifdef PZEM_ON
-    subTopicPzemReset.setCallback(CallbackPzemReset);
-    mqtt.subscribe(&subTopicPzemReset);
+    if (atoi(JConf.pzem_enable) == 1){
+      subTopicPzemReset.setCallback(CallbackPzemReset);
+      mqtt.subscribe(&subTopicPzemReset);
+    }
   #endif
 
   #ifdef DEBUG
@@ -1715,9 +1708,6 @@ void WebRoot(void) {
   String jsHumidity;            jsHumidity += FPSTR(jsHumidityP);
   String jsPressure;            jsPressure += FPSTR(jsPressureP);
   String jsIlluminance;         jsIlluminance += FPSTR(jsIlluminanceP);
-  #ifdef PZEM_ON
-  String jsPzem;                jsPzem += FPSTR(jsPzemP);
-  #endif
   String jsNtp;                 jsNtp += FPSTR(jsNtpP);
   String javaScriptEnd;         javaScriptEnd += FPSTR(javaScriptEndP);
   String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
@@ -1801,6 +1791,7 @@ void WebRoot(void) {
 
   #ifdef PZEM_ON
     if (atoi(JConf.pzem_enable) == 1){
+      String jsPzem;                jsPzem += FPSTR(jsPzemP);
       data += jsPzem;
     }
   #endif
@@ -2301,39 +2292,39 @@ void WebSensorsConf(void) {
   }
 
   if (atoi(JConf.bme280_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bme280_enable' value='1' checked='true'>BME280 Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bme280_enable' value='1' checked='true'>BME280</label></div>"));
   } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bme280_enable' value='1'>BME280 Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bme280_enable' value='1'>BME280</label></div>"));
   }
 
   if (atoi(JConf.sht21_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='sht21_enable' value='1' checked='true'>SHT21 Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='sht21_enable' value='1' checked='true'>SHT21</label></div>"));
   } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='sht21_enable' value='1'>SHT21 Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='sht21_enable' value='1'>SHT21</label></div>"));
   }
 
   if (atoi(JConf.dht_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='dht_enable' value='1' checked='true'>DHT Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='dht_enable' value='1' checked='true'>DHT</label></div>"));
   } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='dht_enable' value='1'>DHT Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='dht_enable' value='1'>DHT</label></div>"));
   }
 
   if (atoi(JConf.bh1750_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bh1750_enable' value='1' checked='true'>BH1750 Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bh1750_enable' value='1' checked='true'>BH1750</label></div>"));
   } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bh1750_enable' value='1'>BH1750 Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bh1750_enable' value='1'>BH1750</label></div>"));
   }
 
   if (atoi(JConf.motion_sensor_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='motion_sensor_enable' value='1' checked='true'>Motion Sensor Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='motion_sensor_enable' value='1' checked='true'>Motion Sensor</label></div>"));
   } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='motion_sensor_enable' value='1'>Motion Sensor Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='motion_sensor_enable' value='1'>Motion Sensor</label></div>"));
   }
 
   if (atoi(JConf.pzem_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='pzem_enable' value='1' checked='true'>Energy Monitor Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='pzem_enable' value='1' checked='true'>Energy Monitor</label></div>"));
   } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='pzem_enable' value='1'>Energy Monitor Enable</label></div>"));
+    data += String(F("<div class='checkbox'><label><input type='checkbox' name='pzem_enable' value='1'>Energy Monitor</label></div>"));
   }
 
   data += inputBodyEnd;
@@ -2498,7 +2489,9 @@ void WebEspConf(void) {
   data += String(F("<h4>Light 1</h4>"));
   data += inputBodyName + String(F("Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.light_pin + inputBodyClose + inputBodyCloseDiv;
   data += inputBodyName + String(F("Off Delay")) + inputBodyPOST + String(F("lightoff_delay")) + inputPlaceHolder + JConf.lightoff_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
-  data += inputBodyName + String(F("On Lux")) + inputBodyPOST + String(F("lighton_lux")) + inputPlaceHolder + JConf.lighton_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
+  if (atoi(JConf.bh1750_enable) == 1){
+    data += inputBodyName + String(F("On Lux")) + inputBodyPOST + String(F("lighton_lux")) + inputPlaceHolder + JConf.lighton_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
+  }
 
   if (atoi(JConf.light_smooth) == 1){
     data += String(F("<div class='checkbox'><label><input type='checkbox' name='light_smooth' value='1' checked='true'>Smooth Enable</label></div>"));
@@ -2510,7 +2503,9 @@ void WebEspConf(void) {
   data += String(F("<h4>Light 2</h4>"));
   data += inputBodyName + String(F("Pin")) + inputBodyPOST + String(F("light2_pin")) + inputPlaceHolder + JConf.light2_pin + inputBodyClose + inputBodyCloseDiv;
   data += inputBodyName + String(F("Off Delay")) + inputBodyPOST + String(F("light2off_delay")) + inputPlaceHolder + JConf.light2off_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
-  data += inputBodyName + String(F("On Lux")) + inputBodyPOST + String(F("light2on_lux")) + inputPlaceHolder + JConf.light2on_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
+  if (atoi(JConf.bh1750_enable) == 1){
+    data += inputBodyName + String(F("On Lux")) + inputBodyPOST + String(F("light2on_lux")) + inputPlaceHolder + JConf.light2on_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
+  }
 
   if (atoi(JConf.light2_smooth) == 1){
     data += String(F("<div class='checkbox'><label><input type='checkbox' name='light2_smooth' value='1' checked='true'>Smooth Enable</label></div>"));
@@ -2519,13 +2514,24 @@ void WebEspConf(void) {
   }
   data += String(F("<hr>"));
 
-  data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + JConf.motion_pin + inputBodyClose + inputBodyCloseDiv;
-  data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + JConf.dht_pin + inputBodyClose + inputBodyCloseDiv;
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + JConf.motion_pin + inputBodyClose + inputBodyCloseDiv;
+  }
+
+  if (atoi(JConf.dht_enable) == 1){
+    data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + JConf.dht_pin + inputBodyClose + inputBodyCloseDiv;
+  }
   data += String(F("<br>"));
 
   data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + JConf.get_data_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
-  data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + JConf.motion_read_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
-  data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + JConf.reboot_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + JConf.motion_read_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+  }
+
+  #ifdef REBOOT_ON
+    data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + JConf.reboot_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
+  #endif
 
   data += inputBodyEnd;
 
@@ -2685,7 +2691,7 @@ void WebMqttConf(void) {
     } 
     data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqtt_pwd")) + inputPlaceHolder + JConf.mqtt_pwd + inputBodyClose + inputBodyCloseDiv;
 
-    data += inputBodyName + String(F("MQTT Prefix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.mqtt_name + inputBodyClose + inputBodyCloseDiv;
+    data += inputBodyName + String(F("MQTT Postfix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.mqtt_name + inputBodyClose + inputBodyCloseDiv;
     data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + JConf.publish_topic + inputBodyClose + inputBodyCloseDiv;
     data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + JConf.subscribe_topic + inputBodyClose + inputBodyCloseDiv;
     data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + JConf.publish_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
@@ -3211,25 +3217,27 @@ void handleXML(){
   XML+=String(F("</illuminance>"));
 
   #ifdef PZEM_ON
-  XML+=String(F("<pzemVoltage>"));
-  XML+=pzemVoltageString;
-  XML+=String(F(" V"));
-  XML+=String(F("</pzemVoltage>"));
+    if (atoi(JConf.pzem_enable) == 1){
+      XML+=String(F("<pzemVoltage>"));
+      XML+=pzemVoltageString;
+      XML+=String(F(" V"));
+      XML+=String(F("</pzemVoltage>"));
 
-  XML+=String(F("<pzemCurrent>"));
-  XML+=pzemCurrentString;
-  XML+=String(F(" A"));
-  XML+=String(F("</pzemCurrent>"));
+      XML+=String(F("<pzemCurrent>"));
+      XML+=pzemCurrentString;
+      XML+=String(F(" A"));
+      XML+=String(F("</pzemCurrent>"));
 
-  XML+=String(F("<pzemPower>"));
-  XML+=pzemPowerString;
-  XML+=String(F(" kW"));
-  XML+=String(F("</pzemPower>"));
+      XML+=String(F("<pzemPower>"));
+      XML+=pzemPowerString;
+      XML+=String(F(" kW"));
+      XML+=String(F("</pzemPower>"));
 
-  XML+=String(F("<pzemEnergy>"));
-  XML+=pzemEnergyString;
-  XML+=String(F(" kWh"));
-  XML+=String(F("</pzemEnergy>"));
+      XML+=String(F("<pzemEnergy>"));
+      XML+=pzemEnergyString;
+      XML+=String(F(" kWh"));
+      XML+=String(F("</pzemEnergy>"));
+    }
   #endif
 
   XML+=String(F("<uptime>"));
@@ -3460,7 +3468,7 @@ void setup() {
   #endif
 
   #ifdef DHT_ON
-    dht.begin();
+    dht.setup(atoi(JConf.dht_pin)); 
   #endif
 
   #ifdef BME280_ON
