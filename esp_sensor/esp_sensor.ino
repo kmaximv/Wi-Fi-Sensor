@@ -2280,6 +2280,7 @@ void WebSensorsConf(void) {
     if (!bh1750_enable){
       JConf.bh1750_enable[0] = '0';
       JConf.bh1750_enable[1] = '\0';
+      luxString = "0";
     }
     if (!motion_sensor_enable){
       JConf.motion_sensor_enable[0] = '0';
