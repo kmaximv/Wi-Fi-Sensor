@@ -94,8 +94,8 @@ String macString =         "none";
 String uptimeString =      "none";
 String ntpTimeString =     "none";
 String freeMemoryString =  "none";
-String lightState =        "AUTO";
-String lightState2 =       "AUTO";
+String lightState =        "OFF";
+String lightState2 =       "OFF";
 String pzemVoltageString = "none";
 String pzemCurrentString = "none";
 String pzemPowerString =   "none";
@@ -285,9 +285,10 @@ const char div1P[] PROGMEM =
     <td class='active'><h4>Pins</h4></td>\
     <td class='active'></td><td class='active'></td>\
     <td class='active'><h4>Status</h4></td>\
-    <td class='active'><h4>Mode</h4></td>\
-    <td class='active'><h4>Timer</h4></td>\
-  </tr>\
+    <td class='active'><h4>Mode</h4></td>";
+
+const char div2P[] PROGMEM =
+ "</tr>\
   <tr>\
     <td class='active'><h4>Light1</h4></td>\
     <td class='active'><div onclick='Pin1();'><input id='OnOff' type='submit' class='btn btn-";
@@ -721,7 +722,7 @@ void LightControl() {
   String ON;         ON += FPSTR(ONP);
   String OFF;        OFF += FPSTR(OFFP);
 
-  if (lightState == ON && luxString.toInt() < atoi(JConf.lighton_lux)){
+  if (lightState == ON){
     PWMChange(atoi(JConf.light_pin), 1023);
   } else if (lightState == OFF){
     PWMChange(atoi(JConf.light_pin), 0);
@@ -734,7 +735,7 @@ void LightControl() {
     }
   }
 
-  if (lightState2 == ON && luxString.toInt() < atoi(JConf.light2on_lux)){
+  if (lightState2 == ON){
     PWMChange(atoi(JConf.light2_pin), 1023);
   } else if (lightState2 == OFF){
     PWMChange(atoi(JConf.light2_pin), 0);
@@ -2839,6 +2840,8 @@ void handleControl(){
         }
       }
       if (WebServer.argName(i) == "1" && WebServer.arg(i) == "2") {
+        lightState = OFF;
+        LightControl();
         lightState = AUTO;
       }
 
@@ -2850,6 +2853,8 @@ void handleControl(){
         }
       }
       if (WebServer.argName(i) == "2" && WebServer.arg(i) == "2") {
+        lightState2 = OFF;
+        LightControl();
         lightState2 = AUTO;
       }
       #ifdef DEBUG
@@ -2977,13 +2982,25 @@ void WebPinControlStatus(void) {
   }
 
   String data;    data += FPSTR(div1P);
-  
+
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    data+=String(F("<td class='active'><h4>Timer</h4></td>"));
+  }
+  data+=FPSTR(div2P);
+
   if (lightState == AUTO) { data+=ClassDefault; } else if (pinState) { data+=ClassDanger; } else { data+=ClassInfo; }
   data+=String(F("' value='"));
   if (pinState) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
-  data+=String(F("'></div></td><td class='active'><div onclick='Auto1();'><input id='Auto' type='submit' class='btn btn-"));
-  if (lightState == AUTO) { data+=ClassDanger; } else { data+=ClassDefault; }
-  data+=String(F("' value='Auto'></div></td><td class='"));
+  data+=String(F("'></div></td>"));
+
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    data+=String(F("<td class='active'><div onclick='Auto1();'><input id='Auto' type='submit' class='btn btn-"));
+    if (lightState == AUTO) { data+=ClassDanger; } else { data+=ClassDefault; }
+    data+=String(F("' value='Auto'></div></td>"));
+  } else {
+    data+=String(F("<td class='active'></td>"));
+  }
+  data+=String(F("<td class='"));
   if (pinState) { data+=ClassInfo; } else { data+=ClassDanger; }
   data+=String(F("'><h4>"));
   if (pinState) { data+=ON; } else { data+=OFF; }
@@ -2991,19 +3008,34 @@ void WebPinControlStatus(void) {
   data+=mode;    
   data+=String(F("'><h4>"));
   data+=lightState;
-  data+=String(F("</h4></td><td class='"));
-  data+=String(F("active"));
-  data+=String(F("'><h4>"));
-  data+=String(timeOff);
-  data+=String(F("</h4></td></tr>"));
+  data+=String(F("</h4></td>"));
+
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    if (lightState == AUTO && pinState == true){
+      data+=String(F("<td class='active'><h4>"));
+      data+=String(timeOff);
+      data+=String(F("</h4></td>"));
+    } else {
+      data+=String(F("<td class='active'></td>"));
+    }
+  }
+  data+=String(F("</tr>"));
+
 
   data+=String(F("<tr><td class='active'><h4>Light2</h4></td><td class='active'><div onclick='Pin2();'><input id='OnOff2' type='submit' class='btn btn-"));
   if (lightState2 == AUTO) { data+=ClassDefault; } else if (pinState2) { data+=ClassDanger; } else { data+=ClassInfo; }
   data+=String(F("' value='"));
   if (pinState2) { data+=String(F("Turn Off")); } else { data+=String(F("Turn On")); }
-  data+=String(F("'></div></td><td class='active'><div onclick='Auto2();'><input id='Auto2' type='submit' class='btn btn-"));
-  if (lightState2 == AUTO) { data+=ClassDanger; } else { data+=ClassDefault; }
-  data+=String(F("' value='Auto'></div></td><td class='"));
+  data+=String(F("'></div></td>"));
+
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    data+=String(F("<td class='active'><div onclick='Auto2();'><input id='Auto2' type='submit' class='btn btn-"));
+    if (lightState2 == AUTO) { data+=ClassDanger; } else { data+=ClassDefault; }
+    data+=String(F("' value='Auto'></div></td>"));
+  } else {
+    data+=String(F("<td class='active'></td>"));
+  }
+  data+=String(F("<td class='"));
   if (pinState2) { data+=ClassInfo; } else { data+=ClassDanger; }
   data+=String(F("'><h4>"));
   if (pinState2) { data+=ON; } else { data+=OFF; }
@@ -3011,11 +3043,18 @@ void WebPinControlStatus(void) {
   data+=mode2;    
   data+=String(F("'><h4>"));
   data+=lightState2;
-  data+=String(F("</h4></td><td class='"));
-  data+=String(F("active"));
-  data+=String(F("'><h4>"));
-  data+=String(timeOff2);
-  data+=String(F("</h4></td></tr>"));
+  data+=String(F("</h4></td>"));
+
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    if (lightState2 == AUTO && pinState2 == true){
+      data+=String(F("<td class='active'><h4>"));
+      data+=String(timeOff2);
+      data+=String(F("</h4></td>"));
+    } else {
+      data+=String(F("<td class='active'></td>"));
+    }
+  }
+  data+=String(F("</tr>"));
   data+=String(F("</tbody></table></div>"));
 
   WebServer.send ( 200, "text/html", data);
