@@ -106,6 +106,7 @@ class JsonConf
     char static_ip_enable             [2]  = "0"                  ;
     char ntp_enable                   [2]  = "0"                  ;
     char mqtt_enable                  [2]  = "0"                  ;
+    char mqtt_auth_enable             [2]  = "0"                  ;
     char dht_enable                   [2]  = "0"                  ;
     char bme280_enable                [2]  = "0"                  ;
     char sht21_enable                 [2]  = "0"                  ;

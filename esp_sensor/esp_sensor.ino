@@ -1093,7 +1093,7 @@ void DHT22Sensor()
   dht.temperature().getEvent(&event);
   if (isnan(event.temperature)) {
     #ifdef DEBUG
-      Serial.println("Error reading temperature!");
+      Serial.println(F("Error reading temperature!"));
     #endif
   }
   else {
@@ -1103,7 +1103,7 @@ void DHT22Sensor()
   dht.humidity().getEvent(&event);
   if (isnan(event.relative_humidity)) {
     #ifdef DEBUG
-      Serial.println("Error reading humidity!");
+      Serial.println(F("Error reading humidity!"));
     #endif
   }
   else {
@@ -2079,7 +2079,7 @@ void WebWiFiConf(void) {
     payload.toCharArray(JConf.static_ip_enable, sizeof(JConf.static_ip_enable));
     config_changed = true;
     enable = true;
-  } 
+  }
 
   payload=WebServer.arg("static_ip");
   if (payload.length() > 6 ) {
@@ -2604,6 +2604,7 @@ void WebMqttConf(void) {
 
   bool config_changed = false;
   bool enable = false;
+  bool enable_auth = false;
   String payload = "";
 
   payload=WebServer.arg("mqtt_enable");
@@ -2625,29 +2626,24 @@ void WebMqttConf(void) {
     config_changed = true;
   }
 
+  payload=WebServer.arg("mqtt_auth_enable");
+  if (payload.length() > 0) {
+    payload.toCharArray(JConf.mqtt_auth_enable, sizeof(JConf.mqtt_auth_enable));
+    config_changed = true;
+    enable_auth = true;
+  }
+
   payload=WebServer.arg("mqtt_user");
   if (payload.length() > 0 ) {
-    if (payload == "0"){
-      String data = "";
-      data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
-      data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
-    } else {
-      payload.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
-    }
+    payload.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
     config_changed = true;
   }
 
   payload=WebServer.arg("mqtt_pwd");
-  if (payload.length() > 0 ) {
-    if (payload == "0"){
-      String data = "";
-      data.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
-      data.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
-    } else {
-      payload.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
-    }
+  if (payload.length() > 0 &&  payload != String(F("********"))) {
+    payload.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
     config_changed = true;
-  } 
+  }
 
   payload=WebServer.arg("mqtt_name");
   if (payload.length() > 0 ) {
@@ -2686,6 +2682,10 @@ void WebMqttConf(void) {
       JConf.mqtt_enable[0] = '0';
       JConf.mqtt_enable[1] = '\0';
     }
+    if (!enable_auth){
+      JConf.mqtt_auth_enable[0] = '0';
+      JConf.mqtt_auth_enable[1] = '\0';
+    }
     JConf.saveConfig();
   }
 
@@ -2695,15 +2695,15 @@ void WebMqttConf(void) {
     data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_server")) + inputPlaceHolder + JConf.mqtt_server + inputBodyClose + inputBodyCloseDiv;
     data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqtt_port")) + inputPlaceHolder + JConf.mqtt_port + inputBodyClose + inputBodyCloseDiv;
 
-    if (strlen(JConf.mqtt_user) != 0){
-      data += String(F("<div><input type='hidden' name='mqtt_user' value='0'></div>"));
-    } 
-    data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqtt_user")) + inputPlaceHolder + JConf.mqtt_user + inputBodyClose + inputBodyCloseDiv;
-
-    if (strlen(JConf.mqtt_pwd) != 0){
-      data += String(F("<div><input type='hidden' name='mqtt_pwd' value='0'></div>"));
-    } 
-    data += inputBodyName + String(F("MQTT Password")) + inputBodyPOST + String(F("mqtt_pwd")) + inputPlaceHolder + JConf.mqtt_pwd + inputBodyClose + inputBodyCloseDiv;
+    data += String(F("<hr>"));
+    if (atoi(JConf.mqtt_auth_enable) == 1){
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='mqtt_auth_enable' value='1' checked='true'>MQTT Authentication</label></div>"));
+      data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqtt_user")) + inputPlaceHolder + JConf.mqtt_user + inputBodyClose + inputBodyCloseDiv;
+      data += inputBodyName + String(F("MQTT Password")) + String(F("</span><input type='password' name='")) + String(F("mqtt_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
+    } else {
+      data += String(F("<div class='checkbox'><label><input type='checkbox' name='mqtt_auth_enable' value='1'>MQTT Authentication</label></div>"));
+    }
+    data += String(F("<hr>"));
 
     data += inputBodyName + String(F("MQTT Postfix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.mqtt_name + inputBodyClose + inputBodyCloseDiv;
     data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + JConf.publish_topic + inputBodyClose + inputBodyCloseDiv;
@@ -3563,7 +3563,7 @@ void setup() {
   delay(1000);
 
   if (atoi(JConf.mqtt_enable) == 1) {
-    if (JConf.mqtt_user != "" && JConf.mqtt_pwd != ""){
+    if (atoi(JConf.mqtt_auth_enable) == 1){
       mqtt = Adafruit_MQTT_Client(&espClient, JConf.mqtt_server, atoi(JConf.mqtt_port), JConf.mqtt_user, JConf.mqtt_pwd);
     } else {
       mqtt = Adafruit_MQTT_Client(&espClient, JConf.mqtt_server, atoi(JConf.mqtt_port));

@@ -65,6 +65,7 @@ bool JsonConf::saveConfig() {
   json["static_ip_enable"]              = static_ip_enable             ;                                     
   json["ntp_enable"]                    = ntp_enable                   ;                               
   json["mqtt_enable"]                   = mqtt_enable                  ;                               
+  json["mqtt_auth_enable"]              = mqtt_auth_enable             ;                               
   json["dht_enable"]                    = dht_enable                   ;                               
   json["bme280_enable"]                 = bme280_enable                ;                               
   json["sht21_enable"]                  = sht21_enable                 ;                               
@@ -193,6 +194,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("static_ip_enable"              )) {  const char* static_ip_enable_char              = json["static_ip_enable"             ];    sprintf_P(static_ip_enable,              ("%s"), static_ip_enable_char             ); }
   if (json.containsKey("ntp_enable"                    )) {  const char* ntp_enable_char                    = json["ntp_enable"                   ];    sprintf_P(ntp_enable,                    ("%s"), ntp_enable_char                   ); }
   if (json.containsKey("mqtt_enable"                   )) {  const char* mqtt_enable_char                   = json["mqtt_enable"                  ];    sprintf_P(mqtt_enable,                   ("%s"), mqtt_enable_char                  ); }
+  if (json.containsKey("mqtt_auth_enable"              )) {  const char* mqtt_auth_enable_char              = json["mqtt_auth_enable"             ];    sprintf_P(mqtt_auth_enable,              ("%s"), mqtt_auth_enable_char             ); }
   if (json.containsKey("bme280_enable"                 )) {  const char* bme280_enable_char                 = json["bme280_enable"                ];    sprintf_P(bme280_enable,                 ("%s"), bme280_enable_char                ); }
   if (json.containsKey("sht21_enable"                  )) {  const char* sht21_enable_char                  = json["sht21_enable"                 ];    sprintf_P(sht21_enable,                  ("%s"), sht21_enable_char                 ); }
   if (json.containsKey("bh1750_enable"                 )) {  const char* bh1750_enable_char                 = json["bh1750_enable"                ];    sprintf_P(bh1750_enable,                 ("%s"), bh1750_enable_char                ); }
@@ -267,6 +269,7 @@ bool JsonConf::printConfig() {
   Serial.print(F("static_ip_enable             : "));   Serial.println(static_ip_enable             );
   Serial.print(F("ntp_enable                   : "));   Serial.println(ntp_enable                   );
   Serial.print(F("mqtt_enable                  : "));   Serial.println(mqtt_enable                  );
+  Serial.print(F("mqtt_auth_enable             : "));   Serial.println(mqtt_auth_enable             );
   Serial.print(F("bme280_enable                : "));   Serial.println(bme280_enable                );
   Serial.print(F("sht21_enable                 : "));   Serial.println(sht21_enable                 );
   Serial.print(F("bh1750_enable                : "));   Serial.println(bh1750_enable                );
