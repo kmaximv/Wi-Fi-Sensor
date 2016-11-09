@@ -27,8 +27,14 @@ SimpleTimer timer;
 JsonConf JConf;
 
 #if defined(DHT_ON)
-  #include "DHT.h"
-  DHT dht;
+  #include <Adafruit_Sensor.h>
+  #include <DHT.h>
+  #include <DHT_U.h>  
+  // Uncomment the type of sensor in use:
+  //#define DHTTYPE           DHT11     // DHT 11 
+  #define DHTTYPE           DHT22     // DHT 22 (AM2302)
+  //#define DHTTYPE           DHT21     // DHT 21 (AM2301)
+  DHT_Unified dht(atoi(JConf.dht_pin), DHTTYPE);
 #endif
 
 #if defined(BH1750_ON)
@@ -1083,19 +1089,25 @@ void DHT22Sensor()
     Serial.println(F("DHT22Sensor() Start"));
   #endif
 
-  float temperatureData = dht.getTemperature();
-  float humidityData = dht.getHumidity();
-  #ifdef DEBUG
-    Serial.print(F("Humidity "));  Serial.println(humidityData);
-    Serial.print(F("Temperature "));  Serial.println(temperatureData);
-  #endif
-  if (isnan(humidityData) || isnan(temperatureData)) {
+  sensors_event_t event;  
+  dht.temperature().getEvent(&event);
+  if (isnan(event.temperature)) {
     #ifdef DEBUG
-      Serial.println(F("Failed to read from DHT"));
+      Serial.println("Error reading temperature!");
     #endif
-  } else {
-    temperatureString = String(temperatureData);
-    humidityString = String(humidityData);
+  }
+  else {
+    temperatureString = String(event.temperature);
+  }
+  // Get humidity event and print its value.
+  dht.humidity().getEvent(&event);
+  if (isnan(event.relative_humidity)) {
+    #ifdef DEBUG
+      Serial.println("Error reading humidity!");
+    #endif
+  }
+  else {
+    humidityString = String(event.relative_humidity);
   }
 
   #ifdef DEBUG
@@ -3508,7 +3520,11 @@ void setup() {
   #endif
 
   #ifdef DHT_ON
-    dht.setup(atoi(JConf.dht_pin)); 
+    dht = DHT_Unified(atoi(JConf.dht_pin), DHTTYPE);
+    dht.begin();
+    sensor_t sensor;
+    dht.temperature().getSensor(&sensor);
+    dht.humidity().getSensor(&sensor);
   #endif
 
   #ifdef BME280_ON
