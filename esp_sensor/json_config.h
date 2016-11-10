@@ -5,42 +5,6 @@
 #include "ArduinoJson.h"
 #include "FS.h"
 
-
-// --------------- Supported Sensors (Uncomment for Enable) -------------------
-#define DHT_ON
-#define BME280_ON
-#define SHT21_ON
-#define BH1750_ON
-#define PZEM_ON
-//-----------------------------------------------------------------------------
-
-//#define DEBUG
-//#define DEBUG_JSON_CONFIG
-
-//#define RESET_BUTTON_ON   //Функционал сброса конфига по кнопке при загрузке модуля
-//#define REBOOT_ON
-#define NTP_ON
-
-// ----------------- UART Settings ---------------------------------------------
-
-//#define UART_ON
-//#define DEBUG_ESP_UART
-//#define CRC_ENABLE
-
-#define DIGITAL_PINS 14   //Кол-во цифровых входов/выходов
-#define ANALOG_PINS 6     //Кол-во цифровых входов/выходов
-#define PARSE_CELLS 4     //Кол-во ячеек в массиве принимаемых данных
-#define DATA_LENGTH 10    //Максимальный размер пакета данных без маркеров и CRC
-//------------------------------------------------------------------------------
-
-#define ESP_PINS 17
-#define UP true 
-#define DOWN false
-
-enum WIFI_MODE_ENUM {AP, STA, AP_STA};
-enum WIFI_PHY_MODE_ENUM {B, G, N};
-enum WIFI_AUTH_ENUM {OPEN, WPA_PSK, WPA2_PSK, WPA_WPA2_PSK};
-
 const String ConfigFileName = "/conf.json";
 
 class JsonConf

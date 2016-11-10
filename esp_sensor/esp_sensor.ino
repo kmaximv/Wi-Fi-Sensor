@@ -10,6 +10,8 @@ extern "C" {
 #include "json_config.h"
 #include "ArduinoJson.h"
 
+#include "user_config.h"
+
 #include "SimpleTimer.h"
 SimpleTimer timer;
 
@@ -63,68 +65,18 @@ JsonConf JConf;
   PZEM_RESET_ENUM pzem_reset_stage = PZEM_STAGE1;
 #endif
 
+WiFiUDP portUDP;                      // UDP Syslog
+
+
 ADC_MODE(ADC_VCC);
 float voltage_float;
 
-const char *ver                = "1.09"              ;         
+String network_html;          // Список доступных Wi-Fi точек
 
-const char *lux                = "Lux"               ;        
-const char *lightType          = "LightType"         ;              
-const char *lightType2         = "LightType2"        ;               
-const char *temperature        = "Temp"              ;         
-const char *humidity           = "Humidity"          ;             
-const char *pressure           = "Pressure"          ;             
-const char *altitude           = "Altitude"          ;             
-const char *motionSensor       = "MotionSensor"      ;                 
-const char *motionSensorTimer  = "MotionSensorTimer" ;                      
-const char *motionSensorTimer2 = "MotionSensorTimer2";                       
-const char *version            = "Version"           ;            
-const char *freeMemory         = "FreeMemory"        ;               
-const char *ip                 = "IP"                ;       
-const char *mac                = "MAC"               ;        
-const char *uptime             = "Uptime"            ;           
-const char *pzemVoltage        = "pzemVoltage"       ;           
-const char *pzemCurrent        = "pzemCurrent"       ;           
-const char *pzemPower          = "pzemPower"         ;           
-const char *pzemEnergy         = "pzemEnergy"        ;           
-const char *pzemReset          = "pzemReset"         ;           
-
-const char sec[] PROGMEM = "sec";
-
-String temperatureString = "none";
-String pressureString =    "none";
-String humidityString =    "none";
-String luxString =         "none";
-String ipString =          "none";
-String macString =         "none";
-String uptimeString =      "none";
-String ntpTimeString =     "none";
-String freeMemoryString =  "none";
-String lightState =        "OFF";
-String lightState2 =       "OFF";
-String pzemVoltageString = "none";
-String pzemCurrentString = "none";
-String pzemPowerString =   "none";
-String pzemEnergyString =  "none";
-
-long Day=0;
-int Hour =0;
-int Minute=0;
-int Second=0;
-int HighMillis=0;
-int Rollover=0;
-
-int wifiReconnectTimer = 0;
-int rebootTimer = 0;
-int subscribeTimer = 0;
-
-unsigned long lightOffTimer = 0;
-unsigned long lightOffTimer2 = 0;
-
-bool motionDetect = false;
-bool wifiSafeMode = false;
+ESP8266WebServer WebServer(80);
 
 WiFiClient espClient;
+
 
 Adafruit_MQTT_Client mqtt = Adafruit_MQTT_Client(&espClient, JConf.mqtt_server, atoi(JConf.mqtt_port), JConf.mqtt_user, JConf.mqtt_pwd);
 
@@ -160,49 +112,6 @@ Adafruit_MQTT_Subscribe subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, JCon
 Adafruit_MQTT_Subscribe subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 
 Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-
-
-char topic_buff[120];
-char value_buff[120];
-
-char lightType_buff[50];
-char lightType2_buff[50];
-char motionSensor_buff[50];
-char motionSensorTimer_buff[50];
-char motionSensorTimer2_buff[50];
-char lux_buff[50];
-char temperature_buff[50];
-char humidity_buff[50];
-char pressure_buff[50];
-char pzemVoltage_buff[50];
-char pzemCurrent_buff[50];
-char pzemPower_buff[50];
-char pzemEnergy_buff[50];
-char freeMemory_buff[50];
-char uptime_buff[50];
-char version_buff[50];
-char ip_buff[50];
-char mac_buff[50];
-
-char motionSensorTimer_buff_sub[50];
-char motionSensorTimer2_buff_sub[50];
-char lightType_buff_sub[50];
-char lightType2_buff_sub[50];
-char uptime_buff_sub[50];
-char pzemReset_buff_sub[50];
-
-
-
-
-String network_html;          // Список доступных Wi-Fi точек
-
-ESP8266WebServer WebServer(80);
-
-int cycleNow[ESP_PINS];
-int cycleEnd[ESP_PINS];
-
-unsigned long timerDigitalPin[ESP_PINS];
-int delayDigitalPin = 10;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
@@ -497,232 +406,20 @@ const char OFFP[] PROGMEM  = "OFF";
 /*
 static char* floatToChar(float charester)
 {
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("floatToChar() Start"));
-  #endif
-
  dtostrf(charester, 1, 0, value_buff);
- 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("floatToChar() Load Time: ")); Serial.println(load_time);
-  #endif
-
  return value_buff;
 }
 */
 
-bool MQTT_connect();
-
-
-
-void GetFreeMemory () {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetFreeMemory() Start"));
-  #endif
-
-  freeMemoryString = String(ESP.getFreeHeap());
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetFreeMemory() Load Time: ")); Serial.println(load_time);
-  #endif
-}
-
-
-
-String GetIpString (IPAddress ip) {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetIpString() Start"));
-  #endif
-
-  String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetIpString() Load Time: ")); Serial.println(load_time);
-  #endif
-
-  return ipStr;
-}
-
-
-
-void GetMacString () {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetMacString() Start"));
-  #endif
-
-  uint8_t macData[6];
-  WiFi.macAddress(macData);
-  sprintf_P(value_buff, (const char *)F("%x:%x:%x:%x:%x:%x"), macData[0], macData[1], macData[2], macData[3], macData[4], macData[5]);
-  
-  macString = String(value_buff);
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetMacString() Load Time: ")); Serial.println(load_time);
-  #endif
-}
-
-
-
-IPAddress stringToIp (String strIp) {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("stringToIp() Start"));
-  #endif
-
-  String temp;
-  IPAddress ip;
-
-  int count = 0;
-  for(int i=0; i <= strIp.length(); i++)
-  {
-    if(strIp[i] != '.')
-    {
-      temp += strIp[i];
-    }
-    else
-    {
-      if(count < 4)
-      {
-        ip[count] = atoi(temp.c_str());
-        temp = "";
-        count++;
-      }
-    }
-    if(i==strIp.length())
-    {
-      ip[count] = atoi(temp.c_str());
-    }
-  }
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("stringToIp() Load Time: ")); Serial.println(load_time);
-  #endif
-
-  return ip;
-}
-
-
-
-bool isIPValid(const char * IP) {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("isIPValid() Start"));
-  #endif
-
-  //limited size
-  int internalcount=0;
-  int dotcount = 0;
-  bool previouswasdot=false;
-  char c;
-
-  if (strlen(IP)>15 || strlen(IP)==0) {
-    return false;
-  }
-  //cannot start with .
-  if (IP[0]=='.') {
-    return false;
-  }
-  //only letter and digit
-  for (int i=0; i < strlen(IP); i++) {
-    c = IP[i];
-    if (isdigit(c)) {
-      //only 3 digit at once
-      internalcount++;
-      previouswasdot=false;
-      if (internalcount>3) {
-        return false;
-      }
-    } else if(c=='.') {
-      if (previouswasdot) {   //cannot have 2 dots side by side
-        return false;
-      }
-      previouswasdot=true;
-      internalcount=0;
-      dotcount++;
-    } else {    //if not a dot neither a digit it is wrong
-      return false;
-    }
-  }
-  
-  if (dotcount!=3) {    //if not 3 dots then it is wrong
-    return false;
-  }
-  //cannot have the last dot as last char
-  if (IP[strlen(IP)-1]=='.') {
-      return false;
-  }
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("isIPValid() Load Time: ")); Serial.println(load_time);
-  #endif
-
-  return true;
-}
-
-
-
-void PWMChange(int pin, int bright) {
-  cycleEnd[pin] = bright;
-
-  if ( ( atoi(JConf.light_smooth) == 0 && pin == atoi(JConf.light_pin) )   ||   ( atoi(JConf.light2_smooth) == 0 && pin == atoi(JConf.light2_pin) ) ){
-    if (cycleNow[pin] < cycleEnd[pin]){
-      cycleNow[pin] = 1022;
-    } else if (cycleNow[pin] > cycleEnd[pin]){
-      cycleNow[pin] = 1;
-    }
-  }
-}
-
-
-
-void FadeSwitchDelay(int pin){
-  if (millis() - timerDigitalPin[pin] >= delayDigitalPin && cycleNow[pin] != cycleEnd[pin]){
-    timerDigitalPin[pin] = millis();
-    if (cycleNow[pin] < cycleEnd[pin]){
-      cycleNow[pin] = constrain(cycleNow[pin] + 10, 0, 1023);
-    } else if (cycleNow[pin] > cycleEnd[pin]){
-      cycleNow[pin] = constrain(cycleNow[pin] - 10, 0, 1023);
-    }
-    analogWrite(pin, cycleNow[pin]);
-
-    #ifdef DEBUG
-    Serial.print(F("PWM pin: ")); Serial.print(pin);
-    Serial.print(F("   PWM Value: ")); Serial.println(cycleNow[pin]);
-    #endif
-  }
-}
-
-
-
-void FadeSwitchLoop(){
-  for ( size_t i = 0; i < ESP_PINS; i++ ){
-    FadeSwitchDelay(i);
-  }
-}
+bool MqttConnect();
 
 
 
 void LightControl() {
 
-  #ifdef DEBUG11
-    unsigned long start_time = millis();
-    Serial.println(F("LightControl() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: LightControl Start");
 
   String AUTO;       AUTO += FPSTR(AUTOP);
   String ON;         ON += FPSTR(ONP);
@@ -754,235 +451,9 @@ void LightControl() {
     }
   }
 
-  #ifdef DEBUG11
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("LightControl() Load Time: ")); Serial.println(load_time);
-  #endif
-}
-
-
-
-void scanWiFi(void) {
-
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("scanWiFi() Start"));
-  #endif
-
-  int founds = WiFi.scanNetworks();
-
-  #ifdef DEBUG
-    Serial.println();  Serial.println(F("scan done"));
-    if (founds == 0) {
-      Serial.println(F("no networks found"));
-    } else {
-      Serial.print(founds);  Serial.println(F(" networks found"));
-      for (size_t i = 0; i < founds; ++i) {
-        // Print SSID and RSSI for each network found
-        Serial.print(i + 1);  Serial.print(F(": "));  Serial.print(WiFi.SSID(i));  Serial.print(F(" ("));  Serial.print(WiFi.RSSI(i));  Serial.print(F(")"));
-        Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? F(" ") : F("*"));
-        delay(10);
-      }
-    }
-  #endif
-
-  network_html = String(F("<blockquote>"));
-  for (size_t i = 0; i < founds; ++i)
-  {
-    // Print SSID and RSSI for each network found
-    network_html += String(F("<p><kbd>"));
-    network_html += WiFi.SSID(i);
-    network_html += String(F(" ("));
-    network_html += WiFi.RSSI(i);
-    network_html += String(F(")"));
-    network_html += (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? F(" ") : F("*");
-    network_html += String(F("</kbd></p>"));
-  }
-  network_html += String(F("</blockquote>"));
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("scanWiFi() Load Time: ")); Serial.println(load_time);
-  #endif
-}
-
-
-
-void wifiAPSettings(){
-  if (atoi(JConf.wifi_auth) == OPEN){
-    WiFi.softAP(JConf.module_id);
-  } else {
-    WiFi.softAP(JConf.module_id, JConf.ap_pwd);
-  }
-
-  //setup PHY_MODE
-  if (atoi(JConf.wifi_phy_mode) == B){
-    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11B);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
-  } else if (atoi(JConf.wifi_phy_mode) == G){
-    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);
-  } else {
-    wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);
-  }
-
-  //get current config
-  struct softap_config apconfig;
-  wifi_softap_get_config(&apconfig);
-  //set the chanel
-  apconfig.channel=atoi(JConf.wifi_channel);
-
-  //set Authentification type                      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
-  if (atoi(JConf.wifi_auth) == OPEN){
-    apconfig.authmode=(AUTH_MODE)AUTH_OPEN;
-  } else if (atoi(JConf.wifi_auth) == WPA_PSK){
-    apconfig.authmode=(AUTH_MODE)AUTH_WPA_PSK;
-  } else if (atoi(JConf.wifi_auth) == WPA2_PSK){
-    apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;
-  } else {
-    apconfig.authmode=(AUTH_MODE)AUTH_WPA_WPA2_PSK;
-  }
-
-  //set the visibility of SSID
-  apconfig.ssid_hidden=0;
-  //no need to add these settings to configuration just use default ones
-  //apconfig.max_connection=2;
-  //apconfig.beacon_interval=100;
-  //apply settings to current and to default
-  if (!wifi_softap_set_config(&apconfig) || !wifi_softap_set_config_current(&apconfig)) {
-      Serial.println(F("Error Wifi AP_STA!"));
-      delay(1000);
-  }
-}
-
-
-
-bool wifiTryConnect(){
-  byte i=0;
-  while (WiFi.status() != WL_CONNECTED && i<40) {  //try to connect
-    switch(WiFi.status()) {
-    case 1:
-      Serial.println(F("No SSID found!"));
-      break;
-    case 4:
-      Serial.println(F("No Connection!"));
-      break;
-    default:
-      Serial.println(F("Connecting..."));
-      break;
-    }
-    delay(500);
-    i++;
-  }
-  if (WiFi.status() != WL_CONNECTED) {
-    return false;
-  }
-  return true;
-}
-
-
-
-void wifiAP() {
-  WiFi.mode(WIFI_AP);   //setup Soft AP
-  wifiAPSettings();
-}
-
-
-
-bool wifiSTA() {
-  WiFi.mode(WIFI_STA);                            //setup station mode
-  WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
-  delay(500);
-  
-  wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);    //setup PHY_MODE
-
-  if (!wifiTryConnect()) {
-    return false;
-  }
-  WiFi.hostname(JConf.module_id);
-  return true; 
-}
-
-
-
-bool wifiAP_STA() {
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
-
-  if (!wifiTryConnect()) {
-    return false;
-  }
-  wifiAPSettings();
-  return true;
-}
-
-
-
-void wifiReconnect() {
-  if (WiFi.status() != WL_CONNECTED && atoi(JConf.wifi_mode) != AP && wifiSafeMode == false) {
-    #ifdef DEBUG
-      Serial.print(F("Connecting "));
-      Serial.println(F("..."));
-    #endif
-
-    WiFiSetup();
-  }
-}
-
-
-
-bool WiFiSetup()
-{
-  wifi_set_sleep_type ((sleep_type_t)NONE_SLEEP_T);   // NONE_SLEEP_T,LIGHT_SLEEP_T,MODEM_SLEEP_T
-  WiFi.disconnect();
-
-  if (atoi(JConf.wifi_mode) == AP) {
-    wifiAP();
-  } else if (atoi(JConf.wifi_mode) == STA && !wifiSTA()) {
-    return false;
-  } else if (atoi(JConf.wifi_mode) == AP_STA && !wifiAP_STA()) {
-    return false;
-  }
-
-  //DHCP or Static IP ?
-  if (atoi(JConf.static_ip_enable) == 1) {
-    IPAddress staticIP = stringToIp(JConf.static_ip);
-    IPAddress staticGateway = stringToIp(JConf.static_gateway);
-    IPAddress staticSubnet = stringToIp(JConf.static_subnet);
-    //apply according active wifi mode
-    if (wifi_get_opmode()==WIFI_STA || wifi_get_opmode()==WIFI_AP_STA) {
-      WiFi.config(staticIP, staticGateway, staticSubnet);
-    }
-  }
-  //Get IP
-  IPAddress espIP;
-  if (wifi_get_opmode()==WIFI_STA || wifi_get_opmode()==WIFI_AP_STA) {
-      espIP=WiFi.localIP();
-  } else {
-      espIP=WiFi.softAPIP();
-  }
-  ipString = GetIpString(espIP);
-
-  return true;
-}
-
-
-
-void  WiFiSafeSetup()
-{
-  WiFi.disconnect();
-  //setup Soft AP
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(JConf.module_id, JConf.ap_pwd);
-  delay(500);
-  Serial.println(F("Safe mode started"));
-  wifiSafeMode = true;
-}
-
-
-
-void wifiSafeModeReconnect() {
-  if (wifiSafeMode == true && WiFiSetup()) {
-    wifiSafeMode = false; 
-  }
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: LightControl load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
@@ -990,21 +461,18 @@ void wifiSafeModeReconnect() {
 #ifdef BH1750_ON
 void GetLightSensorData()
 {
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetLightSensorData() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetLightSensorData Start");
 
   luxString = String(lightSensor.readLightLevel());
     
-  #ifdef DEBUG
-    Serial.print(F("Lux:   "));  Serial.print(luxString);  Serial.println();
-  #endif
+  snprintf_P(log, sizeof(log), PSTR("GetLightSensorData: Lux: %s"), luxString.c_str());
+  addLog(LOG_LEVEL_INFO, log);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetLightSensorData() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: GetLightSensorData load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 #endif
 
@@ -1013,30 +481,26 @@ void GetLightSensorData()
 #ifdef BME280_ON
 void GetBmeSensorData()
 { 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetBmeSensorData() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetBmeSensorData Start");
 
   temperatureString = String(bmeSensor.readTempC());
-  #ifdef DEBUG 
-    Serial.print(F("Temperature: "));  Serial.print(temperatureString);  Serial.println(F(" C"));
-  #endif
+  snprintf_P(log, sizeof(log), PSTR("GetBmeSensorData: Temperature: %d C"), temperatureString.c_str());
+  addLog(LOG_LEVEL_INFO, log);
 
   pressureString = String(bmeSensor.readFloatPressure()/133.3F);
-  #ifdef DEBUG
-    Serial.print(F("Pressure: "));  Serial.print(pressureString);  Serial.println(F(" mm"));
-  #endif
+  snprintf_P(log, sizeof(log), PSTR("GetBmeSensorData: Pressure: %d"), pressureString.c_str());
+  addLog(LOG_LEVEL_INFO, log);
+
 
   humidityString = String(bmeSensor.readFloatHumidity());
-  #ifdef DEBUG
-    Serial.print(F("%RH: "));  Serial.print(humidityString);  Serial.println(F(" %"));
-  #endif
+  snprintf_P(log, sizeof(log), PSTR("GetBmeSensorData: Humidity: %d %"), humidityString.c_str());
+  addLog(LOG_LEVEL_INFO, log);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetBmeSensorData() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: GetBmeSensorData load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 #endif
 
@@ -1045,56 +509,39 @@ void GetBmeSensorData()
 #ifdef SHT21_ON
 void GetSHT21SensorData(){
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetSHT21SensorData() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetSHT21SensorData Start");
 
   myHTU21D.setResolution(HTU21D_RES_RH8_TEMP12);
+
   temperatureString = String(myHTU21D.readTemperature());
+  snprintf_P(log, sizeof(log), PSTR("GetSHT21SensorData: Temperature: %d C"), temperatureString.c_str());
+  addLog(LOG_LEVEL_INFO, log);
+
   humidityString = String(myHTU21D.readCompensatedHumidity());
+  snprintf_P(log, sizeof(log), PSTR("GetSHT21SensorData: Humidity: %d %"), humidityString.c_str());
+  addLog(LOG_LEVEL_INFO, log);
 
-  #ifdef DEBUG
-    Serial.println(F(""));  Serial.println(F(""));  Serial.println(F("<<%RH: 8Bit, Temperature - 12Bit>>"));
-    
-    Serial.println(F(""));  Serial.print(F("Humidity: "));  Serial.println(myHTU21D.readHumidity());
-    
-    Serial.println(F(""));  Serial.print(F("Compensated Humidity: "));   Serial.println(humidityString);
-    
-    Serial.println(F(""));  Serial.print(F("Temperature: "));  Serial.print(temperatureString);  Serial.println(F(" C"));
-
-    Serial.println(F(""));  Serial.println(F(""));  Serial.println(F("<<Battery Status>>"));
-    
-    if (myHTU21D.batteryStatus() == true)
-    {
-      Serial.println(F("Battery OK. Level > 2.25v"));
-    }
-    else
-    {
-      Serial.println(F("Battery LOW. Level < 2.25v"));
-    }
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetSHT21SensorData() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: GetSHT21SensorData load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 #endif
 
 
 
 #ifdef DHT_ON
-void DHT22Sensor()
+void GetDhtSensorData()
 {
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("DHT22Sensor() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetDhtSensorData Start");
 
   sensors_event_t event;  
   dht.temperature().getEvent(&event);
   if (isnan(event.temperature)) {
-    #ifdef DEBUG
-      Serial.println(F("Error reading temperature!"));
-    #endif
+    addLog_P(LOG_LEVEL_INFO, "GetDhtSensorData: Error reading temperature!");
   }
   else {
     temperatureString = String(event.temperature);
@@ -1102,25 +549,28 @@ void DHT22Sensor()
   // Get humidity event and print its value.
   dht.humidity().getEvent(&event);
   if (isnan(event.relative_humidity)) {
-    #ifdef DEBUG
-      Serial.println(F("Error reading humidity!"));
-    #endif
+    addLog_P(LOG_LEVEL_INFO, "GetDhtSensorData: Error reading humidity!");
   }
   else {
     humidityString = String(event.relative_humidity);
   }
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("DHT22Sensor() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: GetDhtSensorData load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 #endif
 
 
 #if defined(PZEM_ON)
 bool GetPzemData(float data, String *val) {
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetPzemData Start");
+
   if (data < 0.0){
+    addLog_P(LOG_LEVEL_INFO, "GetPzemData: Error reading data!");
     return false;
   } else if (pzem_current_read == PZEM_POWER || pzem_current_read == PZEM_ENERGY) {
     data = data * coil_ratio / 1000;
@@ -1128,16 +578,21 @@ bool GetPzemData(float data, String *val) {
     data = data * coil_ratio;
   } 
   *val = String(data);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: GetPzemData load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+
   return true;
 }
 
 
 
 void GetPzemSerialRead() { 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetPzemSerialRead() Start"));
-  #endif
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetPzemSerialRead Start");
 
   switch (pzem_current_read) {
     case PZEM_VOLTAGE:
@@ -1163,15 +618,18 @@ void GetPzemSerialRead() {
       pzem_current_read = PZEM_VOLTAGE;
   }
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetPzemSerialRead() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: GetPzemSerialRead load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void PzemResetEnergy() {
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: PzemResetEnergy Start");
 
   String ON;         ON += FPSTR(ONP);
   String OFF;        OFF += FPSTR(OFFP);
@@ -1203,21 +661,22 @@ void PzemResetEnergy() {
     default:
       break;
   }
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: PzemResetEnergy load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 #endif
 
 
 void MotionDetect(){
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("MotionDetect() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MotionDetect Start");
 
   if (digitalRead(atoi(JConf.motion_pin)) == HIGH) {
-    #ifdef DEBUG
-      Serial.println(F("MotionSensor: movement detected"));
-    #endif
+    addLog_P(LOG_LEVEL_DEBUG, "MotionDetect: movement detected");
     motionDetect = true;
     LightControl();
     if (atoi(JConf.mqtt_enable) == 1 && mqtt.connected()) {
@@ -1227,20 +686,18 @@ void MotionDetect(){
     motionDetect = false;
   }
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("MotionDetect() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: MotionDetect load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 String GetUptimeData(){
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("GetUptimeData() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetUptimeData Start");
 
   //** Making Note of an expected rollover *****//   
   if(millis()>=3000000000){ 
@@ -1261,11 +718,13 @@ String GetUptimeData(){
 
   sprintf_P(value_buff, (const char *)F("%dd %02d:%02d"), Day, Hour, Minute);
   uptimeString = String(value_buff);
-  #ifdef DEBUG
-    Serial.print(F("Uptime: "));  Serial.print(value_buff);  Serial.print(F(":"));  Serial.print(Second/10);  Serial.println(Second%10);
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("GetUptimeData() Load Time: ")); Serial.println(load_time);
-  #endif
+
+  snprintf_P(log, sizeof(log), PSTR("GetUptimeData: Uptime: %s:%d%d"), uptimeString.c_str(), Second/10, Second%10);
+  addLog(LOG_LEVEL_INFO, log);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: GetUptimeData load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 
   return value_buff;
 }
@@ -1283,28 +742,32 @@ void NTPSettingsUpdate(){
 
 
 
-bool MQTT_connect() {
+bool MqttConnect() {
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MqttConnect Start");
+
   int8_t ret;
   // Stop if already connected.
   if (mqtt.connected()) {
     return true;
   }
 
-  #ifdef DEBUG
-    Serial.print("Connecting to MQTT... ");
-  #endif
+  addLog_P(LOG_LEVEL_INFO, "MqttConnect: Connecting to MQTT...");
 
   if ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-    #ifdef DEBUG
-      Serial.println(mqtt.connectErrorString(ret));
-    #endif
+    snprintf_P(log, sizeof(log), PSTR("MqttConnect: Error: %s"), mqtt.connectErrorString(ret));
+    addLog(LOG_LEVEL_INFO, log);
     mqtt.disconnect();
     return false;
   }
 
-  #ifdef DEBUG
-    Serial.println("MQTT Connected!");
-  #endif
+  addLog_P(LOG_LEVEL_INFO, "MqttConnect: MQTT Connected");
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: MqttConnect load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 
   return true;
 }
@@ -1391,17 +854,12 @@ void MqttInit() {
 
 bool MqttPubLightState(){
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("MqttPubLightState() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MqttPubLightState Start");
 
   if (!mqtt.connected()){
-    #ifdef DEBUG
-      Serial.print(F("MQTT server not connected"));  Serial.println();
-      unsigned long load_time = millis() - start_time;
-      Serial.print(F("MqttPubLightState() Load Time: ")); Serial.println(load_time);
-    #endif
+    addLog_P(LOG_LEVEL_INFO, "MqttPubLightState: MQTT not connected!");
     return false;
   }
 
@@ -1427,10 +885,9 @@ bool MqttPubLightState(){
   }
   pubTopicLightType2.publish(lightStateNum.c_str());
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("MqttPubLightState() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: MqttPubLightState load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 
   return true;
 }
@@ -1439,19 +896,12 @@ bool MqttPubLightState(){
 
 bool MqttPubLightOffDelay() {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("MqttPubLightOffDelay() Start"));
-  #endif
-
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MqttPubLightState Start");
 
   if (!mqtt.connected()){
-    #ifdef DEBUG
-      Serial.print(F("MQTT server not connected"));  Serial.println();
-      unsigned long load_time = millis() - start_time;
-      Serial.print(F("MqttPubLightOffDelay() Load Time: ")); Serial.println(load_time);
-    #endif
-
+    addLog_P(LOG_LEVEL_INFO, "MqttPubLightOffDelay: MQTT not connected!");
     return false;
   }
 
@@ -1459,10 +909,9 @@ bool MqttPubLightOffDelay() {
 
   pubTopicMotionSensorTimer2.publish(JConf.light2off_delay);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("MqttPubLightOffDelay() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: MqttPubLightOffDelay load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 
   return true;
 }
@@ -1471,17 +920,12 @@ bool MqttPubLightOffDelay() {
 
 bool MqttPubData() {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("MqttPubData() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MqttPubData Start");
 
   if (!mqtt.connected()){
-    #ifdef DEBUG
-      Serial.print(F("MQTT server not connected"));  Serial.println();
-      unsigned long load_time = millis() - start_time;
-      Serial.print(F("MqttPubData() Load Time: ")); Serial.println(load_time);
-    #endif
+    addLog_P(LOG_LEVEL_INFO, "MqttPubData: MQTT not connected!");
     return false;
   }
 
@@ -1513,11 +957,9 @@ bool MqttPubData() {
     }
   #endif
 
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("MqttPubData() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: MqttPubData load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 
   return true;
 }
@@ -1525,34 +967,42 @@ bool MqttPubData() {
 
 
 void CallbackMotionSensorTimer(char *data, uint16_t len) {
-  #ifdef DEBUG
-    Serial.print(F("CallbackMotionSensorTimer: "));
-    Serial.println(data);
-  #endif
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: CallbackMotionSensorTimer Start");
 
   sprintf_P(JConf.lightoff_delay, (const char *)F("%s"), data);
   JConf.saveConfig();
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: CallbackMotionSensorTimer load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void CallbackMotionSensorTimer2(char *data, uint16_t len) {
-  #ifdef DEBUG
-    Serial.print(F("CallbackMotionSensorTimer2: "));
-    Serial.println(data);
-  #endif
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: CallbackMotionSensorTimer2 Start");
 
   sprintf_P(JConf.light2off_delay, (const char *)F("%s"), data);
   JConf.saveConfig();
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: CallbackMotionSensorTimer2 load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void CallbackLightType(char *data, uint16_t len) {
-  #ifdef DEBUG
-    Serial.print(F("CallbackLightType: "));
-    Serial.println(data);
-  #endif
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: CallbackLightType Start");
 
   String AUTO;       AUTO += FPSTR(AUTOP);
   String ON;         ON += FPSTR(ONP);
@@ -1567,15 +1017,19 @@ void CallbackLightType(char *data, uint16_t len) {
   }
 
   LightControl();
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: CallbackLightType load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void CallbackLightType2(char *data, uint16_t len) {
-  #ifdef DEBUG
-    Serial.print(F("CallbackLightType2: "));
-    Serial.println(data);
-  #endif
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: CallbackLightType2 Start");
 
   String AUTO;       AUTO += FPSTR(AUTOP);
   String ON;         ON += FPSTR(ONP);
@@ -1590,46 +1044,57 @@ void CallbackLightType2(char *data, uint16_t len) {
   }
 
   LightControl();
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: CallbackLightType2 load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 #ifdef PZEM_ON
 void CallbackPzemReset(char *data, uint16_t len) {
-  #ifdef DEBUG
-    Serial.print(F("CallbackPzemReset: "));
-    Serial.println(data);
-  #endif
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: CallbackPzemReset Start");
 
   if (strncmp (data,"ON",1) == 0){
     PzemResetEnergy();
   }
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: CallbackPzemReset load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 #endif
 
 
 
 void CallbackUptime(char *data, uint16_t len) {
-  #ifdef DEBUG
-    Serial.print(F("CallbackUptime: "));
-    Serial.println(data);
-  #endif
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: CallbackUptime Start");
 
   timer.restartTimer(subscribeTimer);
 
   #ifdef REBOOT_ON
     timer.restartTimer(rebootTimer);
   #endif
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: CallbackUptime load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void MqttSubscribe(){
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("MqttSubscribe() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MqttSubscribe Start");
 
   subTopicMotionSensorTimer.setCallback(CallbackMotionSensorTimer);
   subTopicMotionSensorTimer2.setCallback(CallbackMotionSensorTimer2);
@@ -1650,51 +1115,43 @@ void MqttSubscribe(){
     }
   #endif
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("MqttSubscribe() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: MqttSubscribe load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void TestSystemPrint()
 {
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("TestSystemPrint() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: TestSystemPrint Start");
 
-  Serial.println(F("----------------"));
+  snprintf_P(log, sizeof(log), PSTR("ESP: Version: %s"), ver);
+  addLog(LOG_LEVEL_DEBUG, log);
 
-  Serial.println(__TIMESTAMP__);
+  snprintf_P(log, sizeof(log), PSTR("ESP: IP address: %s"), ipString.c_str());
+  addLog(LOG_LEVEL_DEBUG, log);
 
-  Serial.print(F("Version "));  Serial.println(ver);
+  snprintf_P(log, sizeof(log), PSTR("ESP: Sketch size: %d"), ESP.getSketchSize());
+  addLog(LOG_LEVEL_DEBUG, log);
 
-  Serial.print(F("IP address: "));  Serial.println(ipString);
+  snprintf_P(log, sizeof(log), PSTR("ESP: Free size: %d"), ESP.getFreeSketchSpace());
+  addLog(LOG_LEVEL_DEBUG, log);
 
-  Serial.print(F("Sketch size: "));  Serial.println(ESP.getSketchSize());
+  snprintf_P(log, sizeof(log), PSTR("ESP: Free memory: %s"), freeMemoryString.c_str());
+  addLog(LOG_LEVEL_DEBUG, log);
 
-  Serial.print(F("Free size: "));  Serial.println(ESP.getFreeSketchSpace());
+  snprintf_P(log, sizeof(log), PSTR("ESP: Flash Chip Size: %d"), ESP.getFlashChipSize());
+  addLog(LOG_LEVEL_DEBUG, log);
 
-  Serial.print(F("Free memory: "));  Serial.println(freeMemoryString);
+  snprintf_P(log, sizeof(log), PSTR("ESP: Flash Chip Speed: %d"), ESP.getFlashChipSpeed());
+  addLog(LOG_LEVEL_DEBUG, log);
 
-  Serial.print(F("WiFi status: "));  Serial.println(WiFi.status());
-
-  Serial.print(F("Chip Id: "));  Serial.println(ESP.getChipId());
-
-  Serial.print(F("Flash Chip Id: "));  Serial.println(ESP.getFlashChipId());
-
-  Serial.print(F("Flash Chip Size: ")); Serial.println(ESP.getFlashChipSize());
-
-  Serial.print(F("Flash Chip Speed: "));  Serial.println(ESP.getFlashChipSpeed());
-
-  Serial.println(F("----------------"));
-
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("TestSystemPrint() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: TestSystemPrint load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
@@ -1708,10 +1165,9 @@ void TestSystemPrint()
 
 void WebRoot(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebRoot() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebRoot Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -1816,20 +1272,18 @@ void WebRoot(void) {
 
   WebServer.send ( 200, "text/html", data);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebRoot() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebRoot load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void WebReboot(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebReboot() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebReboot Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -1853,10 +1307,9 @@ void WebReboot(void) {
   String data = String(F("<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>Reboot ESP</h2></div><div class='alert alert-info' role='alert'><a href='#' class='alert-link'>Rebooting...</a></div></div>"));
   WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebReboot() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebReboot load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 
   ESP.restart();
 }
@@ -1865,10 +1318,9 @@ void WebReboot(void) {
 
 void WebUpdate(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebUpdate() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebUpdate Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -1891,29 +1343,28 @@ void WebUpdate(void) {
 
   WebServer.send(200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + sketchUploadForm + containerEnd + siteEnd);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebUpdate() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebUpdate load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void WebFileUpload(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebFileUpload() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebFileUpload Start");
 
   if (WebServer.uri() != "/upload_sketch") return;
   HTTPUpload& upload = WebServer.upload();
   if (upload.status == UPLOAD_FILE_START) {
     Serial.setDebugOutput(true);
     WiFiUDP::stopAll();
-    #ifdef DEBUG
-    Serial.printf("Sketch: %s\n", upload.filename.c_str());
-    #endif
+
+    snprintf_P(log, sizeof(log), PSTR("WebFileUpload: Sketch: %s"), upload.filename.c_str());
+    addLog(LOG_LEVEL_INFO, log);
+
     uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
     if (!Update.begin(maxSketchSpace)) { //start with max available size
       Update.printError(Serial);
@@ -1924,9 +1375,8 @@ void WebFileUpload(void) {
     }
   } else if (upload.status == UPLOAD_FILE_END) {
     if (Update.end(true)) { //true to set the size to the current progress
-      #ifdef DEBUG
-      Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
-      #endif
+      snprintf_P(log, sizeof(log), PSTR("WebFileUpload: Update Success: %u"), upload.totalSize);
+      addLog(LOG_LEVEL_INFO, log);
     } else {
       Update.printError(Serial);
     }
@@ -1934,20 +1384,18 @@ void WebFileUpload(void) {
   }
   yield();
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebFileUpload() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebFileUpload load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void WebUploadSketch(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebUploadSketch() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebUploadSketch Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -1973,10 +1421,9 @@ void WebUploadSketch(void) {
 
   WebServer.send(200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + varDataString + containerEnd + siteEnd);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebUploadSketch() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebUploadSketch load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 
   ESP.restart();
 }
@@ -1985,10 +1432,9 @@ void WebUploadSketch(void) {
 
 void WebWiFiConf(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebWiFiConf() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebWiFiConf Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -2172,20 +1618,18 @@ void WebWiFiConf(void) {
 
   WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebWiFiConf() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebWiFiConf load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void WebSensorsConf(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebSensorsConf() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebSensorsConf Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -2345,20 +1789,18 @@ void WebSensorsConf(void) {
 
   WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebSensorsConf() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebSensorsConf load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void WebEspConf(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebEspConf() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebEspConf Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -2551,20 +1993,18 @@ void WebEspConf(void) {
 
   WebServer.send( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebEspConf() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebEspConf load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void WebMqttConf(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebMqttConf() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebMqttConf Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -2719,20 +2159,18 @@ void WebMqttConf(void) {
 
   WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebMqttConf() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebMqttConf load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void WebNTPConf(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebNTPConf() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebNTPConf Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -2821,20 +2259,18 @@ void WebNTPConf(void) {
 
   WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebNTPConf() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebNTPConf load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void handleControl(){
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("handleControl() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleControl Start");
 
   String AUTO;       AUTO += FPSTR(AUTOP);
   String ON;         ON += FPSTR(ONP);
@@ -2870,10 +2306,6 @@ void handleControl(){
         LightControl();
         lightState2 = AUTO;
       }
-      #ifdef DEBUG
-      Serial.println(WebServer.argName(i));
-      Serial.println(WebServer.arg(i));
-      #endif
       if (last_light_state != lightState || last_light_state2 != lightState2){
         LightControl();
         if (atoi(JConf.mqtt_enable) == 1) {
@@ -2885,20 +2317,18 @@ void handleControl(){
 
   WebServer.send ( 200, "text/html", "OK");
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("handleControl() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: handleControl load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void WebPinControl(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebPinControl() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebPinControl Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -2924,20 +2354,18 @@ void WebPinControl(void) {
 
   WebServer.send ( 200, "text/html", pinControl);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebPinControl() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebPinControl load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void WebPinControlStatus(void) {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebPinControlStatus() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebPinControlStatus Start");
 
   LightControl();
 
@@ -3072,19 +2500,19 @@ void WebPinControlStatus(void) {
 
   WebServer.send ( 200, "text/html", data);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebPinControlStatus() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebPinControlStatus load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 #if defined(UART_ON)
 void WebAnalogUart(void) {
-  #ifdef DEBUG
-    Serial.print(F("WebAnalogUart()"));  Serial.println();
-  #endif
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebAnalogUart Start");
 
     String headerStart;           headerStart += FPSTR(headerStartP);
     String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -3132,16 +2560,20 @@ void WebAnalogUart(void) {
     ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin5 + panelBodyEnd;
     
     WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + title1 + ApinValue + panelEnd + title2 + ApinDelay + panelEnd + containerEnd + siteEnd);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebAnalogUart load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 #endif
 
 
 
 void WebGreenhouse(void) {
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebGreenhouse() Start"));
-  #endif
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebGreenhouse Start");
 
   String headerStart;           headerStart += FPSTR(headerStartP);
   String headerStart2;          headerStart2 += FPSTR(headerStart2P);
@@ -3234,20 +2666,20 @@ void WebGreenhouse(void) {
 
   WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebGreenhouse() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebGreenhouse load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 ///////////////////////////////////   WEB PAGES  End  //////////////////////////////////////////////
 
 
 
 void handleXML(){
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("handleXML() Start"));
-  #endif
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleXML Start");
+
   String XML;
   XML=String(F("<?xml version='1.0'?>"));
   XML+=String(F("<Donnees>")); 
@@ -3322,10 +2754,9 @@ void handleXML(){
 
   WebServer.send(200,"text/xml",XML);
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("handleXML() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: handleXML load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
@@ -3333,10 +2764,9 @@ void handleXML(){
 void WebServerInit()
 {
 
-  #ifdef DEBUG
-    unsigned long start_time = millis();
-    Serial.println(F("WebServerInit() Start"));
-  #endif
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebServerInit Start");
 
   // Prepare webserver pages
   WebServer.on("/", WebRoot);
@@ -3371,10 +2801,9 @@ void WebServerInit()
 */
   WebServer.begin();
 
-  #ifdef DEBUG
-    unsigned long load_time = millis() - start_time;
-    Serial.print(F("WebServerInit() Load Time: ")); Serial.println(load_time);
-  #endif
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WebServerInit load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
@@ -3411,7 +2840,7 @@ void getData(){
 
   #ifdef DHT_ON
     if (atoi(JConf.dht_enable) == 1){
-      DHT22Sensor();
+      GetDhtSensorData();
     }
   #endif
 
@@ -3423,11 +2852,10 @@ void getData(){
 
   GetUptimeData();
   GetFreeMemory();
-  GetMacString();
 
-  #ifdef DEBUG
+  if (LOG_LEVEL_DEBUG <= sysCfg.seriallog_level){
     TestSystemPrint();
-  #endif
+  }
 
   #ifdef UART_ON
   for (int i = 0; i < ANALOG_PINS; i++){
@@ -3443,46 +2871,19 @@ void getData(){
 
 
 
-void restartESP() {
-  ESP.restart();
-}
-
-
-
-void deleteConfigFile() {
-  pinMode(atoi(JConf.reset_pin), INPUT); 
-  if (digitalRead(atoi(JConf.reset_pin)) == LOW) {
-    delay(3000);
-    if (digitalRead(atoi(JConf.reset_pin)) == LOW) {
-      #ifdef DEBUG
-        Serial.println(F("Reset pin pressed. Delete config file."));
-      #endif
-      JConf.deleteConfig();
-    }
-  } 
-}
-
-
-
 void setup() {
 
-  #ifdef DEBUG
-    Serial.begin(115200);
-    delay(10);
-    Serial.println();
-  #endif
-
-  #ifdef PZEM_ON
+  if (atoi(JConf.pzem_enable)==1){
+    sysCfg.seriallog_level = LOG_LEVEL_NONE;
     Serial.begin(9600);
-    delay(500);
-    Serial.println();
-  #endif
-  
-  if (!SPIFFS.begin()) {
-    #ifdef DEBUG
-      Serial.println(F("Failed to mount file system"));
-    #endif
+  } else {
+    Serial.begin(115200);
+  }
+  delay(100);
+  Serial.println();
 
+  if (!SPIFFS.begin()) {
+    addLog_P(LOG_LEVEL_INFO, "setup: Failed to mount file system");
     return;
   } else {
     #ifdef RESET_BUTTON_ON
@@ -3497,13 +2898,9 @@ void setup() {
   }
 */
   if (!JConf.loadConfig()) {
-    #ifdef DEBUG
-      Serial.println(F("Failed to load config"));
-    #endif
+    addLog_P(LOG_LEVEL_DEBUG, "setup: Failed to load config");
   } else {
-    #ifdef DEBUG
-      Serial.println(F("Config loaded"));
-    #endif
+    addLog_P(LOG_LEVEL_DEBUG, "setup: Config loaded");
   }
   JConf.printConfig();
 
@@ -3570,7 +2967,7 @@ void setup() {
     }
     MqttInit();
     MqttSubscribe();
-    MQTT_connect();
+    MqttConnect();
   }
 
   WebServerInit();
@@ -3587,7 +2984,7 @@ void setup() {
   wifiReconnectTimer = timer.setInterval(10000, wifiReconnect);
   timer.setInterval(atoi(JConf.get_data_delay) * 1000, getData);
 
-  timer.setInterval(60000, MQTT_connect);
+  timer.setInterval(60000, MqttConnect);
   timer.setInterval(atoi(JConf.publish_delay) * 1000, MqttPubData);
 
   if (atoi(JConf.motion_sensor_enable) == 1){
@@ -3600,6 +2997,10 @@ void setup() {
   #ifdef REBOOT_ON
     rebootTimer = timer.setInterval(atoi(JConf.reboot_delay) * 1000, restartESP);
   #endif
+
+  GetMacString();
+
+  CFG_Default();
 }
 
 
@@ -3630,4 +3031,6 @@ void loop() {
   #endif
 
   FadeSwitchLoop();
+
+  yield();
 }

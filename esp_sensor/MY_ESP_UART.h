@@ -16,7 +16,21 @@
 #ifndef MY_ESP_UART_H
 #define MY_ESP_UART_H
 
-#include "json_config.h"
+//#include "json_config.h"
+#include "Arduino.h"
+
+
+// ----------------- UART Settings ---------------------------------------------
+
+//#define UART_ON
+//#define DEBUG_ESP_UART
+//#define CRC_ENABLE
+
+#define DIGITAL_PINS 14   //Кол-во цифровых входов/выходов
+#define ANALOG_PINS 6     //Кол-во цифровых входов/выходов
+#define PARSE_CELLS 4     //Кол-во ячеек в массиве принимаемых данных
+#define DATA_LENGTH 10    //Максимальный размер пакета данных без маркеров и CRC
+//------------------------------------------------------------------------------
 
 
 class Espuart
