@@ -1087,16 +1087,21 @@ void DHT22Sensor()
     Serial.println(F("DHT22Sensor() Start"));
   #endif
 
-  float h = dht.readHumidity();
-  // Read temperature as Celsius (the default)
-  float t = dht.readTemperature();
+  float humidityData = dht.readHumidity();
+  float temperatureData = dht.readTemperature();
 
-  if (isnan(h) || isnan(t)) {
+  #ifdef DEBUG
+    Serial.print(F("Humidity "));  Serial.println(humidityData);
+    Serial.print(F("Temperature "));  Serial.println(temperatureData);
+  #endif
+
+  if (isnan(humidityData) || isnan(temperatureData)) {
     Serial.println("Failed to read from DHT sensor!");
     return;
+  } else {
+    temperatureString = String(temperatureData);
+    humidityString = String(humidityData);
   }
-  temperatureString = String(t);
-  humidityString = String(h);
 
   #ifdef DEBUG
     unsigned long load_time = millis() - start_time;
