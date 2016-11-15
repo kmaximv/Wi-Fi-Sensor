@@ -2782,6 +2782,9 @@ void WebServerInit()
   WebServer.on("/control", handleControl);
   WebServer.on("/pincontrol", WebPinControl);
   WebServer.on("/controlstatus", WebPinControlStatus);
+  WebServer.on("/test", handleTest);
+
+
 
 #ifdef UART_ON
   WebServer.on("/analog", WebAnalogUart);
