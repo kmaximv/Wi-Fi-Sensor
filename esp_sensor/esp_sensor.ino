@@ -2783,6 +2783,7 @@ void WebServerInit()
   WebServer.on("/pincontrol", WebPinControl);
   WebServer.on("/controlstatus", WebPinControlStatus);
   WebServer.on("/test", handleTest);
+  WebServer.on("/log", handleLog);
 
 
 

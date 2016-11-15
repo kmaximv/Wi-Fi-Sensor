@@ -45,6 +45,9 @@ enum WIFI_AUTH_ENUM {OPEN, WPA_PSK, WPA2_PSK, WPA_WPA2_PSK};
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_ALL
 #define WEB_LOG_LEVEL          LOG_LEVEL_INFO
 
+#define TELE_PERIOD            300          // Telemetry (0 = disable, 2 - 3600 seconds)
+
+
 #define USE_WEBSERVER                       // Enable web server and wifi manager (+37k code, +2k mem) - Disable by //
 #define MAX_LOG_LINES          30           // Max number of lines in weblog
 
@@ -64,6 +67,7 @@ struct SYSCFG {
   byte          syslog_level;
   char          syslog_host[32];
   uint16_t      syslog_port;
+  uint16_t      tele_period;
 } sysCfg;
 
 struct TIME_T {
