@@ -46,12 +46,18 @@ class JsonConf
     char light2_smooth                [2]  = "0"                  ;
     char reset_pin                    [3]  = "2"                  ;
     char motion_pin                   [3]  = "14"                 ;
-    char dht_pin                      [3] =  "2"                  ;
+    char dht_pin                      [3]  =  "2"                 ;
     char get_data_delay               [32] = "10"                 ;
     char publish_delay                [32] = "10"                 ;
     char subscribe_delay              [32] = "60"                 ;
     char motion_read_delay            [32] = "10"                 ;
     char reboot_delay                 [32] = "1800"               ;
+
+    char sys_log_host                 [33] = "192.168.2.50"       ;
+    char sys_log_port                 [6]  = "514"                ;
+    char sys_log_level                [2]  = "0"                  ;
+    char serial_log_level             [2]  = "0"                  ;
+    char web_log_level                [2]  = "0"                  ;
 
     char uart_delay_analog_pin0       [32] = "none"               ;
     char uart_delay_analog_pin1       [32] = "none"               ;

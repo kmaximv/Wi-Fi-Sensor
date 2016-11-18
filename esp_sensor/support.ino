@@ -1,10 +1,6 @@
 
 void CFG_Default() {
 
-  strlcpy(sysCfg.syslog_host, SYS_LOG_HOST, sizeof(sysCfg.syslog_host));
-  sysCfg.syslog_port = SYS_LOG_PORT;
-  sysCfg.seriallog_level = SERIAL_LOG_LEVEL;
-  sysCfg.weblog_level = WEB_LOG_LEVEL;
 }
 
 
@@ -23,7 +19,7 @@ void scanWiFi(void) {
 
   if (founds == 0) {
     addLog_P(LOG_LEVEL_DEBUG, "scanWiFi: No networks found");
-  } else if (LOG_LEVEL_DEBUG <= sysCfg.seriallog_level){
+  } else if (LOG_LEVEL_DEBUG <= atoi(JConf.serial_log_level)){
     snprintf_P(log, sizeof(log), PSTR("scanWiFi: %d networks found"), founds);
     addLog(LOG_LEVEL_DEBUG, log);
 
@@ -460,7 +456,7 @@ void syslog(const char *message)
 {
   char mess[MESSZ], str[TOPSZ+MESSZ];
 
-  portUDP.beginPacket(sysCfg.syslog_host, sysCfg.syslog_port);
+  portUDP.beginPacket(JConf.sys_log_host, atoi(JConf.sys_log_port));
   strlcpy(mess, message, sizeof(mess));
   mess[sizeof(mess)-1] = 0;
   snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), JConf.module_id, mess);
@@ -478,16 +474,16 @@ void addLog(byte loglevel, const char *line)
   DEBUG_ESP_PORT.printf("%s %s\n", __TIMESTAMP__, line);  
 #endif  // DEBUG_ESP_PORT
 
-  if (loglevel <= sysCfg.seriallog_level) Serial.printf("%s %s\n", __TIMESTAMP__, line);
+  if (loglevel <= atoi(JConf.serial_log_level)) Serial.printf("%s %s\n", __TIMESTAMP__, line);
 
 #ifdef USE_WEBSERVER
-  if (loglevel <= sysCfg.weblog_level) {
+  if (loglevel <= atoi(JConf.web_log_level)) {
     Log[logidx] = String(__TIMESTAMP__) + " " + String(line);
     logidx++;
     if (logidx > MAX_LOG_LINES -1) logidx = 0;
   }
 #endif  // USE_WEBSERVER
-  if ((WiFi.status() == WL_CONNECTED) && (loglevel <= sysCfg.syslog_level)) syslog(line);
+  if ((WiFi.status() == WL_CONNECTED) && (loglevel <= atoi(JConf.sys_log_level))) syslog(line);
 }
 
 void addLog_P(byte loglevel, const char *formatP)

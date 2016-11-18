@@ -1,8 +1,6 @@
 #ifndef USER_CONFIG_H
 #define USER_CONFIG_H
 
-
-
 // --------------- Supported Sensors (Uncomment for Enable) -------------------
 #define DHT_ON
 #define BME280_ON
@@ -19,7 +17,6 @@
 #define NTP_ON
 
 
-
 #define ESP_PINS 17
 #define UP true 
 #define DOWN false
@@ -27,48 +24,17 @@
 enum WIFI_MODE_ENUM {AP, STA, AP_STA};
 enum WIFI_PHY_MODE_ENUM {B, G, N};
 enum WIFI_AUTH_ENUM {OPEN, WPA_PSK, WPA2_PSK, WPA_WPA2_PSK};
-
-
-
-
-
+enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 
 #define TOPSZ                  60           // Max number of characters in topic string
-#define MESSZ                  128          // Max number of characters in message string (Domoticz string)
+#define MESSZ                  128          // Max number of characters in message string
 #define LOGSZ                  128          // Max number of characters in log string
 
-
-// Syslog
-#define SYS_LOG_HOST           "domus1"
-#define SYS_LOG_PORT           514
-#define SYS_LOG_LEVEL          LOG_LEVEL_NONE
-#define SERIAL_LOG_LEVEL       LOG_LEVEL_ALL
-#define WEB_LOG_LEVEL          LOG_LEVEL_INFO
-
-#define TELE_PERIOD            300          // Telemetry (0 = disable, 2 - 3600 seconds)
-
-
-#define USE_WEBSERVER                       // Enable web server and wifi manager (+37k code, +2k mem) - Disable by //
+#define USE_WEBSERVER                       // Enable web server and wifi manager
 #define MAX_LOG_LINES          30           // Max number of lines in weblog
 
-
-
-
-
-char Hostname[33];                    // Composed Wifi hostname
 String Log[MAX_LOG_LINES];            // Web log buffer
 byte logidx = 0;                      // Index in Web log buffer
-
-
-
-struct SYSCFG {
-  byte          weblog_level;
-  byte          seriallog_level;
-  byte          syslog_level;
-  char          syslog_host[32];
-  uint16_t      syslog_port;
-  uint16_t      tele_period;
-} sysCfg;
 
 struct TIME_T {
   uint8_t       Second;
@@ -81,8 +47,6 @@ struct TIME_T {
   uint16_t      Year;
   unsigned long Valid;
 } rtcTime;
-
-enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 
 
 const char *ver                = "1.09"              ;         

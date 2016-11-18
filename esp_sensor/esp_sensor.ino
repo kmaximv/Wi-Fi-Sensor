@@ -29,14 +29,12 @@ SimpleTimer timer;
 JsonConf JConf;
 
 #if defined(DHT_ON)
-  #include <Adafruit_Sensor.h>
   #include <DHT.h>
-  #include <DHT_U.h>  
   // Uncomment the type of sensor in use:
   //#define DHTTYPE           DHT11     // DHT 11 
   #define DHTTYPE           DHT22     // DHT 22 (AM2302)
   //#define DHTTYPE           DHT21     // DHT 21 (AM2301)
-  DHT_Unified dht(atoi(JConf.dht_pin), DHTTYPE);
+  DHT dht(atoi(JConf.dht_pin), DHTTYPE);
 #endif
 
 #if defined(BH1750_ON)
@@ -538,21 +536,15 @@ void GetDhtSensorData()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetDhtSensorData Start");
 
-  sensors_event_t event;  
-  dht.temperature().getEvent(&event);
-  if (isnan(event.temperature)) {
-    addLog_P(LOG_LEVEL_INFO, "GetDhtSensorData: Error reading temperature!");
-  }
-  else {
-    temperatureString = String(event.temperature);
-  }
-  // Get humidity event and print its value.
-  dht.humidity().getEvent(&event);
-  if (isnan(event.relative_humidity)) {
-    addLog_P(LOG_LEVEL_INFO, "GetDhtSensorData: Error reading humidity!");
-  }
-  else {
-    humidityString = String(event.relative_humidity);
+  float humidityData = dht.readHumidity();
+  float temperatureData = dht.readTemperature();
+
+  if (isnan(humidityData) || isnan(temperatureData)) {
+    addLog_P(LOG_LEVEL_INFO, "GetDhtSensorData: Error reading DHT!");
+    return;
+  } else {
+    temperatureString = String(temperatureData);
+    humidityString = String(humidityData);
   }
 
   unsigned long load_time = millis() - start_time;
@@ -560,6 +552,7 @@ void GetDhtSensorData()
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 #endif
+
 
 
 #if defined(PZEM_ON)
@@ -2784,7 +2777,7 @@ void WebServerInit()
   WebServer.on("/controlstatus", WebPinControlStatus);
   WebServer.on("/test", handleTest);
   WebServer.on("/log", handleLog);
-
+  WebServer.on("/save", handleSave);
 
 
 #ifdef UART_ON
@@ -2857,7 +2850,7 @@ void getData(){
   GetUptimeData();
   GetFreeMemory();
 
-  if (LOG_LEVEL_DEBUG <= sysCfg.seriallog_level){
+  if (LOG_LEVEL_DEBUG <= atoi(JConf.serial_log_level)){
     TestSystemPrint();
   }
 
@@ -2877,12 +2870,7 @@ void getData(){
 
 void setup() {
 
-  if (atoi(JConf.pzem_enable)==1){
-    sysCfg.seriallog_level = LOG_LEVEL_NONE;
-    Serial.begin(9600);
-  } else {
-    Serial.begin(115200);
-  }
+  Serial.begin(115200);
   delay(100);
   Serial.println();
 
@@ -2908,6 +2896,14 @@ void setup() {
   }
   JConf.printConfig();
 
+  if (atoi(JConf.pzem_enable)==1){
+    JConf.serial_log_level[0] = '0'; // Отключаем serial log
+    JConf.serial_log_level[1] = '\0';
+    Serial.begin(9600);
+    delay(100);
+    Serial.println();
+  }
+
   pinMode(atoi(JConf.light_pin), OUTPUT);
   pinMode(atoi(JConf.light2_pin), OUTPUT);
   pinMode(atoi(JConf.motion_pin), INPUT);
@@ -2921,11 +2917,8 @@ void setup() {
   #endif
 
   #ifdef DHT_ON
-    dht = DHT_Unified(atoi(JConf.dht_pin), DHTTYPE);
+    dht = DHT(atoi(JConf.dht_pin), DHTTYPE);
     dht.begin();
-    sensor_t sensor;
-    dht.temperature().getSensor(&sensor);
-    dht.humidity().getSensor(&sensor);
   #endif
 
   #ifdef BME280_ON
