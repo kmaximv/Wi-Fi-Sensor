@@ -16,6 +16,7 @@
 //#define REBOOT_ON
 #define NTP_ON
 
+#define USE_WEBSERVER
 
 #define ESP_PINS 17
 #define UP true 
@@ -32,6 +33,10 @@ enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, 
 
 #define USE_WEBSERVER                       // Enable web server and wifi manager
 #define MAX_LOG_LINES          30           // Max number of lines in weblog
+
+
+#define SUB_PREFIX             "cmnd"       // Sonoff devices subscribe to:- cmnd/MQTT_TOPIC and cmnd/MQTT_GRPTOPIC
+
 
 String Log[MAX_LOG_LINES];            // Web log buffer
 byte logidx = 0;                      // Index in Web log buffer
