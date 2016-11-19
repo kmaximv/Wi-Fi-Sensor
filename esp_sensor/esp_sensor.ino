@@ -540,7 +540,7 @@ void GetDhtSensorData()
   float temperatureData = dht.readTemperature();
 
   if (isnan(humidityData) || isnan(temperatureData)) {
-    addLog_P(LOG_LEVEL_INFO, "GetDhtSensorData: Error reading DHT!");
+    addLog_P(LOG_LEVEL_ERROR, "GetDhtSensorData: Error reading DHT!");
     return;
   } else {
     temperatureString = String(temperatureData);
@@ -563,7 +563,9 @@ bool GetPzemData(float data, String *val) {
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetPzemData Start");
 
   if (data < 0.0){
-    addLog_P(LOG_LEVEL_INFO, "GetPzemData: Error reading data!");
+    addLog_P(LOG_LEVEL_ERROR, "GetPzemData: Error reading data!");
+    pzem.setAddress(ip_pzem);
+    pzem.setReadTimeout(500);
     return false;
   } else if (pzem_current_read == PZEM_POWER || pzem_current_read == PZEM_ENERGY) {
     data = data * coil_ratio / 1000;
@@ -669,7 +671,7 @@ void MotionDetect(){
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MotionDetect Start");
 
   if (digitalRead(atoi(JConf.motion_pin)) == HIGH) {
-    addLog_P(LOG_LEVEL_DEBUG, "MotionDetect: movement detected");
+    addLog_P(LOG_LEVEL_INFO, "MotionDetect: movement detected");
     motionDetect = true;
     LightControl();
     if (atoi(JConf.mqtt_enable) == 1 && mqtt.connected()) {
@@ -737,6 +739,10 @@ void NTPSettingsUpdate(){
 
 bool MqttConnect() {
 
+  if (atoi(JConf.mqtt_enable) != 1) {
+    return false;
+  }
+
   char log[LOGSZ];
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MqttConnect Start");
@@ -751,7 +757,7 @@ bool MqttConnect() {
 
   if ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
     snprintf_P(log, sizeof(log), PSTR("MqttConnect: Error: %s"), mqtt.connectErrorString(ret));
-    addLog(LOG_LEVEL_INFO, log);
+    addLog(LOG_LEVEL_ERROR, log);
     mqtt.disconnect();
     return false;
   }
@@ -768,6 +774,11 @@ bool MqttConnect() {
 
 
 void MqttInit() {
+
+  if (atoi(JConf.mqtt_enable) != 1) {
+    return;
+  }
+
   //Publish Topics
   sprintf(lightType_buff, "%s%s%s", JConf.publish_topic, lightType, JConf.mqtt_name);
   pubTopicLightType = Adafruit_MQTT_Publish(&mqtt, lightType_buff);
@@ -847,12 +858,16 @@ void MqttInit() {
 
 bool MqttPubLightState(){
 
+  if (atoi(JConf.mqtt_enable) != 1) {
+    return false;
+  }
+
   char log[LOGSZ];
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MqttPubLightState Start");
 
   if (!mqtt.connected()){
-    addLog_P(LOG_LEVEL_INFO, "MqttPubLightState: MQTT not connected!");
+    addLog_P(LOG_LEVEL_ERROR, "MqttPubLightState: MQTT not connected!");
     return false;
   }
 
@@ -889,12 +904,16 @@ bool MqttPubLightState(){
 
 bool MqttPubLightOffDelay() {
 
+  if (atoi(JConf.mqtt_enable) != 1) {
+    return false;
+  }
+
   char log[LOGSZ];
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MqttPubLightState Start");
 
   if (!mqtt.connected()){
-    addLog_P(LOG_LEVEL_INFO, "MqttPubLightOffDelay: MQTT not connected!");
+    addLog_P(LOG_LEVEL_ERROR, "MqttPubLightOffDelay: MQTT not connected!");
     return false;
   }
 
@@ -913,12 +932,16 @@ bool MqttPubLightOffDelay() {
 
 bool MqttPubData() {
 
+  if (atoi(JConf.mqtt_enable) != 1) {
+    return false;
+  }
+
   char log[LOGSZ];
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MqttPubData Start");
 
   if (!mqtt.connected()){
-    addLog_P(LOG_LEVEL_INFO, "MqttPubData: MQTT not connected!");
+    addLog_P(LOG_LEVEL_ERROR, "MqttPubData: MQTT not connected!");
     return false;
   }
 
@@ -1085,6 +1108,10 @@ void CallbackUptime(char *data, uint16_t len) {
 
 void MqttSubscribe(){
 
+  if (atoi(JConf.mqtt_enable) != 1) {
+    return;
+  }
+
   char log[LOGSZ];
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: MqttSubscribe Start");
@@ -1134,7 +1161,7 @@ void TestSystemPrint()
   addLog(LOG_LEVEL_DEBUG, log);
 
   snprintf_P(log, sizeof(log), PSTR("ESP: Free memory: %s"), freeMemoryString.c_str());
-  addLog(LOG_LEVEL_DEBUG, log);
+  addLog(LOG_LEVEL_INFO, log);
 
   snprintf_P(log, sizeof(log), PSTR("ESP: Flash Chip Size: %d"), ESP.getFlashChipSize());
   addLog(LOG_LEVEL_DEBUG, log);
@@ -1304,7 +1331,7 @@ void WebReboot(void) {
   snprintf_P(log, sizeof(log), PSTR("Func: WebReboot load time: %d"), load_time);
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 
-  ESP.restart();
+  restartESP();
 }
 
 
@@ -1418,7 +1445,7 @@ void WebUploadSketch(void) {
   snprintf_P(log, sizeof(log), PSTR("Func: WebUploadSketch load time: %d"), load_time);
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 
-  ESP.restart();
+  restartESP();
 }
 
 
@@ -2874,8 +2901,15 @@ void setup() {
   delay(100);
   Serial.println();
 
+  scanWiFi();  // scan Access Points
+
+  if (!WiFiSetup()) {
+    WiFiSafeSetup();
+  }
+  delay(300);
+
   if (!SPIFFS.begin()) {
-    addLog_P(LOG_LEVEL_INFO, "setup: Failed to mount file system");
+    addLog_P(LOG_LEVEL_NONE, "setup: Failed to mount file system");
     return;
   } else {
     #ifdef RESET_BUTTON_ON
@@ -2890,18 +2924,20 @@ void setup() {
   }
 */
   if (!JConf.loadConfig()) {
-    addLog_P(LOG_LEVEL_DEBUG, "setup: Failed to load config");
+    addLog_P(LOG_LEVEL_NONE, "setup: Failed to load config");
   } else {
-    addLog_P(LOG_LEVEL_DEBUG, "setup: Config loaded");
+    addLog_P(LOG_LEVEL_NONE, "setup: Config loaded");
   }
-  JConf.printConfig();
 
   if (atoi(JConf.pzem_enable)==1){
     JConf.serial_log_level[0] = '0'; // Отключаем serial log
     JConf.serial_log_level[1] = '\0';
+    Serial.end();
     Serial.begin(9600);
     delay(100);
     Serial.println();
+  } else {
+    JConf.printConfig();
   }
 
   pinMode(atoi(JConf.light_pin), OUTPUT);
@@ -2949,12 +2985,6 @@ void setup() {
     myHTU21D.begin(4, 5);  //SDA=4, SCL=5
   #endif
 
-  scanWiFi();  // scan Access Points
-
-  if (!WiFiSetup()) {
-    WiFiSafeSetup();
-  }
-  delay(1000);
 
   if (atoi(JConf.mqtt_enable) == 1) {
     if (atoi(JConf.mqtt_auth_enable) == 1){

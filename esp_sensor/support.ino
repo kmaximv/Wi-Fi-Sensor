@@ -18,10 +18,10 @@ void scanWiFi(void) {
   int founds = WiFi.scanNetworks();
 
   if (founds == 0) {
-    addLog_P(LOG_LEVEL_DEBUG, "scanWiFi: No networks found");
-  } else if (LOG_LEVEL_DEBUG <= atoi(JConf.serial_log_level)){
+    addLog_P(LOG_LEVEL_ERROR, "scanWiFi: No networks found");
+  } else if (LOG_LEVEL_INFO <= atoi(JConf.serial_log_level)){
     snprintf_P(log, sizeof(log), PSTR("scanWiFi: %d networks found"), founds);
-    addLog(LOG_LEVEL_DEBUG, log);
+    addLog(LOG_LEVEL_INFO, log);
 
     for (size_t i = 0; i < founds; ++i) {
       // Print SSID and RSSI for each network found
@@ -92,7 +92,7 @@ void wifiAPSettings(){
   //apconfig.beacon_interval=100;
   //apply settings to current and to default
   if (!wifi_softap_set_config(&apconfig) || !wifi_softap_set_config_current(&apconfig)) {
-      addLog_P(LOG_LEVEL_DEBUG, "Wifi: Error Wifi AP_STA!");
+      addLog_P(LOG_LEVEL_ERROR, "Wifi: Error Wifi AP_STA!");
       delay(1000);
   }
 }
@@ -104,13 +104,13 @@ bool wifiTryConnect(){
   while (WiFi.status() != WL_CONNECTED && i<40) {  //try to connect
     switch(WiFi.status()) {
     case 1:
-      addLog_P(LOG_LEVEL_DEBUG, "Wifi: No SSID found!");
+      addLog_P(LOG_LEVEL_ERROR, "Wifi: No SSID found!");
       break;
     case 4:
-      addLog_P(LOG_LEVEL_DEBUG, "Wifi: No Connection!");
+      addLog_P(LOG_LEVEL_ERROR, "Wifi: No Connection!");
       break;
     default:
-      addLog_P(LOG_LEVEL_DEBUG, "Wifi: Connecting...");
+      addLog_P(LOG_LEVEL_INFO, "Wifi: Connecting...");
       break;
     }
     delay(500);
@@ -162,7 +162,7 @@ bool wifiAP_STA() {
 
 void wifiReconnect() {
   if (WiFi.status() != WL_CONNECTED && atoi(JConf.wifi_mode) != AP && wifiSafeMode == false) {
-    addLog_P(LOG_LEVEL_DEBUG, "Wifi: Reconnecting...");
+    addLog_P(LOG_LEVEL_INFO, "Wifi: Reconnecting...");
     WiFiSetup();
   }
 }
@@ -213,7 +213,7 @@ void  WiFiSafeSetup()
   WiFi.mode(WIFI_AP);
   WiFi.softAP(JConf.module_id, JConf.ap_pwd);
   delay(500);
-  addLog_P(LOG_LEVEL_DEBUG, "Wifi: Safe mode started");
+  addLog_P(LOG_LEVEL_INFO, "Wifi: Safe mode started");
   wifiSafeMode = true;
 }
 
@@ -431,6 +431,8 @@ void FadeSwitchLoop(){
 
 
 void restartESP() {
+  addLog_P(LOG_LEVEL_INFO, "restartESP: Restart ESP!");
+  delay(100);
   ESP.restart();
 }
 
@@ -459,7 +461,7 @@ void syslog(const char *message)
   portUDP.beginPacket(JConf.sys_log_host, atoi(JConf.sys_log_port));
   strlcpy(mess, message, sizeof(mess));
   mess[sizeof(mess)-1] = 0;
-  snprintf_P(str, sizeof(str), PSTR("%s ESP-%s"), JConf.module_id, mess);
+  snprintf_P(str, sizeof(str), PSTR("%s => %s"), JConf.module_id, mess);
   portUDP.write(str);
   portUDP.endPacket();
 }
@@ -483,8 +485,11 @@ void addLog(byte loglevel, const char *line)
     if (logidx > MAX_LOG_LINES -1) logidx = 0;
   }
 #endif  // USE_WEBSERVER
-  if ((WiFi.status() == WL_CONNECTED) && (loglevel <= atoi(JConf.sys_log_level))) syslog(line);
+  if ((WiFi.status() == WL_CONNECTED) && (loglevel <= atoi(JConf.sys_log_level))) {
+    syslog(line);
+  }
 }
+
 
 void addLog_P(byte loglevel, const char *formatP)
 {
