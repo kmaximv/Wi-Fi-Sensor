@@ -8,82 +8,6 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         HTML SNIPPLETS
 
-const char headerStartP[] PROGMEM = "<html lang='en'><head><title>";
-//JConf.module_id
-const char headerStart2P[] PROGMEM = "</title><meta charset='utf-8'>";
-
-const char headerRefreshStatusP[] PROGMEM = "<META HTTP-EQUIV='Refresh' CONTENT='20; URL=/'>";
-
-const char headerEndP[] PROGMEM = 
-"<meta name='viewport' content='width=device-width, initial-scale=1'>\
-<link rel='stylesheet' href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css'>\
-<script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>\
-<script src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js'></script></head>";
-
-const char javaScriptPinControlP[] PROGMEM = 
-"<div id='content'></div>\
-<div id='pin1'></div>\
-<script>\
-function show()\
-{\
-$.ajax({\
-url: 'controlstatus',\
-cache: false,\
-success: function(html){\
-$('#content').html(html);\
-}\
-});\
-}\
-function Pin1()\
-{\
-$.ajax({\
-type: 'POST',\
-url: 'control',\
-data: '1=1',\
-success: function(data){\
-show();\
-}\
-});\
-}\
-function Auto1()\
-{\
-$.ajax({\
-type: 'POST',\
-url: 'control',\
-data: '1=2',\
-success: function(data){\
-show();\
-}\
-});\
-}\
-function Pin2()\
-{\
-$.ajax({\
-type: 'POST',\
-url: 'control',\
-data: '2=1',\
-success: function(data){\
-show();\
-}\
-});\
-}\
-function Auto2()\
-{\
-$.ajax({\
-type: 'POST',\
-url: 'control',\
-data: '2=2',\
-success: function(data){\
-show();\
-}\
-});\
-}\
-$(document).ready(function(){\
-show();\
-setInterval('show()',5000);\
-});\
-</script>";
-
 const char div1P[] PROGMEM =
 "<div class='col-sm-8 col-md-6 col-lg-5'><h2>Control Pins</h2>\
 <table class='table table-hover'>\
@@ -100,56 +24,11 @@ const char div2P[] PROGMEM =
     <td class='active'><h4>Light1</h4></td>\
     <td class='active'><div onclick='Pin1();'><input id='OnOff' type='submit' class='btn btn-";
 
-
-const char navbarStartP[] PROGMEM = 
-"<nav class='navbar navbar-inverse'><div class='container-fluid'><div class='navbar-header'>\
-<a class='navbar-brand' href='/'>";
-//JConf.module_id
-const char navbarStart2P[] PROGMEM = "</a></div><div><ul class='nav navbar-nav'>";
-
-const char navbarNonActiveP[] PROGMEM = "<li>";
-const char navbarActiveP[] PROGMEM = "<li class='active'>";
-
-const char navbarBeginP[] PROGMEM  = 
-"<a href='/'><span class='glyphicon glyphicon-dashboard'></span> Status</a></li>\
-<li><a href='/pincontrol'><span class='glyphicon glyphicon-tasks'></span> Control Pins</a></li>";
-
-#if defined(UART_ON)
-const char navbarUartP[] PROGMEM = 
-"<li><a href='/analog'><span class='glyphicon glyphicon-tasks'></span> Analog Pins UART</a></li>";
-#endif
-
-const char navbarEndP[] PROGMEM =
-"<li class='dropdown'><a class='dropdown-toggle' data-toggle='dropdown' href='#'>\
-<span class='glyphicon glyphicon-cog'></span> Configure<span class='caret'></span></a><ul class='dropdown-menu'>\
-<li><a href='/wificonf'>Wi-Fi</a></li>\
-<li><a href='/sensorsconf'>Sensors</a></li>\
-<li><a href='/espconf'>ESP</a></li>\
-<li><a href='/mqttconf'>MQTT</a></li>\
-<li><a href='/ntpconf'>NTP time</a></li>\
-<li><a href='/update'>Update frimware</a></li>\
-<li><a href='/reboot'>Reboot ESP</a></li>\
-</ul></li></ul></div></div></nav>"; 
-
-const char containerStartP[] PROGMEM    =  "<div class='container'><div class='row'>";
-const char containerEndP[] PROGMEM      =  "<div class='clearfix visible-lg'></div></div></div>";
-const char siteEndP[] PROGMEM         =  "</body></html>";
-  
 const char panelHeaderNameP[] PROGMEM     =  "<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>";
 const char panelHeaderEndP[] PROGMEM    =  "</h2></div>";
-const char panelEndP[] PROGMEM        =  "</div>";
-  
-const char panelBodySymbolP[] PROGMEM     =  
-"<div class='panel panel-default'><div class='panel-body'><span class='glyphicon glyphicon-";
-
-const char panelBodyNameP[] PROGMEM     =  "'></span> ";
-const char panelBodyValueP[] PROGMEM    =  "<span class='pull-right'";
-const char closingAngleBracketP[] PROGMEM    =  ">";
-
-const char panelBodyEndP[] PROGMEM      =  "</span></div></div>";
 
 const char inputBodyStartP[] PROGMEM    =  
-"<form action='' method='POST'><div class='panel panel-default'><div class='panel-body'>";
+"<form action='save' method='POST'><div class='panel panel-default'><div class='panel-body'>";
 
 const char inputBodyNameP[] PROGMEM     =  
 "<div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>";
@@ -168,14 +47,6 @@ const char inputBodyEndP[] PROGMEM      =
 "</div><div class='panel-footer clearfix'><div class='pull-right'>\
 <button type='submit' class='btn btn-default' name='save_conf' value='1'>Save</button></div></div></div></form>";
 
-const char sketchUploadFormP[] PROGMEM  = 
-"<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>Update Frimware</h2></div>\
-<form method='POST' action='/upload_sketch' enctype='multipart/form-data'>\
-<p><input type='file' class='btn btn-primary' name='sketch'></p>\
-<h3><small>Выберите файл формата *.bin</small></h3>\
-<p><input type='submit' value='Upload' class='btn btn-danger'></p></form></div>";
-
-
 const char ClassInfoP[] PROGMEM  = "info";
 const char ClassDangerP[] PROGMEM  = "danger";
 const char ClassDefaultP[] PROGMEM  = "default";
@@ -184,11 +55,6 @@ const char ClassSuccessP[] PROGMEM  = "success";
 const char AUTOP[] PROGMEM  = "AUTO";
 const char ONP[] PROGMEM  = "ON";
 const char OFFP[] PROGMEM  = "OFF";
-
-
-const char bodyAjaxP[] PROGMEM = "<body onload='process()'>";
-const char bodyNonAjaxP[] PROGMEM = "<body>";
-
 
 
 /*********************************************************************************************\
@@ -240,6 +106,56 @@ const char HTTP_BODY[] PROGMEM =
     "<div class='row'>";
 
 
+const char HTTP_PANEL_NAME[] PROGMEM =  
+"<div class='col-sm-6 col-md-5 col-lg-4'>"
+  "<div class='page-header'><h2>{panel_name}</h2></div>";
+
+//Form for save config///////////////////////////////////////////////////////////////////////
+const char HTTP_FORM_START[] PROGMEM =
+"<form action='save' method='POST'>"
+    "<div class='panel panel-default'>"
+        "<div class='panel-body'>";
+
+const char HTTP_FORM_CHECKBOX[] PROGMEM =
+"<div class='checkbox'>"
+  "<label><input type='checkbox' value='1' id='{id}' name='{id}'>{name}</label>"
+"</div>";
+
+const char HTTP_FORM_INPUT_TXT[] PROGMEM =
+"<div class='form-group'>"
+    "<div class='input-group'>"
+        "<span class='input-group-addon' id='basic-addon1'>{name}</span>"
+        "<input type='text'  id='{id}' name='{id}' length=32 placeholder='{value}' value='{value}' class='form-control' aria-describedby='basic-addon1'>"
+    "</div>"
+"</div>";
+
+const char HTTP_FORM_INPUT_TXT_UNIT[] PROGMEM =
+"<div class='form-group'>"
+    "<div class='input-group'>"
+        "<span class='input-group-addon' id='basic-addon1'>{name}</span>"
+        "<input type='text'  id='{id}' name='{id}' length=32 placeholder='{value}' value='{value}' class='form-control' aria-describedby='basic-addon1'>"
+        "<span class='input-group-addon' id='basic-addon1'>{unit}</span>"
+    "</div>"
+"</div>";
+
+const char HTTP_FORM_INPUT_PWD[] PROGMEM =
+"<div class='form-group'>"
+    "<div class='input-group'>"
+        "<span class='input-group-addon' id='basic-addon1'>{name}</span>"
+        "<input type='password'  id='{id}' name='{id}' length=32 value='********' class='form-control' aria-describedby='basic-addon1'>"
+    "</div>"
+"</div>";
+
+const char HTTP_BTN_SAVE[] PROGMEM =
+"</div>"
+"<div class='panel-footer clearfix'>"
+  "<div class='pull-right'><button type='submit' class='btn btn-default'>Save</button></div>"
+"</div>";
+
+const char HTTP_FORM_END[] PROGMEM =
+    "</div>"
+"</form>";
+/////////////////////////////////////////////////////////////////////////Form for save config//
 
 const char HTTP_BODY_END[] PROGMEM =  
         "<div class='clearfix visible-lg'>"
@@ -583,6 +499,78 @@ const char JS_CONSOLE[] PROGMEM =
 \*********************************************************************************************/
 
 
+const char JS_PIN_CONTROL[] PROGMEM = 
+  "<div id='content'></div>"
+  "<div id='pin1'></div>"
+  "<script>"
+  "function show(){"
+    "$.ajax({url:'controlstatus', cache: false, success: function(html){$('#content').html(html);}});"
+  "}"
+  "function Pin1(){"
+    "$.ajax({type:'POST', url:'control', data:'1=1', success:function(data){show();}});"
+  "}"
+  "function Auto1(){"
+    "$.ajax({type:'POST', url:'control', data:'1=2', success:function(data){show();}});"
+  "}"
+  "function Pin2(){"
+    "$.ajax({type:'POST', url:'control', data:'2=1', success:function(data){show();}});"
+  "}"
+  "function Auto2(){"
+    "$.ajax({type:'POST', url:'control', data:'2=2', success:function(data){show();}});"
+  "}"
+  "$(document).ready(function(){show(); setInterval('show()',5000);});"
+  "</script>";
+
+
+
+const char HTTP_REBOOT[] PROGMEM =
+"<div class='col-sm-6 col-md-5 col-lg-4'>"
+  "<div class='page-header'>"
+    "<h2>Reboot ESP</h2>"
+  "</div>"
+  "<div class='alert alert-info' role='alert'>"
+    "<a href='#' class='alert-link'>Rebooting...</a>"
+  "</div>"
+"</div>";
+
+const char HTTP_UPDATE[] PROGMEM  = 
+"<div class='col-sm-6 col-md-5 col-lg-4'>"
+  "<div class='page-header'>"
+    "<h2>Update Frimware</h2>"
+  "</div>"
+  "<form method='POST' action='/upload_sketch' enctype='multipart/form-data'>"
+    "<p><input type='file' class='btn btn-primary' name='sketch'></p>"
+    "<h3><small>Выберите файл формата *.bin</small></h3>"
+    "<p><input type='submit' value='Upload' class='btn btn-danger'></p>"
+  "</form>"
+"</div>";
+
+const char HTTP_SENSORS[] PROGMEM  = 
+"<div class='col-sm-6 col-md-5 col-lg-4'>"
+    "<div class='page-header'>"
+        "<h3>Sensors Configuration</h3>"
+    "</div>"
+    "<form action='save' method='POST'>"
+        "<div class='panel panel-default'>"
+            "<div class='panel-body'>"
+                "<input id='w' name='w' value='2' hidden>"
+                "<div class='checkbox'><label><input type='checkbox' value='1' id='bme280_enable' name='bme280_enable'>BME280</label></div>"
+                "<div class='checkbox'><label><input type='checkbox' value='1' id='sht21_enable' name='sht21_enable'>SHT21</label></div>"
+                "<div class='checkbox'><label><input type='checkbox' value='1' id='dht_enable' name='dht_enable'>DHT</label></div>"
+                "<div class='checkbox'><label><input type='checkbox' value='1' id='bh1750_enable' name='bh1750_enable'>BH1750</label></div>"
+                "<div class='checkbox'><label><input type='checkbox' value='1' id='motion_sensor_enable' name='motion_sensor_enable'>Motion Sensor</label></div>"
+                "<div class='checkbox'><label><input type='checkbox' value='1' id='pzem_enable' name='pzem_enable'>Energy Monitor</label></div>"
+            "</div>"
+            "<div class='panel-footer clearfix'>"
+                "<div class='pull-right'><button type='submit' class='btn btn-default'>Save</button></div>"
+            "</div>"
+        "</div>"
+    "</form>"
+    "<div class='clearfix visible-lg'></div>"
+"</div>";
+
+
+
 
 void showPage(String &page)
 {
@@ -711,9 +699,6 @@ void handleLogConfig()
 
 
 
-
-
-
 void handleConsole()
 {
   char svalue[MESSZ];
@@ -738,6 +723,8 @@ void handleConsole()
   showPage(page);
 }
 
+
+
 void handleAjax()
 {
   String message = "";
@@ -759,145 +746,77 @@ void handleAjax()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void handleSave()
+void handleReboot()
 {
   char log[LOGSZ];
-  byte what = 0, restart;
-
-  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Parameter save"));
-
-  if (strlen(WebServer.arg("w").c_str())) what = atoi(WebServer.arg("w").c_str());
-  switch (what) {
-  case 1:
-    break;
-  case 2:
-    break;
-  case 3:  //Logging Config save
-    strlcpy(JConf.serial_log_level, (!strlen(WebServer.arg("ls").c_str())) ? JConf.serial_log_level : WebServer.arg("ls").c_str(), sizeof(JConf.serial_log_level));
-    strlcpy(JConf.web_log_level, (!strlen(WebServer.arg("lw").c_str())) ? JConf.web_log_level : WebServer.arg("lw").c_str(), sizeof(JConf.web_log_level));
-    strlcpy(JConf.sys_log_level, (!strlen(WebServer.arg("ll").c_str())) ? JConf.sys_log_level : WebServer.arg("ll").c_str(), sizeof(JConf.sys_log_level));
-    strlcpy(JConf.sys_log_host, (!strlen(WebServer.arg("lh").c_str())) ? JConf.sys_log_host : WebServer.arg("lh").c_str(), sizeof(JConf.sys_log_host));
-    strlcpy(JConf.sys_log_port, (!strlen(WebServer.arg("lp").c_str())) ? JConf.sys_log_port : WebServer.arg("lp").c_str(), sizeof(JConf.sys_log_port));
-
-    snprintf_P(log, sizeof(log), PSTR("HTTP: Logging Seriallog %s, Weblog %s, Syslog %s, Host %s, Port %s"),
-      JConf.serial_log_level, JConf.web_log_level, JConf.sys_log_level, JConf.sys_log_host, JConf.sys_log_port);
-    addLog(LOG_LEVEL_INFO, log);
-    JConf.saveConfig();
-    handleLogConfig();
-    break;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////   WEB PAGES  Start  //////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void WebReboot(void) {
-
-  char log[LOGSZ];
   unsigned long start_time = millis();
-  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebReboot Start");
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleReboot Start");
 
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-  String headerRefreshStatus;   headerRefreshStatus += FPSTR(headerRefreshStatusP);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+  String head = FPSTR(HTTP_HEAD);
+  head.replace("{module_id}", String(JConf.module_id));
+  head.replace("</title>", "</title><META HTTP-EQUIV='Refresh' CONTENT='20; URL=/'>");
+  
+  String body = FPSTR(HTTP_BODY);
+  body.replace("{module_id}", String(JConf.module_id));
 
-  navbarNonActive += FPSTR(navbarBeginP);
-  #ifdef UART_ON
-    navbarNonActive += FPSTR(navbarUartP);
-  #endif
-
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
-
-  String data = String(F("<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>Reboot ESP</h2></div><div class='alert alert-info' role='alert'><a href='#' class='alert-link'>Rebooting...</a></div></div>"));
-  WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+  String page = head + body + FPSTR(HTTP_REBOOT) + FPSTR(HTTP_BODY_END);
 
   unsigned long load_time = millis() - start_time;
-  snprintf_P(log, sizeof(log), PSTR("Func: WebReboot load time: %d"), load_time);
+  snprintf_P(log, sizeof(log), PSTR("Func: handleReboot load time: %d"), load_time);
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 
+  showPage(page);
   restartESP();
 }
 
 
 
-void WebUpdate(void) {
-
+void handleUpdate()
+{
   char log[LOGSZ];
   unsigned long start_time = millis();
-  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebUpdate Start");
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleUpdate Start");
 
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+  String head = FPSTR(HTTP_HEAD);
+  head.replace("{module_id}", String(JConf.module_id));
+  
+  String body = FPSTR(HTTP_BODY);
+  body.replace("{module_id}", String(JConf.module_id));
 
-  navbarNonActive += FPSTR(navbarBeginP);
-  #ifdef UART_ON
-    navbarNonActive += FPSTR(navbarUartP);
-  #endif
-
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
-  String sketchUploadForm;      sketchUploadForm += FPSTR(sketchUploadFormP);
-
-  WebServer.send(200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + sketchUploadForm + containerEnd + siteEnd);
+  String page = head + body + FPSTR(HTTP_UPDATE) + FPSTR(HTTP_BODY_END);
 
   unsigned long load_time = millis() - start_time;
-  snprintf_P(log, sizeof(log), PSTR("Func: WebUpdate load time: %d"), load_time);
+  snprintf_P(log, sizeof(log), PSTR("Func: handleUpdate load time: %d"), load_time);
   addLog(LOG_LEVEL_DEBUG_MORE, log);
+
+  showPage(page);
+}
+
+
+
+void handleUploadSketch()
+{
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleUploadSketch Start");
+
+  String head = FPSTR(HTTP_HEAD);
+  head.replace("{module_id}", String(JConf.module_id));
+  head.replace("</title>", "</title><META HTTP-EQUIV='Refresh' CONTENT='20; URL=/'>");
+  
+  String body = FPSTR(HTTP_BODY);
+  body.replace("{module_id}", String(JConf.module_id));
+
+  String data = String(F("<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>Update Frimware</h2></div><div class='alert alert-success'>")) + ((Update.hasError()) ? String(F("FAIL")) : String(F("Update Frimware: OK"))) + String(F("</div></div>"));
+
+  String page = head + body + data + FPSTR(HTTP_BODY_END);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: handleUploadSketch load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+
+  showPage(page);
+  restartESP();
 }
 
 
@@ -943,75 +862,530 @@ void WebFileUpload(void) {
 
 
 
-void WebUploadSketch(void) {
-
+void handleSensorsConfig()
+{
   char log[LOGSZ];
   unsigned long start_time = millis();
-  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebUploadSketch Start");
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleSensorsConfig Start");
 
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-  String headerRefreshStatus;   headerRefreshStatus += FPSTR(headerRefreshStatusP);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
-
-  navbarNonActive += FPSTR(navbarBeginP);
-  #ifdef UART_ON
-    navbarNonActive += FPSTR(navbarUartP);
-  #endif
-
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
-
-  String varDataString = String(F("<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>Update Frimware</h2></div><div class='alert alert-success'>")) + ((Update.hasError()) ? String(F("FAIL")) : String(F("Update Frimware: OK"))) + String(F("</div></div>"));
+  String head = FPSTR(HTTP_HEAD);
+  head.replace("{module_id}", String(JConf.module_id));
+  
+  String body = FPSTR(HTTP_BODY);
+  body.replace("{module_id}", String(JConf.module_id));
 
 
-  WebServer.send(200, "text/html", headerStart + JConf.module_id + headerStart2 + headerRefreshStatus + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + varDataString + containerEnd + siteEnd);
+  String settings = FPSTR(HTTP_SENSORS);
+
+  if (atoi(JConf.bme280_enable) == 1){
+    settings.replace("id='bme280_enable'", "checked='true' id='bme280_enable'");
+  }
+  if (atoi(JConf.sht21_enable) == 1){
+    settings.replace("id='sht21_enable'", "checked='true' id='sht21_enable'");
+  }
+  if (atoi(JConf.dht_enable) == 1){
+    settings.replace("id='dht_enable'", "checked='true' id='dht_enable'");
+  }
+  if (atoi(JConf.bh1750_enable) == 1){
+    settings.replace("id='bh1750_enable'", "checked='true' id='bh1750_enable'");
+  }
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    settings.replace("id='motion_sensor_enable'", "checked='true' id='motion_sensor_enable'");
+  }
+  if (atoi(JConf.pzem_enable) == 1){
+    settings.replace("id='pzem_enable'", "checked='true' id='pzem_enable'");
+  }
+
+  String page = head + body + settings + FPSTR(HTTP_BODY_END);
 
   unsigned long load_time = millis() - start_time;
-  snprintf_P(log, sizeof(log), PSTR("Func: WebUploadSketch load time: %d"), load_time);
+  snprintf_P(log, sizeof(log), PSTR("Func: handleSensorsConfig load time: %d"), load_time);
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 
-  restartESP();
+  showPage(page);
 }
 
 
 
+void handleMqttConfig()
+{
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleMqttConfig Start");
+
+  String head = FPSTR(HTTP_HEAD);
+  head.replace("{module_id}", String(JConf.module_id));
+  
+  String body = FPSTR(HTTP_BODY);
+  body.replace("{module_id}", String(JConf.module_id));
+
+  String name = FPSTR(HTTP_PANEL_NAME);
+  name.replace("{panel_name}", "MQTT Configuration");
+
+
+  String form = FPSTR(HTTP_FORM_START);
+  form += "<input id='w' name='w' value='1' hidden>";
+
+  if (atoi(JConf.mqtt_enable) == 1){
+    form += FPSTR(HTTP_FORM_CHECKBOX);
+    form.replace("{id}", "mqtt_enable");
+    form.replace("{name}", "MQTT Enable");
+    form.replace("id='mqtt_enable'", "checked='true' id='mqtt_enable'");
+
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "mqtt_server");
+    form.replace("{name}", "Server MQTT");
+    form.replace("{value}", String(JConf.mqtt_server));
+
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "mqtt_port");
+    form.replace("{name}", "Port MQTT");
+    form.replace("{value}", String(JConf.mqtt_port));
+    form += String(F("<hr>"));
+
+    if (atoi(JConf.mqtt_auth_enable) == 1){
+      form += FPSTR(HTTP_FORM_CHECKBOX);
+      form.replace("{id}", "mqtt_auth_enable");
+      form.replace("{name}", "MQTT Authentication");
+      form.replace("id='mqtt_auth_enable'", "checked='true' id='mqtt_auth_enable'");
+
+      form += FPSTR(HTTP_FORM_INPUT_TXT);
+      form.replace("{id}", "mqtt_user");
+      form.replace("{name}", "MQTT User");
+      form.replace("{value}", String(JConf.mqtt_user));
+
+      form += FPSTR(HTTP_FORM_INPUT_PWD);
+      form.replace("{id}", "mqtt_pwd");
+      form.replace("{name}", "MQTT Password");
+    } else {
+      form += FPSTR(HTTP_FORM_CHECKBOX);
+      form.replace("{id}", "mqtt_auth_enable");
+      form.replace("{name}", "MQTT Authentication");
+    }
+    form += String(F("<hr>"));
+
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "mqtt_name");
+    form.replace("{name}", "MQTT Postfix");
+    form.replace("{value}", String(JConf.mqtt_name));
+
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "publish_topic");
+    form.replace("{name}", "Publish Topic");
+    form.replace("{value}", String(JConf.publish_topic));
+
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "subscribe_topic");
+    form.replace("{name}", "Subscribe Topic");
+    form.replace("{value}", String(JConf.subscribe_topic));
+
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "publish_delay");
+    form.replace("{name}", "Publish Delay");
+    form.replace("{value}", String(JConf.publish_delay));
+
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "subscribe_delay");
+    form.replace("{name}", "Subscribe Delay");
+    form.replace("{value}", String(JConf.subscribe_delay));
+  } else {
+    form += FPSTR(HTTP_FORM_CHECKBOX);
+    form.replace("{id}", "mqtt_enable");
+    form.replace("{name}", "MQTT Enable");
+  }
+  form += FPSTR(HTTP_BTN_SAVE);
+  form += FPSTR(HTTP_FORM_END);
+
+  String page = head + body + name + form + FPSTR(HTTP_BODY_END);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: handleMqttConfig load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+
+  showPage(page);
+}
+
+
+
+void handleNtpConfig()
+{
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleNtpConfig Start");
+
+  String head = FPSTR(HTTP_HEAD);
+  head.replace("{module_id}", String(JConf.module_id));
+  
+  String body = FPSTR(HTTP_BODY);
+  body.replace("{module_id}", String(JConf.module_id));
+
+  String name = FPSTR(HTTP_PANEL_NAME);
+  name.replace("{panel_name}", "NTP Configuration");
+
+
+  String form = FPSTR(HTTP_FORM_START);
+  form += "<input id='w' name='w' value='4' hidden>";
+  
+  form += FPSTR(HTTP_FORM_CHECKBOX);
+  form.replace("{id}", "ntp_enable");
+  form.replace("{name}", "NTP Enable");
+
+  if (atoi(JConf.ntp_enable) == 1){
+    form.replace("id='ntp_enable'", "checked='true' id='ntp_enable'");
+
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "ntp_server");
+    form.replace("{name}", "Server NTP");
+    form.replace("{value}", String(JConf.ntp_server));
+
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "my_time_zone");
+    form.replace("{name}", "Port NTP");
+    form.replace("{value}", String(JConf.my_time_zone));
+    form += String(F("<hr>"));
+  }
+  form += FPSTR(HTTP_BTN_SAVE);
+  form += FPSTR(HTTP_FORM_END);
+
+  String page = head + body + name + form + FPSTR(HTTP_BODY_END);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: handleNtpConfig load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+
+  showPage(page);
+}
+
+
+
+void handlePinControl()
+{
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handlePinControl Start");
+
+  String head = FPSTR(HTTP_HEAD);
+  head.replace("{module_id}", String(JConf.module_id));
+  
+  String body = FPSTR(HTTP_BODY);
+  body.replace("{module_id}", String(JConf.module_id));
+
+  String page = head + body + FPSTR(JS_PIN_CONTROL) + FPSTR(HTTP_BODY_END);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: handlePinControl load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+
+  showPage(page);
+}
+
+
+
+void handleEspConfig()
+{
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleEspConfig Start");
+
+  String head = FPSTR(HTTP_HEAD);
+  head.replace("{module_id}", String(JConf.module_id));
+  
+  String body = FPSTR(HTTP_BODY);
+  body.replace("{module_id}", String(JConf.module_id));
+
+  String name = FPSTR(HTTP_PANEL_NAME);
+  name.replace("{panel_name}", "ESP Configuration");
+
+
+  String form = FPSTR(HTTP_FORM_START);
+  form += String(F("<input id='w' name='w' value='5' hidden>"));
+  form += String(F("<h4>Light 1</h4>"));
+
+
+  form += FPSTR(HTTP_FORM_INPUT_TXT);
+  form.replace("{id}", "light_pin");
+  form.replace("{name}", "Pin");
+  form.replace("{value}", String(JConf.light_pin));
+
+  form += FPSTR(HTTP_FORM_INPUT_TXT_UNIT);
+  form.replace("{id}", "lightoff_delay");
+  form.replace("{name}", "Off Delay");
+  form.replace("{value}", String(JConf.lightoff_delay));
+  form.replace("{unit}", "min");
+
+  if (atoi(JConf.bh1750_enable) == 1){
+    form += FPSTR(HTTP_FORM_INPUT_TXT_UNIT);
+    form.replace("{id}", "lighton_lux");
+    form.replace("{name}", "On Lux");
+    form.replace("{value}", String(JConf.lighton_lux));
+    form.replace("{unit}", "Lux");
+  }
+
+  form += FPSTR(HTTP_FORM_CHECKBOX);
+  form.replace("{id}", "light_smooth");
+  form.replace("{name}", "Smooth Enable");
+  if (atoi(JConf.light_smooth) == 1){
+    form.replace("id='light_smooth'", "checked='true' id='light_smooth'");
+  }
+
+  form += String(F("<hr>"));
+  form += String(F("<h4>Light 2</h4>"));
+
+  form += FPSTR(HTTP_FORM_INPUT_TXT);
+  form.replace("{id}", "light2_pin");
+  form.replace("{name}", "Pin");
+  form.replace("{value}", String(JConf.light2_pin));
+
+  form += FPSTR(HTTP_FORM_INPUT_TXT_UNIT);
+  form.replace("{id}", "light2off_delay");
+  form.replace("{name}", "Off Delay");
+  form.replace("{value}", String(JConf.light2off_delay));
+  form.replace("{unit}", "min");
+
+  if (atoi(JConf.bh1750_enable) == 1){
+    form += FPSTR(HTTP_FORM_INPUT_TXT_UNIT);
+    form.replace("{id}", "light2on_lux");
+    form.replace("{name}", "On Lux");
+    form.replace("{value}", String(JConf.light2on_lux));
+    form.replace("{unit}", "Lux");
+  }
+
+  form += FPSTR(HTTP_FORM_CHECKBOX);
+  form.replace("{id}", "light2_smooth");
+  form.replace("{name}", "Smooth Enable");
+  if (atoi(JConf.light2_smooth) == 1){
+    form.replace("id='light2_smooth'", "checked='true' id='light2_smooth'");
+  }
+  form += String(F("<hr>"));
+
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "motion_pin");
+    form.replace("{name}", "Motion Pin");
+    form.replace("{value}", String(JConf.motion_pin));
+  }
+
+  if (atoi(JConf.dht_enable) == 1){
+    form += FPSTR(HTTP_FORM_INPUT_TXT);
+    form.replace("{id}", "dht_pin");
+    form.replace("{name}", "DHT Pin");
+    form.replace("{value}", String(JConf.dht_pin));
+  }
+  form += String(F("<br>"));
+
+  form += FPSTR(HTTP_FORM_INPUT_TXT_UNIT);
+  form.replace("{id}", "get_data_delay");
+  form.replace("{name}", "Update Data Delay");
+  form.replace("{value}", String(JConf.get_data_delay));
+  form.replace("{unit}", "sec");
+
+  if (atoi(JConf.motion_sensor_enable) == 1){
+    form += FPSTR(HTTP_FORM_INPUT_TXT_UNIT);
+    form.replace("{id}", "motion_read_delay");
+    form.replace("{name}", "Motion Read Delay");
+    form.replace("{value}", String(JConf.motion_read_delay));
+    form.replace("{unit}", "sec");
+  }
+
+  #ifdef REBOOT_ON
+    form += FPSTR(HTTP_FORM_INPUT_TXT_UNIT);
+    form.replace("{id}", "reboot_delay");
+    form.replace("{name}", "Reboot Delay");
+    form.replace("{value}", String(JConf.reboot_delay));
+    form.replace("{unit}", "sec");
+  #endif //REBOOT_ON
+
+  form += FPSTR(HTTP_BTN_SAVE);
+  form += FPSTR(HTTP_FORM_END);
+
+  String page = head + body + name + form + FPSTR(HTTP_BODY_END);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: handleEspConfig load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+
+  showPage(page);
+}
+
+
+
+
+
+
+void handleSave()
+{
+  char log[LOGSZ];
+  byte what = 0, restart;
+
+  addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Parameter save"));
+
+  if (strlen(WebServer.arg("w").c_str())) what = atoi(WebServer.arg("w").c_str());
+  switch (what) {
+    case 1:
+      if (strstr(WebServer.arg("mqtt_enable").c_str(),"1")) {
+        strlcpy(JConf.mqtt_enable, "1", sizeof(JConf.mqtt_enable));
+      } else {
+        strlcpy(JConf.mqtt_enable, "0", sizeof(JConf.mqtt_enable));
+      }
+      strlcpy(JConf.mqtt_server, (!strlen(WebServer.arg("mqtt_server").c_str())) ? JConf.mqtt_server : WebServer.arg("mqtt_server").c_str(), sizeof(JConf.mqtt_server));
+      strlcpy(JConf.mqtt_port, (!strlen(WebServer.arg("mqtt_port").c_str())) ? JConf.mqtt_port : WebServer.arg("mqtt_port").c_str(), sizeof(JConf.mqtt_port));
+
+      if (strstr(WebServer.arg("mqtt_auth_enable").c_str(),"1")) {
+        strlcpy(JConf.mqtt_auth_enable, "1", sizeof(JConf.mqtt_auth_enable));
+      } else {
+        strlcpy(JConf.mqtt_auth_enable, "0", sizeof(JConf.mqtt_auth_enable));
+      }
+      strlcpy(JConf.mqtt_user, (!strlen(WebServer.arg("mqtt_user").c_str())) ? JConf.mqtt_user : WebServer.arg("mqtt_user").c_str(), sizeof(JConf.mqtt_user));
+      strlcpy(JConf.mqtt_pwd, (!strlen(WebServer.arg("mqtt_pwd").c_str())) ? JConf.mqtt_pwd : WebServer.arg("mqtt_pwd").c_str(), sizeof(JConf.mqtt_pwd));
+
+      strlcpy(JConf.mqtt_name, (!strlen(WebServer.arg("mqtt_name").c_str())) ? JConf.mqtt_name : WebServer.arg("mqtt_name").c_str(), sizeof(JConf.mqtt_name));
+      strlcpy(JConf.publish_topic, (!strlen(WebServer.arg("publish_topic").c_str())) ? JConf.publish_topic : WebServer.arg("publish_topic").c_str(), sizeof(JConf.publish_topic));
+      strlcpy(JConf.subscribe_topic, (!strlen(WebServer.arg("subscribe_topic").c_str())) ? JConf.subscribe_topic : WebServer.arg("subscribe_topic").c_str(), sizeof(JConf.subscribe_topic));
+      strlcpy(JConf.publish_delay, (!strlen(WebServer.arg("publish_delay").c_str())) ? JConf.publish_delay : WebServer.arg("publish_delay").c_str(), sizeof(JConf.publish_delay));
+      strlcpy(JConf.subscribe_delay, (!strlen(WebServer.arg("subscribe_delay").c_str())) ? JConf.subscribe_delay : WebServer.arg("subscribe_delay").c_str(), sizeof(JConf.subscribe_delay));
+
+      snprintf_P(log, sizeof(log), PSTR("HTTP: MQTT mqtt_enable %s, mqtt_server %s, mqtt_port %s, mqtt_auth_enable %s, mqtt_user %s"),
+        JConf.mqtt_enable, JConf.mqtt_server, JConf.mqtt_port, JConf.mqtt_auth_enable, JConf.mqtt_user);
+      addLog(LOG_LEVEL_INFO, log);
+
+      snprintf_P(log, sizeof(log), PSTR("HTTP: MQTT mqtt_name %s, publish_topic %s, subscribe_topic %s, publish_delay %s, subscribe_delay %s"),
+        JConf.mqtt_name, JConf.publish_topic, JConf.subscribe_topic, JConf.publish_delay, JConf.subscribe_delay);
+      addLog(LOG_LEVEL_INFO, log);
+
+      JConf.saveConfig();
+      handleMqttConfig();
+      break;
+    case 2:  //Sensors Config save
+      if (strstr(WebServer.arg("bme280_enable").c_str(),"1")) {
+        strlcpy(JConf.bme280_enable, "1", sizeof(JConf.bme280_enable));
+      } else {
+        strlcpy(JConf.bme280_enable, "0", sizeof(JConf.bme280_enable));
+      }
+      if (strstr(WebServer.arg("sht21_enable").c_str(),"1")) {
+        strlcpy(JConf.sht21_enable, "1", sizeof(JConf.sht21_enable));
+      } else {
+        strlcpy(JConf.sht21_enable, "0", sizeof(JConf.sht21_enable));
+      }
+      if (strstr(WebServer.arg("dht_enable").c_str(),"1")) {
+        strlcpy(JConf.dht_enable, "1", sizeof(JConf.dht_enable));
+      } else {
+        strlcpy(JConf.dht_enable, "0", sizeof(JConf.dht_enable));
+      }
+      if (strstr(WebServer.arg("bh1750_enable").c_str(),"1")) {
+        strlcpy(JConf.bh1750_enable, "1", sizeof(JConf.bh1750_enable));
+      } else {
+        strlcpy(JConf.bh1750_enable, "0", sizeof(JConf.bh1750_enable));
+      }
+      if (strstr(WebServer.arg("motion_sensor_enable").c_str(),"1")) {
+        strlcpy(JConf.motion_sensor_enable, "1", sizeof(JConf.motion_sensor_enable));
+      } else {
+        strlcpy(JConf.motion_sensor_enable, "0", sizeof(JConf.motion_sensor_enable));
+      }
+      if (strstr(WebServer.arg("pzem_enable").c_str(),"1")) {
+        strlcpy(JConf.pzem_enable, "1", sizeof(JConf.pzem_enable));
+      } else {
+        strlcpy(JConf.pzem_enable, "0", sizeof(JConf.pzem_enable));
+      }
+
+      snprintf_P(log, sizeof(log), PSTR("HTTP: Sensors bme280_enable %s, sht21_enable %s, dht_enable %s, bh1750_enable %s, motion_sensor_enable %s, pzem_enable %s"),
+        JConf.bme280_enable, JConf.sht21_enable, JConf.dht_enable, JConf.bh1750_enable, JConf.motion_sensor_enable, JConf.pzem_enable);
+      addLog(LOG_LEVEL_INFO, log);
+
+      JConf.saveConfig();
+      handleSensorsConfig();
+      break;
+    case 3:  //Logging Config save
+      strlcpy(JConf.serial_log_level, (!strlen(WebServer.arg("ls").c_str())) ? JConf.serial_log_level : WebServer.arg("ls").c_str(), sizeof(JConf.serial_log_level));
+      strlcpy(JConf.web_log_level, (!strlen(WebServer.arg("lw").c_str())) ? JConf.web_log_level : WebServer.arg("lw").c_str(), sizeof(JConf.web_log_level));
+      strlcpy(JConf.sys_log_level, (!strlen(WebServer.arg("ll").c_str())) ? JConf.sys_log_level : WebServer.arg("ll").c_str(), sizeof(JConf.sys_log_level));
+      strlcpy(JConf.sys_log_host, (!strlen(WebServer.arg("lh").c_str())) ? JConf.sys_log_host : WebServer.arg("lh").c_str(), sizeof(JConf.sys_log_host));
+      strlcpy(JConf.sys_log_port, (!strlen(WebServer.arg("lp").c_str())) ? JConf.sys_log_port : WebServer.arg("lp").c_str(), sizeof(JConf.sys_log_port));
+
+      snprintf_P(log, sizeof(log), PSTR("HTTP: Logging Seriallog %s, Weblog %s, Syslog %s, Host %s, Port %s"),
+        JConf.serial_log_level, JConf.web_log_level, JConf.sys_log_level, JConf.sys_log_host, JConf.sys_log_port);
+      addLog(LOG_LEVEL_INFO, log);
+
+      JConf.saveConfig();
+      handleLogConfig();
+      break;
+    case 4:  //MQTT Config save
+      if (strstr(WebServer.arg("ntp_enable").c_str(),"1")) {
+        strlcpy(JConf.ntp_enable, "1", sizeof(JConf.ntp_enable));
+      } else {
+        strlcpy(JConf.ntp_enable, "0", sizeof(JConf.ntp_enable));
+      }
+      strlcpy(JConf.ntp_server, (!strlen(WebServer.arg("ntp_server").c_str())) ? JConf.ntp_server : WebServer.arg("ntp_server").c_str(), sizeof(JConf.ntp_server));
+      strlcpy(JConf.my_time_zone, (!strlen(WebServer.arg("my_time_zone").c_str())) ? JConf.my_time_zone : WebServer.arg("my_time_zone").c_str(), sizeof(JConf.my_time_zone));
+
+      snprintf_P(log, sizeof(log), PSTR("HTTP: NTP ntp_enable %s, ntp_server %s, my_time_zone %s"), JConf.ntp_enable, JConf.ntp_server, JConf.my_time_zone);
+      addLog(LOG_LEVEL_INFO, log);
+
+      #ifdef NTP_ON
+        NTPSettingsUpdate();
+      #endif //NTP_ON
+
+      JConf.saveConfig();
+      handleNtpConfig();
+      break;
+    case 5:  //ESP Config save
+      strlcpy(JConf.light_pin, (!strlen(WebServer.arg("light_pin").c_str())) ? JConf.light_pin : WebServer.arg("light_pin").c_str(), sizeof(JConf.light_pin));
+      strlcpy(JConf.lightoff_delay, (!strlen(WebServer.arg("lightoff_delay").c_str())) ? JConf.lightoff_delay : WebServer.arg("lightoff_delay").c_str(), sizeof(JConf.lightoff_delay));
+      strlcpy(JConf.lighton_lux, (!strlen(WebServer.arg("lighton_lux").c_str())) ? JConf.lighton_lux : WebServer.arg("lighton_lux").c_str(), sizeof(JConf.lighton_lux));
+
+      if (strstr(WebServer.arg("light_smooth").c_str(),"1")) {
+        strlcpy(JConf.light_smooth, "1", sizeof(JConf.light_smooth));
+      } else {
+        strlcpy(JConf.light_smooth, "0", sizeof(JConf.light_smooth));
+      }
+
+      strlcpy(JConf.light2_pin, (!strlen(WebServer.arg("light2_pin").c_str())) ? JConf.light2_pin : WebServer.arg("light2_pin").c_str(), sizeof(JConf.light2_pin));
+      strlcpy(JConf.light2off_delay, (!strlen(WebServer.arg("light2off_delay").c_str())) ? JConf.light2off_delay : WebServer.arg("light2off_delay").c_str(), sizeof(JConf.light2off_delay));
+      strlcpy(JConf.light2on_lux, (!strlen(WebServer.arg("light2on_lux").c_str())) ? JConf.light2on_lux : WebServer.arg("light2on_lux").c_str(), sizeof(JConf.light2on_lux));
+
+      if (strstr(WebServer.arg("light2_smooth").c_str(),"1")) {
+        strlcpy(JConf.light2_smooth, "1", sizeof(JConf.light2_smooth));
+      } else {
+        strlcpy(JConf.light2_smooth, "0", sizeof(JConf.light2_smooth));
+      }
+
+      strlcpy(JConf.motion_pin, (!strlen(WebServer.arg("motion_pin").c_str())) ? JConf.motion_pin : WebServer.arg("motion_pin").c_str(), sizeof(JConf.motion_pin));
+      strlcpy(JConf.dht_pin, (!strlen(WebServer.arg("dht_pin").c_str())) ? JConf.dht_pin : WebServer.arg("dht_pin").c_str(), sizeof(JConf.dht_pin));
+      strlcpy(JConf.get_data_delay, (!strlen(WebServer.arg("get_data_delay").c_str())) ? JConf.get_data_delay : WebServer.arg("get_data_delay").c_str(), sizeof(JConf.get_data_delay));
+      strlcpy(JConf.motion_read_delay, (!strlen(WebServer.arg("motion_read_delay").c_str())) ? JConf.motion_read_delay : WebServer.arg("motion_read_delay").c_str(), sizeof(JConf.motion_read_delay));
+      strlcpy(JConf.reboot_delay, (!strlen(WebServer.arg("reboot_delay").c_str())) ? JConf.reboot_delay : WebServer.arg("reboot_delay").c_str(), sizeof(JConf.reboot_delay));
+
+      JConf.saveConfig();
+      handleEspConfig();
+      break;
+  }
+}
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////   WEB PAGES  Start  //////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 void WebWiFiConf(void) {
 
   char log[LOGSZ];
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebWiFiConf Start");
 
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
+  String head = FPSTR(HTTP_HEAD);
+  head.replace("{module_id}", String(JConf.module_id));
+  
+  String body = FPSTR(HTTP_BODY);
+  body.replace("{module_id}", String(JConf.module_id));
 
-  navbarNonActive += FPSTR(navbarBeginP);
-  #ifdef UART_ON
-    navbarNonActive += FPSTR(navbarUartP);
-  #endif
+  String name = FPSTR(HTTP_PANEL_NAME);
+  name.replace("{panel_name}", "Wi-Fi Configuration");
 
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
+  String form = FPSTR(HTTP_FORM_START);
+  form.replace("save", "");
+
   String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
   String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
-  String panelEnd;              panelEnd += FPSTR(panelEndP);
-  String panelBodySymbol;       panelBodySymbol += FPSTR(panelBodySymbolP);
-  String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
-  String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
-  String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
   String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
   String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
   String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
@@ -1106,10 +1480,8 @@ void WebWiFiConf(void) {
     JConf.saveConfig();
   }
 
-  String data = panelHeaderName + String(F("Wi-Fi Configuration")) + panelHeaderEnd;
-  data += inputBodyStart;
 
-  data += inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
+  String data = inputBodyName + String(F("Module ID")) + inputBodyPOST + String(F("module_id"))  + inputPlaceHolder + JConf.module_id + inputBodyClose + inputBodyCloseDiv;
 
   data += String(F("<div class='form-group'><div class='input-group'><span class='input-group-addon'>AP type</span>"));
   if (atoi(JConf.wifi_mode) == STA){
@@ -1168,651 +1540,10 @@ void WebWiFiConf(void) {
   data += panelHeaderName + String(F("Scan AP")) + panelHeaderEnd;
   data += network_html;
 
-  WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
+  WebServer.send ( 200, "text/html", head + body + name + form + data + FPSTR(HTTP_BODY_END));
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: WebWiFiConf load time: %d"), load_time);
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
-}
-
-
-
-void WebSensorsConf(void) {
-
-  char log[LOGSZ];
-  unsigned long start_time = millis();
-  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebSensorsConf Start");
-
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
-
-  navbarNonActive += FPSTR(navbarBeginP);
-  #ifdef UART_ON
-    navbarNonActive += FPSTR(navbarUartP);
-  #endif
-
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
-  String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
-  String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
-
-  String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
-  String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
-  String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
-  String inputPlaceHolder;      inputPlaceHolder += FPSTR(inputPlaceHolderP);
-  String inputBodyClose;        inputBodyClose += FPSTR(inputBodyCloseP);
-  String inputBodyCloseDiv;     inputBodyCloseDiv += FPSTR(inputBodyCloseDivP);
-  String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
-  String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
-  String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
-
-  String data;
-  data += panelHeaderName;
-  data += String(F("Sensors Configuration"));
-  data += panelHeaderEnd;
-  data += inputBodyStart;
-
-  bool config_changed = false;
-
-  bool dht_enable = false;
-  bool bme280_enable = false;
-  bool sht21_enable = false;
-  bool bh1750_enable = false;
-  bool motion_sensor_enable = false;
-  bool pzem_enable = false;
-
-  String payload = "";
-
-  payload=WebServer.arg("save_conf");
-  if (payload.length() > 0) {
-    config_changed = true;
-  } 
-
-  payload=WebServer.arg("bme280_enable");
-  if (payload.length() > 0) {
-    payload.toCharArray(JConf.bme280_enable, sizeof(JConf.bme280_enable));
-    bme280_enable = true;
-  } 
-
-  payload=WebServer.arg("sht21_enable");
-  if (payload.length() > 0) {
-    payload.toCharArray(JConf.sht21_enable, sizeof(JConf.sht21_enable));
-    sht21_enable = true;
-  } 
-
-  payload=WebServer.arg("dht_enable");
-  if (payload.length() > 0) {
-    payload.toCharArray(JConf.dht_enable, sizeof(JConf.dht_enable));
-    dht_enable = true;
-  } 
-
-  payload=WebServer.arg("bh1750_enable");
-  if (payload.length() > 0) {
-    payload.toCharArray(JConf.bh1750_enable, sizeof(JConf.bh1750_enable));
-    bh1750_enable = true;
-  } 
-
-  payload=WebServer.arg("motion_sensor_enable");
-  if (payload.length() > 0) {
-    payload.toCharArray(JConf.motion_sensor_enable, sizeof(JConf.motion_sensor_enable));
-    motion_sensor_enable = true;
-  } 
-
-  payload=WebServer.arg("pzem_enable");
-  if (payload.length() > 0) {
-    payload.toCharArray(JConf.pzem_enable, sizeof(JConf.pzem_enable));
-    pzem_enable = true;
-  } 
-
-
-  if (config_changed){
-    if (!bme280_enable){
-      JConf.bme280_enable[0] = '0';
-      JConf.bme280_enable[1] = '\0';
-    }
-    if (!sht21_enable){
-      JConf.sht21_enable[0] = '0';
-      JConf.sht21_enable[1] = '\0';
-    }
-    if (!dht_enable){
-      JConf.dht_enable[0] = '0';
-      JConf.dht_enable[1] = '\0';
-    }
-    if (!bh1750_enable){
-      JConf.bh1750_enable[0] = '0';
-      JConf.bh1750_enable[1] = '\0';
-      luxString = "0";
-    }
-    if (!motion_sensor_enable){
-      JConf.motion_sensor_enable[0] = '0';
-      JConf.motion_sensor_enable[1] = '\0';
-    }
-    if (!pzem_enable){
-      JConf.pzem_enable[0] = '0';
-      JConf.pzem_enable[1] = '\0';
-    }
-    JConf.saveConfig();
-  }
-
-  if (atoi(JConf.bme280_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bme280_enable' value='1' checked='true'>BME280</label></div>"));
-  } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bme280_enable' value='1'>BME280</label></div>"));
-  }
-
-  if (atoi(JConf.sht21_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='sht21_enable' value='1' checked='true'>SHT21</label></div>"));
-  } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='sht21_enable' value='1'>SHT21</label></div>"));
-  }
-
-  if (atoi(JConf.dht_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='dht_enable' value='1' checked='true'>DHT</label></div>"));
-  } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='dht_enable' value='1'>DHT</label></div>"));
-  }
-
-  if (atoi(JConf.bh1750_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bh1750_enable' value='1' checked='true'>BH1750</label></div>"));
-  } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='bh1750_enable' value='1'>BH1750</label></div>"));
-  }
-
-  if (atoi(JConf.motion_sensor_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='motion_sensor_enable' value='1' checked='true'>Motion Sensor</label></div>"));
-  } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='motion_sensor_enable' value='1'>Motion Sensor</label></div>"));
-  }
-
-  if (atoi(JConf.pzem_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='pzem_enable' value='1' checked='true'>Energy Monitor</label></div>"));
-  } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='pzem_enable' value='1'>Energy Monitor</label></div>"));
-  }
-
-  data += inputBodyEnd;
-
-  WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
-
-  unsigned long load_time = millis() - start_time;
-  snprintf_P(log, sizeof(log), PSTR("Func: WebSensorsConf load time: %d"), load_time);
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
-}
-
-
-
-void WebEspConf(void) {
-
-  char log[LOGSZ];
-  unsigned long start_time = millis();
-  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebEspConf Start");
-
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
-
-  navbarNonActive += FPSTR(navbarBeginP);
-  #ifdef UART_ON
-    navbarNonActive += FPSTR(navbarUartP);
-  #endif
-
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
-  String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
-  String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
-  String panelEnd;              panelEnd += FPSTR(panelEndP);
-  String panelBodySymbol;       panelBodySymbol += FPSTR(panelBodySymbolP);
-  String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
-  String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
-  String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
-  String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
-  String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
-  String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
-  String inputPlaceHolder;      inputPlaceHolder += FPSTR(inputPlaceHolderP);
-  String inputBodyClose;        inputBodyClose += FPSTR(inputBodyCloseP);
-  String inputBodyCloseDiv;     inputBodyCloseDiv += FPSTR(inputBodyCloseDivP);
-  String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
-  String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
-  String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
-
-  bool config_changed = false;
-  bool enable_light_smooth = false;
-  bool enable_light2_smooth = false;
-  String payload = "";
-
-  payload=WebServer.arg("light_pin");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.light_pin, sizeof(JConf.light_pin));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("lightoff_delay");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.lightoff_delay, sizeof(JConf.lightoff_delay));
-    if (atoi(JConf.mqtt_enable) == 1){
-      MqttPubLightOffDelay();
-    }
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("lighton_lux");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.lighton_lux, sizeof(JConf.lighton_lux));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("light_smooth");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.light_smooth, sizeof(JConf.light_smooth));
-    config_changed = true;
-    enable_light_smooth = true;
-  }
-
-  payload=WebServer.arg("light2_pin");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.light2_pin, sizeof(JConf.light2_pin));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("light2off_delay");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.light2off_delay, sizeof(JConf.light2off_delay));
-    if (atoi(JConf.mqtt_enable) == 1){
-      MqttPubLightOffDelay();
-    }
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("light2on_lux");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.light2on_lux, sizeof(JConf.light2on_lux));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("light2_smooth");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.light2_smooth, sizeof(JConf.light2_smooth));
-    config_changed = true;
-    enable_light2_smooth = true;
-  }
-
-  payload=WebServer.arg("motion_pin");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.motion_pin, sizeof(JConf.motion_pin));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("dht_pin");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.dht_pin, sizeof(JConf.dht_pin));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("get_data_delay");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.get_data_delay, sizeof(JConf.get_data_delay));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("motion_read_delay");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.motion_read_delay, sizeof(JConf.motion_read_delay));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("reboot_delay");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.reboot_delay, sizeof(JConf.reboot_delay));
-    config_changed = true;
-  }
-
-  if (config_changed){
-    if (!enable_light_smooth){
-      JConf.light_smooth[0] = '0';
-      JConf.light_smooth[1] = '\0';
-    }
-    if (!enable_light2_smooth){
-      JConf.light2_smooth[0] = '0';
-      JConf.light2_smooth[1] = '\0';
-    }
-    JConf.saveConfig();
-  }
-
-  String data = panelHeaderName + String(F("ESP Configuration")) + panelHeaderEnd;
-  data += inputBodyStart;
-
-  data += String(F("<h4>Light 1</h4>"));
-  data += inputBodyName + String(F("Pin")) + inputBodyPOST + String(F("light_pin")) + inputPlaceHolder + JConf.light_pin + inputBodyClose + inputBodyCloseDiv;
-  data += inputBodyName + String(F("Off Delay")) + inputBodyPOST + String(F("lightoff_delay")) + inputPlaceHolder + JConf.lightoff_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
-  if (atoi(JConf.bh1750_enable) == 1){
-    data += inputBodyName + String(F("On Lux")) + inputBodyPOST + String(F("lighton_lux")) + inputPlaceHolder + JConf.lighton_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
-  }
-
-  if (atoi(JConf.light_smooth) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light_smooth' value='1' checked='true'>Smooth Enable</label></div>"));
-  } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light_smooth' value='1'>Smooth Enable</label></div>"));
-  }
-  data += String(F("<hr>"));
-
-  data += String(F("<h4>Light 2</h4>"));
-  data += inputBodyName + String(F("Pin")) + inputBodyPOST + String(F("light2_pin")) + inputPlaceHolder + JConf.light2_pin + inputBodyClose + inputBodyCloseDiv;
-  data += inputBodyName + String(F("Off Delay")) + inputBodyPOST + String(F("light2off_delay")) + inputPlaceHolder + JConf.light2off_delay + inputBodyClose + inputBodyUnitStart + String(F("min")) + inputBodyUnitEnd + inputBodyCloseDiv;
-  if (atoi(JConf.bh1750_enable) == 1){
-    data += inputBodyName + String(F("On Lux")) + inputBodyPOST + String(F("light2on_lux")) + inputPlaceHolder + JConf.light2on_lux + inputBodyClose + inputBodyUnitStart + String(F("Lux")) + inputBodyUnitEnd + inputBodyCloseDiv;
-  }
-
-  if (atoi(JConf.light2_smooth) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light2_smooth' value='1' checked='true'>Smooth Enable</label></div>"));
-  } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='light2_smooth' value='1'>Smooth Enable</label></div>"));
-  }
-  data += String(F("<hr>"));
-
-  if (atoi(JConf.motion_sensor_enable) == 1){
-    data += inputBodyName + String(F("Motion Pin")) + inputBodyPOST + String(F("motion_pin")) + inputPlaceHolder + JConf.motion_pin + inputBodyClose + inputBodyCloseDiv;
-  }
-
-  if (atoi(JConf.dht_enable) == 1){
-    data += inputBodyName + String(F("DHT Pin")) + inputBodyPOST + String(F("dht_pin")) + inputPlaceHolder + JConf.dht_pin + inputBodyClose + inputBodyCloseDiv;
-  }
-  data += String(F("<br>"));
-
-  data += inputBodyName + String(F("Update Data Delay")) + inputBodyPOST + String(F("get_data_delay")) + inputPlaceHolder + JConf.get_data_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
-
-  if (atoi(JConf.motion_sensor_enable) == 1){
-    data += inputBodyName + String(F("Motion Read Delay")) + inputBodyPOST + String(F("motion_read_delay")) + inputPlaceHolder + JConf.motion_read_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
-  }
-
-  #ifdef REBOOT_ON
-    data += inputBodyName + String(F("Reboot Delay")) + inputBodyPOST + String(F("reboot_delay")) + inputPlaceHolder + JConf.reboot_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
-  #endif
-
-  data += inputBodyEnd;
-
-  WebServer.send( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
-
-  unsigned long load_time = millis() - start_time;
-  snprintf_P(log, sizeof(log), PSTR("Func: WebEspConf load time: %d"), load_time);
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
-}
-
-
-
-void WebMqttConf(void) {
-
-  char log[LOGSZ];
-  unsigned long start_time = millis();
-  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebMqttConf Start");
-
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
-
-  navbarNonActive += FPSTR(navbarBeginP);
-  #ifdef UART_ON
-    navbarNonActive += FPSTR(navbarUartP);
-  #endif
-
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
-  String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
-  String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
-
-  String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
-  String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
-  String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
-  String inputPlaceHolder;      inputPlaceHolder += FPSTR(inputPlaceHolderP);
-  String inputBodyClose;        inputBodyClose += FPSTR(inputBodyCloseP);
-  String inputBodyCloseDiv;     inputBodyCloseDiv += FPSTR(inputBodyCloseDivP);
-  String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
-  String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
-  String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
-
-  String data;
-  data += panelHeaderName;
-  data += String(F("MQTT Configuration"));
-  data += panelHeaderEnd;
-  data += inputBodyStart;
-
-  bool config_changed = false;
-  bool enable = false;
-  bool enable_auth = false;
-  String payload = "";
-
-  payload=WebServer.arg("mqtt_enable");
-  if (payload.length() > 0) {
-    payload.toCharArray(JConf.mqtt_enable, sizeof(JConf.mqtt_enable));
-    config_changed = true;
-    enable = true;
-  } 
-
-  payload=WebServer.arg("mqtt_server");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.mqtt_server, sizeof(JConf.mqtt_server));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("mqtt_port");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.mqtt_port, sizeof(JConf.mqtt_port));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("mqtt_auth_enable");
-  if (payload.length() > 0) {
-    payload.toCharArray(JConf.mqtt_auth_enable, sizeof(JConf.mqtt_auth_enable));
-    config_changed = true;
-    enable_auth = true;
-  }
-
-  payload=WebServer.arg("mqtt_user");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.mqtt_user, sizeof(JConf.mqtt_user));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("mqtt_pwd");
-  if (payload.length() > 0 &&  payload != String(F("********"))) {
-    payload.toCharArray(JConf.mqtt_pwd, sizeof(JConf.mqtt_pwd));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("mqtt_name");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.mqtt_name, sizeof(JConf.mqtt_name));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("publish_topic");
-  if (payload.length() > 0 ) {
-    payload.replace("%2F", String(F("/")));
-    payload.toCharArray(JConf.publish_topic, sizeof(JConf.publish_topic));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("subscribe_topic");
-  if (payload.length() > 0 ) {
-    payload.replace("%2F", String(F("/")));
-    payload.toCharArray(JConf.subscribe_topic, sizeof(JConf.subscribe_topic));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("publish_delay");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.publish_delay, sizeof(JConf.publish_delay));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("subscribe_delay");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.subscribe_delay, sizeof(JConf.subscribe_delay));
-    config_changed = true;
-  }
-
-  if (config_changed){
-    if (!enable){
-      JConf.mqtt_enable[0] = '0';
-      JConf.mqtt_enable[1] = '\0';
-    }
-    if (!enable_auth){
-      JConf.mqtt_auth_enable[0] = '0';
-      JConf.mqtt_auth_enable[1] = '\0';
-    }
-    JConf.saveConfig();
-  }
-
-  if (atoi(JConf.mqtt_enable) == 1){
-
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='mqtt_enable' value='1' checked='true'>MQTT Enable</label></div>"));
-    data += inputBodyName + String(F("Server MQTT")) + inputBodyPOST + String(F("mqtt_server")) + inputPlaceHolder + JConf.mqtt_server + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Port MQTT")) + inputBodyPOST + String(F("mqtt_port")) + inputPlaceHolder + JConf.mqtt_port + inputBodyClose + inputBodyCloseDiv;
-
-    data += String(F("<hr>"));
-    if (atoi(JConf.mqtt_auth_enable) == 1){
-      data += String(F("<div class='checkbox'><label><input type='checkbox' name='mqtt_auth_enable' value='1' checked='true'>MQTT Authentication</label></div>"));
-      data += inputBodyName + String(F("MQTT User")) + inputBodyPOST + String(F("mqtt_user")) + inputPlaceHolder + JConf.mqtt_user + inputBodyClose + inputBodyCloseDiv;
-      data += inputBodyName + String(F("MQTT Password")) + String(F("</span><input type='password' name='")) + String(F("mqtt_pwd")) + inputPlaceHolder + String(F("********")) + inputBodyClose + inputBodyCloseDiv;
-    } else {
-      data += String(F("<div class='checkbox'><label><input type='checkbox' name='mqtt_auth_enable' value='1'>MQTT Authentication</label></div>"));
-    }
-    data += String(F("<hr>"));
-
-    data += inputBodyName + String(F("MQTT Postfix")) + inputBodyPOST + String(F("mqtt_name")) + inputPlaceHolder + JConf.mqtt_name + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Publish Topic")) + inputBodyPOST + String(F("publish_topic")) + inputPlaceHolder + JConf.publish_topic + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Subscribe Topic")) + inputBodyPOST + String(F("subscribe_topic")) + inputPlaceHolder + JConf.subscribe_topic + inputBodyClose + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Publish Delay")) + inputBodyPOST + String(F("publish_delay")) + inputPlaceHolder + JConf.publish_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
-    data += inputBodyName + String(F("Subscribe Delay")) + inputBodyPOST + String(F("subscribe_delay")) + inputPlaceHolder + JConf.subscribe_delay + inputBodyClose + inputBodyUnitStart + String(FPSTR(sec)) + inputBodyUnitEnd + inputBodyCloseDiv;
-
-  } else {
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='mqtt_enable' value='1'>MQTT Enable</label></div>"));
-  }
-
-  data += inputBodyEnd;
-
-  WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
-
-  unsigned long load_time = millis() - start_time;
-  snprintf_P(log, sizeof(log), PSTR("Func: WebMqttConf load time: %d"), load_time);
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
-}
-
-
-
-void WebNTPConf(void) {
-
-  char log[LOGSZ];
-  unsigned long start_time = millis();
-  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebNTPConf Start");
-
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
-
-  navbarNonActive += FPSTR(navbarBeginP);
-  #ifdef UART_ON
-    navbarNonActive += FPSTR(navbarUartP);
-  #endif
-
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
-  String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
-  String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
-
-  String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
-  String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
-  String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
-  String inputPlaceHolder;      inputPlaceHolder += FPSTR(inputPlaceHolderP);
-  String inputBodyClose;        inputBodyClose += FPSTR(inputBodyCloseP);
-  String inputBodyCloseDiv;     inputBodyCloseDiv += FPSTR(inputBodyCloseDivP);
-  String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
-  String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
-  String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
-
-  String data;
-  data += panelHeaderName;
-  data += String(F("NTP Configuration"));
-  data += panelHeaderEnd;
-  data += inputBodyStart;
-
-  bool config_changed = false;
-  bool enable = false;
-  String payload = "";
-
-  payload=WebServer.arg("ntp_enable");
-  if (payload.length() > 0) {
-    payload.toCharArray(JConf.ntp_enable, sizeof(JConf.ntp_enable));
-    config_changed = true;
-    enable = true;
-  } 
-
-  payload=WebServer.arg("ntp_server");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.ntp_server, sizeof(JConf.ntp_server));
-    config_changed = true;
-  }
-
-  payload=WebServer.arg("my_time_zone");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.my_time_zone, sizeof(JConf.my_time_zone));
-    config_changed = true;
-  }
-
-  if (config_changed){
-    if (!enable){
-      JConf.ntp_enable[0] = '0';
-      JConf.ntp_enable[1] = '\0';
-    }
-    JConf.saveConfig();
-    #ifdef NTP_ON
-      NTPSettingsUpdate();
-    #endif
-  }
-
-  if (atoi(JConf.ntp_enable) == 1){
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='ntp_enable' value='1' checked='true'>NTP Enable</label></div>"));
-
-    data += inputBodyName + String(F("Server NTP")) + inputBodyPOST + String(F("ntp_server")) + inputPlaceHolder + JConf.ntp_server + inputBodyClose + inputBodyCloseDiv;
-
-    data += inputBodyName + String(F("Time Zone")) + inputBodyPOST + String(F("my_time_zone")) + inputPlaceHolder + JConf.my_time_zone + inputBodyClose + inputBodyCloseDiv;
-
-  } else {
-
-    data += String(F("<div class='checkbox'><label><input type='checkbox' name='ntp_enable' value='1'>NTP Enable</label></div>"));
-  }
-
-  data += inputBodyEnd;
-
-
-  WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
-
-  unsigned long load_time = millis() - start_time;
-  snprintf_P(log, sizeof(log), PSTR("Func: WebNTPConf load time: %d"), load_time);
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
@@ -1876,40 +1607,6 @@ void handleControl(){
 
 
 
-void WebPinControl(void) {
-
-  char log[LOGSZ];
-  unsigned long start_time = millis();
-  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebPinControl Start");
-
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
-
-  navbarNonActive += FPSTR(navbarBeginP);
-  #ifdef UART_ON
-    navbarNonActive += FPSTR(navbarUartP);
-  #endif
-
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
-
-  String javaScriptPinControl;               javaScriptPinControl += FPSTR(javaScriptPinControlP);
-
-  String pinControl = headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + javaScriptPinControl + containerEnd + siteEnd;
-
-  WebServer.send ( 200, "text/html", pinControl);
-
-  unsigned long load_time = millis() - start_time;
-  snprintf_P(log, sizeof(log), PSTR("Func: WebPinControl load time: %d"), load_time);
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
-}
 
 
 
@@ -2058,170 +1755,6 @@ void WebPinControlStatus(void) {
 }
 
 
-
-#if defined(UART_ON)
-void WebAnalogUart(void) {
-
-  char log[LOGSZ];
-  unsigned long start_time = millis();
-  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebAnalogUart Start");
-
-    String headerStart;           headerStart += FPSTR(headerStartP);
-    String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-    String headerEnd;             headerEnd += FPSTR(headerEndP);
-    String javaScript;            javaScript += FPSTR(javaScriptP);
-    String javaScript2;           javaScript2 += FPSTR(javaScript2P);
-    String bodyAjax;              bodyAjax += FPSTR(bodyAjaxP);
-    String navbarStart;           navbarStart += FPSTR(navbarStartP);
-    String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-    String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
-
-    navbarNonActive += FPSTR(navbarBeginP);
-    navbarNonActive += FPSTR(navbarUartP);
-
-    String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-    String containerStart;        containerStart += FPSTR(containerStartP);
-    String containerEnd;          containerEnd += FPSTR(containerEndP);
-    String siteEnd;               siteEnd += FPSTR(siteEndP);
-    String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
-    String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
-    String panelEnd;              panelEnd += FPSTR(panelEndP);
-    String panelBodySymbol;       panelBodySymbol += FPSTR(panelBodySymbolP);
-    String panelBodyName;         panelBodyName += FPSTR(panelBodyNameP);
-    String panelBodyValue;        panelBodyValue += FPSTR(panelBodyValueP);
-    String closingAngleBracket;   closingAngleBracket += FPSTR(closingAngleBracketP);
-    String panelBodyEnd;          panelBodyEnd += FPSTR(panelBodyEndP);
-
-    String title1  = panelHeaderName + String(F("Analog Pins value"))   + panelHeaderEnd;
-
-    String ApinValue = panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + String(F(" id='apin0Id'")) + closingAngleBracket + panelBodyEnd;
-    ApinValue       += panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + String(F(" id='apin1Id'")) + closingAngleBracket + panelBodyEnd;
-    ApinValue       += panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + String(F(" id='apin2Id'")) + closingAngleBracket + panelBodyEnd;
-    ApinValue       += panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + String(F(" id='apin3Id'")) + closingAngleBracket + panelBodyEnd;
-    ApinValue       += panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + String(F(" id='apin4Id'")) + closingAngleBracket + panelBodyEnd;
-    ApinValue       += panelBodySymbol + String(F("fire")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + String(F(" id='apin5Id'")) + closingAngleBracket + panelBodyEnd;
-
-    
-    String title2 = panelHeaderName + String(F("Analog Pins delay"))  + panelHeaderEnd;
-
-    String ApinDelay = panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 0")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin0 + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 1")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin1 + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 2")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin2 + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 3")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin3 + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 4")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin4 + panelBodyEnd;
-    ApinDelay       += panelBodySymbol + String(F("time")) + panelBodyName + String(F("Analog pin 5")) + panelBodyValue + closingAngleBracket + JConf.uart_delay_analog_pin5 + panelBodyEnd;
-    
-    WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + javaScript + javaScript2 + bodyAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + title1 + ApinValue + panelEnd + title2 + ApinDelay + panelEnd + containerEnd + siteEnd);
-
-  unsigned long load_time = millis() - start_time;
-  snprintf_P(log, sizeof(log), PSTR("Func: WebAnalogUart load time: %d"), load_time);
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
-}
-#endif
-
-
-
-void WebGreenhouse(void) {
-
-  char log[LOGSZ];
-  unsigned long start_time = millis();
-  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebGreenhouse Start");
-
-  String headerStart;           headerStart += FPSTR(headerStartP);
-  String headerStart2;          headerStart2 += FPSTR(headerStart2P);
-  String headerEnd;             headerEnd += FPSTR(headerEndP);
-  String bodyNonAjax;           bodyNonAjax += FPSTR(bodyNonAjaxP);
-  String navbarStart;           navbarStart += FPSTR(navbarStartP);
-  String navbarStart2;          navbarStart2 += FPSTR(navbarStart2P);
-  String navbarNonActive;       navbarNonActive += FPSTR(navbarNonActiveP);
-
-  navbarNonActive += FPSTR(navbarBeginP);
-  #ifdef UART_ON
-    navbarNonActive += FPSTR(navbarUartP);
-  #endif
-
-  String navbarEnd;             navbarEnd += FPSTR(navbarEndP);
-  String containerStart;        containerStart += FPSTR(containerStartP);
-  String containerEnd;          containerEnd += FPSTR(containerEndP);
-  String siteEnd;               siteEnd += FPSTR(siteEndP);
-  String panelHeaderName;       panelHeaderName += FPSTR(panelHeaderNameP);
-  String panelHeaderEnd;        panelHeaderEnd += FPSTR(panelHeaderEndP);
-
-  String inputBodyStart;        inputBodyStart += FPSTR(inputBodyStartP);
-  String inputBodyName;         inputBodyName += FPSTR(inputBodyNameP);
-  String inputBodyPOST;         inputBodyPOST += FPSTR(inputBodyPOSTP);
-  String inputPlaceHolder;      inputPlaceHolder += FPSTR(inputPlaceHolderP);
-  String inputBodyClose;        inputBodyClose += FPSTR(inputBodyCloseP);
-  String inputBodyCloseDiv;     inputBodyCloseDiv += FPSTR(inputBodyCloseDivP);
-  String inputBodyUnitStart;    inputBodyUnitStart += FPSTR(inputBodyUnitStartP);
-  String inputBodyUnitEnd;      inputBodyUnitEnd += FPSTR(inputBodyUnitEndP);
-  String inputBodyEnd;          inputBodyEnd += FPSTR(inputBodyEndP);
-
-  String data;
-  data += panelHeaderName;
-  data += String(F("Подсветка"));
-  data += panelHeaderEnd;
-  data += inputBodyStart;
-
-  String payload=WebServer.arg("green_light_on");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.green_light_on, sizeof(JConf.green_light_on));
-  }
-  data += inputBodyName + String(F("Время включения")) + inputBodyPOST + String(F("green_light_on")) + inputPlaceHolder + JConf.green_light_on + inputBodyClose + inputBodyCloseDiv;
-
-  payload=WebServer.arg("green_light_off");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.green_light_off, sizeof(JConf.green_light_off));
-  }
-  data += inputBodyName + String(F("Время выключения")) + inputBodyPOST + String(F("green_light_off")) + inputPlaceHolder + JConf.green_light_off + inputBodyClose + inputBodyCloseDiv;
-
-  payload=WebServer.arg("green_light_pin");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.green_light_pin, sizeof(JConf.green_light_pin));
-  }
-  data += inputBodyName + String(F("Пин лампы")) + inputBodyPOST + String(F("green_light_pin")) + inputPlaceHolder + JConf.green_light_pin + inputBodyClose + inputBodyCloseDiv;
-
-  data += inputBodyEnd;
-
-  data += String(F("<div class='page-header'><h2>"));
-  data += String(F("Влажность почвы"));
-  data += panelHeaderEnd;
-  data += inputBodyStart;
-
-  payload=WebServer.arg("green_humidity_threshold_up");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.green_humidity_threshold_up, sizeof(JConf.green_humidity_threshold_up));
-  }
-  data += inputBodyName + String(F("Верхний порог")) + inputBodyPOST + String(F("green_humidity_threshold_up")) + inputPlaceHolder + JConf.green_humidity_threshold_up + inputBodyClose + inputBodyCloseDiv;
-
-  payload=WebServer.arg("green_humidity_threshold_down");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.green_humidity_threshold_down, sizeof(JConf.green_humidity_threshold_down));
-  }
-  data += inputBodyName + String(F("Нижний порог")) + inputBodyPOST + String(F("green_humidity_threshold_down")) + inputPlaceHolder + JConf.green_humidity_threshold_down + inputBodyClose + inputBodyCloseDiv;
-
-  payload=WebServer.arg("green_humidity_sensor_pin");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.green_humidity_sensor_pin, sizeof(JConf.green_humidity_sensor_pin));
-  }
-  data += inputBodyName + String(F("Пин датчика")) + inputBodyPOST + String(F("green_humidity_sensor_pin")) + inputPlaceHolder + JConf.green_humidity_sensor_pin + inputBodyClose + inputBodyCloseDiv;
-
-  payload=WebServer.arg("green_pump_pin");
-  if (payload.length() > 0 ) {
-    payload.toCharArray(JConf.green_pump_pin, sizeof(JConf.green_pump_pin));
-  }
-  data += inputBodyName + String(F("Пин насоса")) + inputBodyPOST + String(F("green_pump_pin")) + inputPlaceHolder + JConf.green_pump_pin + inputBodyClose + inputBodyCloseDiv;
-
-  data += inputBodyEnd;
-
-  JConf.saveConfig();
-
-  WebServer.send ( 200, "text/html", headerStart + JConf.module_id + headerStart2 + headerEnd + bodyNonAjax + navbarStart + JConf.module_id + navbarStart2 +navbarNonActive + navbarEnd + containerStart + data + containerEnd + siteEnd);
-
-  unsigned long load_time = millis() - start_time;
-  snprintf_P(log, sizeof(log), PSTR("Func: WebGreenhouse load time: %d"), load_time);
-  addLog(LOG_LEVEL_DEBUG_MORE, log);
-}
 ///////////////////////////////////   WEB PAGES  End  //////////////////////////////////////////////
 
 
@@ -2324,17 +1857,17 @@ void WebServerInit()
 
   // Prepare webserver pages
   WebServer.on("/", handleRoot);
-  WebServer.on("/reboot", WebReboot);
-  WebServer.on("/update", WebUpdate);
+  WebServer.on("/reboot", handleReboot);
+  WebServer.on("/update", handleUpdate);
   WebServer.onFileUpload(WebFileUpload);
-  WebServer.on("/upload_sketch", WebUploadSketch);
+  WebServer.on("/upload_sketch", handleUploadSketch);
   WebServer.on("/wificonf", WebWiFiConf);
-  WebServer.on("/sensorsconf", WebSensorsConf);
-  WebServer.on("/espconf", WebEspConf);
-  WebServer.on("/mqttconf", WebMqttConf);
-  WebServer.on("/ntpconf", WebNTPConf);
+  WebServer.on("/sensorsconf", handleSensorsConfig);
+  WebServer.on("/espconf", handleEspConfig);
+  WebServer.on("/mqttconf", handleMqttConfig);
+  WebServer.on("/ntpconf", handleNtpConfig);
   WebServer.on("/control", handleControl);
-  WebServer.on("/pincontrol", WebPinControl);
+  WebServer.on("/pincontrol", handlePinControl);
   WebServer.on("/controlstatus", WebPinControlStatus);
   WebServer.on("/log", handleLogConfig);
   WebServer.on("/save", handleSave);
@@ -2342,12 +1875,6 @@ void WebServerInit()
   WebServer.on("/cm", handleConsole);
   WebServer.on("/ax", handleAjax);
 
-
-#ifdef UART_ON
-  WebServer.on("/analog", WebAnalogUart);
-#endif
-
-  WebServer.on("/greenhouse", WebGreenhouse);
   WebServer.on("/xml",handleXML);
 
 /*
