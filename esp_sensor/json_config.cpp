@@ -79,6 +79,7 @@ bool JsonConf::saveConfig() {
   json["bh1750_enable"]                 = bh1750_enable                ;                               
   json["motion_sensor_enable"]          = motion_sensor_enable         ;                               
   json["pzem_enable"]                   = pzem_enable                  ;                               
+  json["ds18x20_enable"]                = ds18x20_enable               ;                               
 
 
 
@@ -215,6 +216,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("motion_sensor_enable"          )) {  const char* motion_sensor_enable_char          = json["motion_sensor_enable"         ];    sprintf_P(motion_sensor_enable,          ("%s"), motion_sensor_enable_char         ); }
   if (json.containsKey("pzem_enable"                   )) {  const char* pzem_enable_char                   = json["pzem_enable"                  ];    sprintf_P(pzem_enable,                   ("%s"), pzem_enable_char                  ); }
   if (json.containsKey("dht_enable"                    )) {  const char* dht_enable_char                    = json["dht_enable"                   ];    sprintf_P(dht_enable,                    ("%s"), dht_enable_char                   ); }
+  if (json.containsKey("ds18x20_enable"                )) {  const char* ds18x20_enable_char                = json["ds18x20_enable"               ];    sprintf_P(ds18x20_enable,                ("%s"), ds18x20_enable_char               ); }
 
   configFile.close();
   return true;
@@ -268,9 +270,9 @@ bool JsonConf::printConfig() {
 
   Serial.print(F("sys_log_host                 : "));   Serial.println(sys_log_host                 );
   Serial.print(F("sys_log_port                 : "));   Serial.println(sys_log_port                 );
-  Serial.print(F("sys_log_level                 : "));   Serial.println(sys_log_level                 );
-  Serial.print(F("serial_log_level                 : "));   Serial.println(serial_log_level                 );
-  Serial.print(F("web_log_level                 : "));   Serial.println(web_log_level                 );
+  Serial.print(F("sys_log_level                : "));   Serial.println(sys_log_level                );
+  Serial.print(F("serial_log_level             : "));   Serial.println(serial_log_level             );
+  Serial.print(F("web_log_level                : "));   Serial.println(web_log_level                );
 /*
   Serial.print(F("uart_delay_analog_pin0       : "));   Serial.println(uart_delay_analog_pin0       );
   Serial.print(F("uart_delay_analog_pin1       : "));   Serial.println(uart_delay_analog_pin1       );
@@ -296,4 +298,5 @@ bool JsonConf::printConfig() {
   Serial.print(F("motion_sensor_enable         : "));   Serial.println(motion_sensor_enable         );
   Serial.print(F("pzem_enable                  : "));   Serial.println(pzem_enable                  );
   Serial.print(F("dht_enable                   : "));   Serial.println(dht_enable                   );
+  Serial.print(F("ds18x20_enable               : "));   Serial.println(ds18x20_enable               );
 }

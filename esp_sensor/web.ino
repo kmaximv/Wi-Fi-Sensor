@@ -332,9 +332,6 @@ const char HTTP_ROOT_SETTINGS_START[] PROGMEM =
         "<h2>Settings</h2>"
     "</div>"
     "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-globe'></span> IP Address<span class='pull-right'>192.168.2.121</span></div>"
-    "</div>"
-    "<div class='panel panel-default'>"
         "<div class='panel-body'><span class='glyphicon glyphicon-time'></span> Uptime<span class='pull-right' id='uptimeId'></span></div>"
     "</div>";
 
@@ -557,6 +554,7 @@ const char HTTP_SENSORS[] PROGMEM  =
                 "<div class='checkbox'><label><input type='checkbox' value='1' id='bme280_enable' name='bme280_enable'>BME280</label></div>"
                 "<div class='checkbox'><label><input type='checkbox' value='1' id='sht21_enable' name='sht21_enable'>SHT21</label></div>"
                 "<div class='checkbox'><label><input type='checkbox' value='1' id='dht_enable' name='dht_enable'>DHT</label></div>"
+                "<div class='checkbox'><label><input type='checkbox' value='1' id='ds18x20_enable' name='ds18x20_enable'>DS18X20</label></div>"
                 "<div class='checkbox'><label><input type='checkbox' value='1' id='bh1750_enable' name='bh1750_enable'>BH1750</label></div>"
                 "<div class='checkbox'><label><input type='checkbox' value='1' id='motion_sensor_enable' name='motion_sensor_enable'>Motion Sensor</label></div>"
                 "<div class='checkbox'><label><input type='checkbox' value='1' id='pzem_enable' name='pzem_enable'>Energy Monitor</label></div>"
@@ -885,6 +883,9 @@ void handleSensorsConfig()
   }
   if (atoi(JConf.dht_enable) == 1){
     settings.replace("id='dht_enable'", "checked='true' id='dht_enable'");
+  }
+  if (atoi(JConf.ds18x20_enable) == 1){
+    settings.replace("id='ds18x20_enable'", "checked='true' id='ds18x20_enable'");
   }
   if (atoi(JConf.bh1750_enable) == 1){
     settings.replace("id='bh1750_enable'", "checked='true' id='bh1750_enable'");
@@ -1270,6 +1271,11 @@ void handleSave()
         strlcpy(JConf.dht_enable, "1", sizeof(JConf.dht_enable));
       } else {
         strlcpy(JConf.dht_enable, "0", sizeof(JConf.dht_enable));
+      }
+      if (strstr(WebServer.arg("ds18x20_enable").c_str(),"1")) {
+        strlcpy(JConf.ds18x20_enable, "1", sizeof(JConf.ds18x20_enable));
+      } else {
+        strlcpy(JConf.ds18x20_enable, "0", sizeof(JConf.ds18x20_enable));
       }
       if (strstr(WebServer.arg("bh1750_enable").c_str(),"1")) {
         strlcpy(JConf.bh1750_enable, "1", sizeof(JConf.bh1750_enable));

@@ -26,6 +26,8 @@ enum WIFI_MODE_ENUM {AP, STA, AP_STA};
 enum WIFI_PHY_MODE_ENUM {B, G, N};
 enum WIFI_AUTH_ENUM {OPEN, WPA_PSK, WPA2_PSK, WPA_WPA2_PSK};
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
+enum DS_SENSOR_ENUM {DS18S20, DS18B20, DS1822, UNKNOWN};
+
 
 #define TOPSZ                  60           // Max number of characters in topic string
 #define MESSZ                  128          // Max number of characters in message string
@@ -52,6 +54,21 @@ struct TIME_T {
   uint16_t      Year;
   unsigned long Valid;
 } rtcTime;
+
+
+struct DS1820_T {
+  uint8_t type;
+  float data;
+  byte address[8];
+} dsSensor;
+
+#define MAX_DS_SENSORS 5
+
+DS1820_T dsData[MAX_DS_SENSORS];
+uint8_t findDsSensors = 0;
+uint8_t currentDsSensor = 0;
+bool searchDsSensorDone = false;
+bool flag_ds_sensor_read_delay = false;
 
 
 const char *ver                = "1.09"              ;         

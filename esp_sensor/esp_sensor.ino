@@ -37,6 +37,9 @@ JsonConf JConf;
   DHT dht(atoi(JConf.dht_pin), DHTTYPE);
 #endif
 
+#include "OneWire.h"
+OneWire ds(atoi(JConf.ds18x20_pin));
+
 #if defined(BH1750_ON)
   #include "BH1750.h"
   BH1750 lightSensor;
@@ -110,7 +113,6 @@ Adafruit_MQTT_Subscribe subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, JCon
 Adafruit_MQTT_Subscribe subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 
 Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-
 
 
  
@@ -273,6 +275,160 @@ void GetDhtSensorData()
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 #endif
+
+
+
+void SearchDS18x20Sensors() {
+
+  if (searchDsSensorDone){
+    return;
+  }
+
+  char log[LOGSZ];
+
+  if (!ds.search(dsData[currentDsSensor].address)) {
+    searchDsSensorDone = true;
+    currentDsSensor = 0;
+    ds.reset_search();
+    return;
+  } else if (!searchDsSensorDone) {
+    findDsSensors ++;
+  }
+
+  if (OneWire::crc8(dsData[currentDsSensor].address, 7) != dsData[currentDsSensor].address[7]) {
+    addLog_P(LOG_LEVEL_ERROR, "DS Sensor Address CRC is not valid!");
+    return;
+  }
+
+  switch (dsData[currentDsSensor].address[0])
+  {
+    case 0x10:
+        dsData[currentDsSensor].type = DS18S20;
+        break;
+    case 0x28:
+        dsData[currentDsSensor].type = DS18B20;
+        break;
+    case 0x22:
+        dsData[currentDsSensor].type = DS1822;
+        break;
+    default:
+        dsData[currentDsSensor].type = UNKNOWN;
+        return;
+  }
+  currentDsSensor ++;
+
+  snprintf_P(log, sizeof(log), PSTR("DS: currentDsSensor:%d  findDsSensors:%d"), currentDsSensor, findDsSensors);
+  addLog(LOG_LEVEL_NONE, log);
+
+}
+
+
+
+void GetDS18x20SensorData(){
+  byte i;
+  //byte present = 0;
+  byte data[12];
+  byte address[8];
+
+  if (!flag_ds_sensor_read_delay){
+    flag_ds_sensor_read_delay = true;
+    ds.reset();
+    ds.select(dsData[currentDsSensor].address);
+    ds.write(0x44, 1);        // start conversion, with parasite power on at the end
+    timer.setTimeout(800, GetDS18x20SensorData);
+    return;
+  } else {
+    flag_ds_sensor_read_delay = false;
+  }
+
+  //delay(1000);     // maybe 750ms is enough, maybe not
+  // we might do a ds.depower() here, but the reset will take care of it.
+
+  ds.reset();
+  ds.select(dsData[currentDsSensor].address);
+  ds.write(0xBE);         // Read Scratchpad
+
+  for (i = 0; i < 9; i++)
+  {           // we need 9 bytes
+      data[i] = ds.read();
+  }
+
+  OneWire::crc8(data, 8);
+
+  // Convert the data to actual temperature
+  // because the result is a 16 bit signed integer, it should
+  // be stored to an "int16_t" type, which is always 16 bits
+  // even when compiled on a 32 bit processor.
+  int16_t raw = (data[1] << 8) | data[0];
+  if (dsData[currentDsSensor].type == DS18S20) {
+    raw = raw << 3; // 9 bit resolution default
+    if (data[7] == 0x10) {
+        // "count remain" gives full 12 bit resolution
+        raw = (raw & 0xFFF0) + 12 - data[6];
+    }
+  } else if (dsData[currentDsSensor].type == DS18B20 || dsData[currentDsSensor].type == DS1822) {
+    byte cfg = (data[4] & 0x60);
+    // at lower res, the low bits are undefined, so let's zero them
+    if (cfg == 0x00) raw = raw & ~7;  // 9 bit resolution, 93.75 ms
+    else if (cfg == 0x20) raw = raw & ~3; // 10 bit res, 187.5 ms
+    else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
+    //// default is 12 bit resolution, 750 ms conversion time
+  } else {
+    addLog_P(LOG_LEVEL_ERROR, "Device is not a DS18x20 family device!");
+  }
+
+  float celsius = (float) raw / 16.0;
+
+  dsData[currentDsSensor].data = celsius;
+
+  dsDataPrint();
+  if (findDsSensors == currentDsSensor+1){
+    currentDsSensor = 0;
+  } else {
+    currentDsSensor ++;
+  }
+}
+
+
+
+void dsDataPrint(){
+
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: dsDataPrint Start");
+
+  byte i;
+  String dsType = " ";
+  String addr = "";
+
+    switch (dsData[currentDsSensor].address[0])
+    {
+        case 0x10:
+            dsType = "DS18S20";  // or old DS1820
+            break;
+        case 0x28:
+            dsType = "DS18B20";
+            break;
+        case 0x22:
+            dsType = "DS1822";
+            break;
+        default:
+            addLog_P(LOG_LEVEL_ERROR, "Device is not a DS18x20 family device!");
+            return;
+    }
+
+  for (i = 0; i < 8; i++)
+  {
+      addr += String(dsData[currentDsSensor].address[i], HEX);
+  }
+
+  snprintf_P(log, sizeof(log), PSTR("DS type:%s  addr:%s  temp:%sC"), dsType.c_str(), addr.c_str(), String(dsData[currentDsSensor].data).c_str());
+  addLog(LOG_LEVEL_NONE, log);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: dsDataPrint load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+}
 
 
 
@@ -934,6 +1090,14 @@ void getData(){
     }
   #endif
 
+  if (atoi(JConf.ds18x20_enable) == 1){
+    if (searchDsSensorDone){
+      GetDS18x20SensorData();
+    } else {
+      SearchDS18x20Sensors();
+    }
+  }
+
   #ifdef PZEM_ON
     if (atoi(JConf.pzem_enable) == 1){
       GetPzemSerialRead();
@@ -1021,6 +1185,8 @@ void setup() {
     dht = DHT(atoi(JConf.dht_pin), DHTTYPE);
     dht.begin();
   #endif
+
+  ds = OneWire(atoi(JConf.ds18x20_pin));
 
   #ifdef BME280_ON
   if (atoi(JConf.bme280_enable) == 1) {

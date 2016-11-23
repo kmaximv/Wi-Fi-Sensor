@@ -46,7 +46,8 @@ class JsonConf
     char light2_smooth                [2]  = "0"                  ;
     char reset_pin                    [3]  = "2"                  ;
     char motion_pin                   [3]  = "14"                 ;
-    char dht_pin                      [3]  =  "2"                 ;
+    char dht_pin                      [3]  = "2"                  ;
+    char ds18x20_pin                  [3]  = "2"                  ;
     char get_data_delay               [32] = "10"                 ;
     char publish_delay                [32] = "10"                 ;
     char subscribe_delay              [32] = "60"                 ;
@@ -83,6 +84,7 @@ class JsonConf
     char bh1750_enable                [2]  = "0"                  ;
     char motion_sensor_enable         [2]  = "0"                  ;
     char pzem_enable                  [2]  = "0"                  ;
+    char ds18x20_enable               [2]  = "0"                  ;
 
 
   private:
