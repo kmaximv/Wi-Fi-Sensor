@@ -204,7 +204,7 @@ const char JS_ROOT_START[] PROGMEM =
    "xmlHttp.onreadystatechange=handleServerResponse;"
    "xmlHttp.send(null);"
  "}"
- "setTimeout('process()',10000);"
+ "setTimeout('process()',{update_delay});"
 "}"
 "function handleServerResponse(){"
  "if(xmlHttp.readyState==4 && xmlHttp.status==200){"
@@ -466,6 +466,9 @@ void handleRoot()
 
 //JavaScript//////////////////////////////////////////////////////////////////////////////////////////////
   String js = FPSTR(JS_ROOT_START);
+    js.replace("{update_delay}", String(atoi(JConf.get_data_delay) * 1000).c_str());
+
+
 
   if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.sht21_enable) == 1 || atoi(JConf.dht_enable) == 1) {
     js += FPSTR(JS_ROOT_XML);
@@ -547,9 +550,10 @@ void handleRoot()
     for (size_t i = 0; i < findDsSensors; i++)
     {
       String id = String(F("ds")) + String(i);
+      String name = String(F("ds")) + String(i) + String(F(" (")) + dsData[i].addressString + String(F(")"));
       sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
       sensors.replace("{icon}", "fire");
-      sensors.replace("{name}", id);
+      sensors.replace("{name}", name);
       sensors.replace("{id}", id);
     }
   }

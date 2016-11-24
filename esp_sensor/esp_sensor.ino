@@ -296,7 +296,7 @@ void SearchDS18x20Sensors() {
     searchDsSensorDone = true;
     currentDsSensor = 0;
     ds.reset_search();
-    MqttInit();
+    MqttInitDS();
     return;
   } else if (!searchDsSensorDone) {
     findDsSensors ++;
@@ -306,6 +306,13 @@ void SearchDS18x20Sensors() {
     addLog_P(LOG_LEVEL_ERROR, "DS Sensor Address CRC is not valid!");
     return;
   }
+
+  String addr = "";
+  for (size_t i = 0; i < 8; i++)
+  {
+    addr += String(dsData[currentDsSensor].address[i], HEX);
+  }
+  dsData[currentDsSensor].addressString = addr;
 
   switch (dsData[currentDsSensor].address[0])
   {
@@ -325,19 +332,21 @@ void SearchDS18x20Sensors() {
   currentDsSensor ++;
 
   snprintf_P(log, sizeof(log), PSTR("DS: currentDsSensor:%d  findDsSensors:%d"), currentDsSensor, findDsSensors);
-  addLog(LOG_LEVEL_NONE, log);
-
+  addLog(LOG_LEVEL_INFO, log);
+  SearchDS18x20Sensors();
 }
 
 
 
 void GetDS18x20SensorData(){
   byte i;
-  //byte present = 0;
   byte data[12];
   byte address[8];
 
   if (!flag_ds_sensor_read_delay){
+    if (findDsSensors == 0){
+      addLog_P(LOG_LEVEL_ERROR, "DS Sensors Not Found!");
+    }
     flag_ds_sensor_read_delay = true;
     ds.reset();
     ds.select(dsData[currentDsSensor].address);
@@ -348,9 +357,6 @@ void GetDS18x20SensorData(){
     flag_ds_sensor_read_delay = false;
   }
 
-  //delay(1000);     // maybe 750ms is enough, maybe not
-  // we might do a ds.depower() here, but the reset will take care of it.
-
   ds.reset();
   ds.select(dsData[currentDsSensor].address);
   ds.write(0xBE);         // Read Scratchpad
@@ -360,7 +366,10 @@ void GetDS18x20SensorData(){
       data[i] = ds.read();
   }
 
-  OneWire::crc8(data, 8);
+  if (OneWire::crc8(data, 8) != data[8]) {
+    addLog_P(LOG_LEVEL_ERROR, "DS Sensor: Data CRC is not valid!");
+    return;
+  }
 
   // Convert the data to actual temperature
   // because the result is a 16 bit signed integer, it should
@@ -404,9 +413,7 @@ void dsDataPrint(){
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: dsDataPrint Start");
 
-  byte i;
   String dsType = " ";
-  String addr = "";
 
     switch (dsData[currentDsSensor].address[0])
     {
@@ -424,15 +431,8 @@ void dsDataPrint(){
             return;
     }
 
-  for (i = 0; i < 8; i++)
-  {
-      addr += String(dsData[currentDsSensor].address[i], HEX);
-  }
-
-  dsData[currentDsSensor].addressString = addr;
-
-  snprintf_P(log, sizeof(log), PSTR("DS type:%s  addr:%s  temp:%sC"), dsType.c_str(), addr.c_str(), dsData[currentDsSensor].dsTemp.c_str());
-  addLog(LOG_LEVEL_NONE, log);
+  snprintf_P(log, sizeof(log), PSTR("DS type:%s  addr:%s  temp:%sC"), dsType.c_str(), dsData[currentDsSensor].addressString.c_str(), dsData[currentDsSensor].dsTemp.c_str());
+  addLog(LOG_LEVEL_INFO, log);
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: dsDataPrint load time: %d"), load_time);
@@ -726,17 +726,6 @@ void MqttInit() {
   sprintf(mac_buff, "%s%s%s", JConf.publish_topic, mac, JConf.mqtt_name);
   pubTopicMac = Adafruit_MQTT_Publish(&mqtt, mac_buff);
 
-  sprintf(ds1_buff, "%s%s%s", JConf.publish_topic, dsData[0].addressString.c_str(), JConf.mqtt_name);
-  pubTopic_ds1 = Adafruit_MQTT_Publish(&mqtt, ds1_buff);
-  sprintf(ds2_buff, "%s%s%s", JConf.publish_topic, dsData[1].addressString.c_str(), JConf.mqtt_name);
-  pubTopic_ds2 = Adafruit_MQTT_Publish(&mqtt, ds2_buff);
-  sprintf(ds3_buff, "%s%s%s", JConf.publish_topic, dsData[2].addressString.c_str(), JConf.mqtt_name);
-  pubTopic_ds3 = Adafruit_MQTT_Publish(&mqtt, ds3_buff);
-  sprintf(ds4_buff, "%s%s%s", JConf.publish_topic, dsData[3].addressString.c_str(), JConf.mqtt_name);
-  pubTopic_ds4 = Adafruit_MQTT_Publish(&mqtt, ds4_buff);
-  sprintf(ds5_buff, "%s%s%s", JConf.publish_topic, dsData[4].addressString.c_str(), JConf.mqtt_name);
-  pubTopic_ds5 = Adafruit_MQTT_Publish(&mqtt, ds5_buff);
-
   //Subscribe Topics
   sprintf(motionSensorTimer_buff_sub, "%s%s%s", JConf.command_pub_topic, motionSensorTimer, JConf.mqtt_name);
   subTopicMotionSensorTimer = Adafruit_MQTT_Subscribe(&mqtt, motionSensorTimer_buff_sub);
@@ -755,6 +744,25 @@ void MqttInit() {
 
   sprintf(pzemReset_buff_sub, "%s%s%s", JConf.command_pub_topic, pzemReset, JConf.mqtt_name);
   subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, pzemReset_buff_sub);
+}
+
+
+
+void MqttInitDS() {
+
+  if (atoi(JConf.mqtt_enable) != 1) {
+    return;
+  }
+  sprintf(ds1_buff, "%s%s%s", JConf.publish_topic, dsData[0].addressString.c_str(), JConf.mqtt_name);
+  pubTopic_ds1 = Adafruit_MQTT_Publish(&mqtt, ds1_buff);
+  sprintf(ds2_buff, "%s%s%s", JConf.publish_topic, dsData[1].addressString.c_str(), JConf.mqtt_name);
+  pubTopic_ds2 = Adafruit_MQTT_Publish(&mqtt, ds2_buff);
+  sprintf(ds3_buff, "%s%s%s", JConf.publish_topic, dsData[2].addressString.c_str(), JConf.mqtt_name);
+  pubTopic_ds3 = Adafruit_MQTT_Publish(&mqtt, ds3_buff);
+  sprintf(ds4_buff, "%s%s%s", JConf.publish_topic, dsData[3].addressString.c_str(), JConf.mqtt_name);
+  pubTopic_ds4 = Adafruit_MQTT_Publish(&mqtt, ds4_buff);
+  sprintf(ds5_buff, "%s%s%s", JConf.publish_topic, dsData[4].addressString.c_str(), JConf.mqtt_name);
+  pubTopic_ds5 = Adafruit_MQTT_Publish(&mqtt, ds5_buff);
 }
 
 
@@ -1214,7 +1222,6 @@ void setup() {
     dht.begin();
   #endif
 
-  ds = OneWire(atoi(JConf.ds18x20_pin));
 
   #ifdef BME280_ON
   if (atoi(JConf.bme280_enable) == 1) {
