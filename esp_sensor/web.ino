@@ -108,7 +108,16 @@ const char HTTP_BODY[] PROGMEM =
 
 const char HTTP_PANEL_NAME[] PROGMEM =  
 "<div class='col-sm-6 col-md-5 col-lg-4'>"
-  "<div class='page-header'><h2>{panel_name}</h2></div>";
+  "<div class='page-header'><h3>{panel_name}</h3></div>";
+
+const char HTTP_PANEL_NAME_12[] PROGMEM =  
+"<div class='col-sm-12 col-md-9 col-lg-8'>"
+  "<div class='page-header'><h3>{panel_name}</h3></div>";
+
+
+const char HTTP_PANEL_END[] PROGMEM =  
+    "<div class='clearfix visible-lg'></div>"
+"</div>";
 
 //Form for save config///////////////////////////////////////////////////////////////////////
 const char HTTP_FORM_START[] PROGMEM =
@@ -178,175 +187,46 @@ const char HTTP_BODY_END[] PROGMEM =
  * 
 \*********************************************************************************************/
 
-const char javaScriptP[] PROGMEM = 
-"<SCRIPT>\
-var xmlHttp=createXmlHttpObject();\
-function createXmlHttpObject(){\
-  if(window.XMLHttpRequest){\
-    xmlHttp=new XMLHttpRequest();\
-  }else{\
-    xmlHttp=new ActiveXObject('Microsoft.XMLHTTP');\
- }\
- return xmlHttp;\
-}\
-function process(){\
- if(xmlHttp.readyState==0 || xmlHttp.readyState==4){\
-   xmlHttp.open('PUT','xml',true);\
-   xmlHttp.onreadystatechange=handleServerResponse;\
-   xmlHttp.send(null);\
- }\
- setTimeout('process()',10000);\
-}\
-function handleServerResponse(){\
- if(xmlHttp.readyState==4 && xmlHttp.status==200){\
-   xmlResponse=xmlHttp.responseXML;";
+const char JS_ROOT_START[] PROGMEM = 
+"<SCRIPT>"
+"var xmlHttp=createXmlHttpObject();"
+"function createXmlHttpObject(){"
+  "if(window.XMLHttpRequest){"
+    "xmlHttp=new XMLHttpRequest();"
+  "}else{"
+    "xmlHttp=new ActiveXObject('Microsoft.XMLHTTP');"
+ "}"
+ "return xmlHttp;"
+"}"
+"function process(){"
+ "if(xmlHttp.readyState==0 || xmlHttp.readyState==4){"
+   "xmlHttp.open('PUT','xml',true);"
+   "xmlHttp.onreadystatechange=handleServerResponse;"
+   "xmlHttp.send(null);"
+ "}"
+ "setTimeout('process()',10000);"
+"}"
+"function handleServerResponse(){"
+ "if(xmlHttp.readyState==4 && xmlHttp.status==200){"
+   "xmlResponse=xmlHttp.responseXML;";
 
-#if defined(UART_ON)
-const char javaScript2P[] PROGMEM = 
-"xmldoc = xmlResponse.getElementsByTagName('apin0');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('apin0Id').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('apin1');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('apin1Id').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('apin2');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('apin2Id').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('apin3');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('apin3Id').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('apin4');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('apin4Id').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('apin5');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('apin5Id').innerHTML=message;";
-#endif
+const char JS_ROOT_XML[] PROGMEM = 
+"xmldoc = xmlResponse.getElementsByTagName('{id}');"
+"message = xmldoc[0].firstChild.nodeValue;"
+"document.getElementById('{id}Id').innerHTML=message;";
 
-const char jsTemperatureP[] PROGMEM = 
-"xmldoc = xmlResponse.getElementsByTagName('temperature');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('temperatureId').innerHTML=message;";
-
-const char jsHumidityP[] PROGMEM = 
-"xmldoc = xmlResponse.getElementsByTagName('humidity');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('humidityId').innerHTML=message;";
-
-const char jsIlluminanceP[] PROGMEM = 
-"xmldoc = xmlResponse.getElementsByTagName('illuminance');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('illuminanceId').innerHTML=message;";
-
-const char jsPressureP[] PROGMEM = 
-"xmldoc = xmlResponse.getElementsByTagName('pressure');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('pressureId').innerHTML=message;";
+const char JS_ROOT_END[] PROGMEM = 
+ "}"
+"}"
+"</SCRIPT>";
 
 
-#if defined(PZEM_ON)
-const char jsPzemP[] PROGMEM = 
-"xmldoc = xmlResponse.getElementsByTagName('pzemVoltage');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('pzemVoltageId').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('pzemCurrent');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('pzemCurrentId').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('pzemPower');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('pzemPowerId').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('pzemEnergy');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('pzemEnergyId').innerHTML=message;";
-#endif
-
-
-const char jsNtpP[] PROGMEM = 
-"xmldoc = xmlResponse.getElementsByTagName('ntpTime');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('ntpTimeId').innerHTML=message;";
-
-// Длина строки не должна быть больше 1024 символов
-const char javaScriptEndP[] PROGMEM = 
-"xmldoc = xmlResponse.getElementsByTagName('vcc');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('vccId').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('uptime');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('uptimeId').innerHTML=message;\
-xmldoc = xmlResponse.getElementsByTagName('freeMemory');\
-message = xmldoc[0].firstChild.nodeValue;\
-document.getElementById('freeMemoryId').innerHTML=message;\
- }\
-}\
-</SCRIPT>";
-
-
-
-const char HTTP_ROOT_SENSOR_START[] PROGMEM =
-"<div class='col-sm-6 col-md-5 col-lg-4'>"
-    "<div class='page-header'>"
-        "<h2>Sensor Data</h2>"
+const char HTTP_ROOT_PANEL_DIV[] PROGMEM =
+    "<div class='panel panel-default'>"
+        "<div class='panel-body'><span class='glyphicon glyphicon-{icon}'></span> {name}<span class='pull-right' id='{id}Id'></span></div>"
     "</div>";
 
-const char HTTP_ROOT_SENSOR_T_H[] PROGMEM =
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-fire'></span> Temperature<span class='pull-right' id='temperatureId'></span></div>"
-    "</div>"
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-tint'></span> Humidity<span class='pull-right' id='humidityId'></span></div>"
-    "</div>";
-
-const char HTTP_ROOT_SENSOR_P[] PROGMEM =
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-cloud'></span> Pressure<span class='pull-right' id='pressureId'></span></div>"
-    "</div>";
-
-const char HTTP_ROOT_SENSOR_PZEM[] PROGMEM =
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-flash'></span> Voltage<span class='pull-right' id='pzemVoltageId'></span></div>"
-    "</div>"
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-flash'></span> Current<span class='pull-right' id='pzemCurrentId'></span></div>"
-    "</div>"
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-flash'></span> Power<span class='pull-right' id='pzemPowerId'></span></div>"
-    "</div>"
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-flash'></span> Energy<span class='pull-right' id='pzemEnergyId'></span></div>"
-    "</div>";
-
-const char HTTP_ROOT_SENSOR_L[] PROGMEM =
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-asterisk'></span> illuminance<span class='pull-right' id='illuminanceId'></span></div>"
-    "</div>";
-
-const char HTTP_ROOT_SENSOR_END[] PROGMEM =
-"</div>";
-
-
-
-const char HTTP_ROOT_SETTINGS_START[] PROGMEM =
-"<div class='col-sm-6 col-md-5 col-lg-4'>"
-    "<div class='page-header'>"
-        "<h2>Settings</h2>"
-    "</div>"
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-time'></span> Uptime<span class='pull-right' id='uptimeId'></span></div>"
-    "</div>";
-
-const char HTTP_ROOT_SETTINGS_NTP[] PROGMEM =
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-time'></span> NTP time<span class='pull-right' id='ntpTimeId'></span></div>"
-    "</div>";
-
-const char HTTP_ROOT_SETTINGS_END[] PROGMEM =
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-flash'></span> Voltage<span class='pull-right' id='vccId'></span></div>"
-    "</div>"
-    "<div class='panel panel-default'>"
-        "<div class='panel-body'><span class='glyphicon glyphicon-flash'></span> Free Memory<span class='pull-right' id='freeMemoryId'></span></div>"
-    "</div>"
+const char HTTP_ROOT_PANEL_END[] PROGMEM =
 "</div>";
 /*********************************************************************************************\
  * 
@@ -443,19 +323,13 @@ const char HTTP_FORM_LOG[] PROGMEM =
  * 
 \*********************************************************************************************/
 const char HTTP_CONSOLE[] PROGMEM =
-"<div class='col-sm-12 col-md-9 col-lg-8'>"
-    "<div class='page-header'>"
-        "<h3>Console</h3>"
-    "</div>"
     "<textarea class='form-control' rows='30' readonly id='t1' name='t1' cols='50' wrap='off'></textarea>"
     "<form class='form-horizontal' role='form'  method='post' action='cm'>"
       "<br>"
       "<div>"
           "<input type='text'  id='" SUB_PREFIX "' name='" SUB_PREFIX "' length=80 placeholder='Enter command' class='form-control' autofocus>"
       "</div>"
-    "</form>"
-    "<div class='clearfix visible-lg'></div>"
-"</div>";
+    "</form>";
 
 const char JS_CONSOLE[] PROGMEM =
   "<script>"
@@ -591,64 +465,155 @@ void handleRoot()
   body.replace("{module_id}", String(JConf.module_id));
 
 //JavaScript//////////////////////////////////////////////////////////////////////////////////////////////
-  String js = FPSTR(javaScriptP);
+  String js = FPSTR(JS_ROOT_START);
 
   if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.sht21_enable) == 1 || atoi(JConf.dht_enable) == 1) {
-    js += FPSTR(jsTemperatureP);
-    js += FPSTR(jsHumidityP);
+    js += FPSTR(JS_ROOT_XML);
+    js.replace("{id}", "temperature");
+
+    js += FPSTR(JS_ROOT_XML);
+    js.replace("{id}", "humidity");
   }
   if (atoi(JConf.bme280_enable) == 1) {
-    js += FPSTR(jsPressureP);
+    js += FPSTR(JS_ROOT_XML);
+    js.replace("{id}", "pressure");
   }
   if (atoi(JConf.bh1750_enable) == 1) {
-    js += FPSTR(jsIlluminanceP);
+    js += FPSTR(JS_ROOT_XML);
+    js.replace("{id}", "illuminance");
+  }
+  if (atoi(JConf.ds18x20_enable) == 1){
+    for (size_t i = 0; i < findDsSensors; i++)
+    {
+      String id = String(F("ds")) + String(i);
+      js += FPSTR(JS_ROOT_XML);
+      js.replace("{id}", id);
+    }
   }
 
   #ifdef PZEM_ON
     if (atoi(JConf.pzem_enable) == 1){
-      js += FPSTR(jsPzemP);
+    js += FPSTR(JS_ROOT_XML);
+    js.replace("{id}", "pzemVoltage");
+    js += FPSTR(JS_ROOT_XML);
+    js.replace("{id}", "pzemCurrent");
+    js += FPSTR(JS_ROOT_XML);
+    js.replace("{id}", "pzemPower");
+    js += FPSTR(JS_ROOT_XML);
+    js.replace("{id}", "pzemEnergy");
     }
   #endif //PZEM_ON
 
   if (atoi(JConf.ntp_enable) == 1) {
-    js += FPSTR(jsNtpP);
+    js += FPSTR(JS_ROOT_XML);
+    js.replace("{id}", "ntpTime");
   }
 
-  js += FPSTR(javaScriptEndP);
+  js += FPSTR(JS_ROOT_XML);
+  js.replace("{id}", "vcc");
+  js += FPSTR(JS_ROOT_XML);
+  js.replace("{id}", "uptime");
+  js += FPSTR(JS_ROOT_XML);
+  js.replace("{id}", "freeMemory");
+
+  js += FPSTR(JS_ROOT_END);
 
 //Sensors//////////////////////////////////////////////////////////////////////////////////////////////////
-  String sensors = FPSTR(HTTP_ROOT_SENSOR_START);
+  String sensors = FPSTR(HTTP_PANEL_NAME);
+  sensors.replace("{panel_name}", "Sensors Data");
 
   if (atoi(JConf.bme280_enable) == 1 || atoi(JConf.sht21_enable) == 1 || atoi(JConf.dht_enable) == 1 ){
-    sensors += FPSTR(HTTP_ROOT_SENSOR_T_H);
+    sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+    sensors.replace("{icon}", "fire");
+    sensors.replace("{name}", "Temperature");
+    sensors.replace("{id}", "temperature");
+
+    sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+    sensors.replace("{icon}", "tint");
+    sensors.replace("{name}", "Humidity");
+    sensors.replace("{id}", "humidity");
   }
 
   #ifdef BME280_ON
     if (atoi(JConf.bme280_enable) == 1){
-      sensors += FPSTR(HTTP_ROOT_SENSOR_P);
+      sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+      sensors.replace("{icon}", "cloud");
+      sensors.replace("{name}", "Pressure");
+      sensors.replace("{id}", "pressure");
     }
   #endif //BME280_ON
 
+  if (atoi(JConf.ds18x20_enable) == 1){
+    for (size_t i = 0; i < findDsSensors; i++)
+    {
+      String id = String(F("ds")) + String(i);
+      sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+      sensors.replace("{icon}", "fire");
+      sensors.replace("{name}", id);
+      sensors.replace("{id}", id);
+    }
+  }
+
   #ifdef PZEM_ON
     if (atoi(JConf.pzem_enable) == 1){
-      sensors += FPSTR(HTTP_ROOT_SENSOR_PZEM);
+      sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+      sensors.replace("{icon}", "flash");
+      sensors.replace("{name}", "Voltage");
+      sensors.replace("{id}", "pzemVoltage");
+
+      sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+      sensors.replace("{icon}", "flash");
+      sensors.replace("{name}", "Current");
+      sensors.replace("{id}", "pzemCurrent");
+
+      sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+      sensors.replace("{icon}", "flash");
+      sensors.replace("{name}", "Power");
+      sensors.replace("{id}", "pzemPower");
+
+      sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+      sensors.replace("{icon}", "flash");
+      sensors.replace("{name}", "Energy");
+      sensors.replace("{id}", "pzemEnergy");
     }
   #endif //PZEM_ON
 
   if (atoi(JConf.bh1750_enable) == 1){
-    sensors += FPSTR(HTTP_ROOT_SENSOR_L);
+    sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+    sensors.replace("{icon}", "asterisk");
+    sensors.replace("{name}", "Illuminance");
+    sensors.replace("{id}", "illuminance");
   }
 
-  sensors += FPSTR(HTTP_ROOT_SENSOR_END);
+  sensors += FPSTR(HTTP_ROOT_PANEL_END);
 
 //Settings/////////////////////////////////////////////////////////////////////////////////////////////////
-  String settings = FPSTR(HTTP_ROOT_SETTINGS_START);
+  String settings = FPSTR(HTTP_PANEL_NAME);
+  settings.replace("{panel_name}", "Settings");
 
   if (atoi(JConf.ntp_enable) == 1) {
-    settings += FPSTR(HTTP_ROOT_SETTINGS_NTP);
+    settings += FPSTR(HTTP_ROOT_PANEL_DIV);
+    settings.replace("{icon}", "time");
+    settings.replace("{name}", "NTP Time");
+    settings.replace("{id}", "ntpTime");
   }
 
-  settings += FPSTR(HTTP_ROOT_SETTINGS_END);
+  settings += FPSTR(HTTP_ROOT_PANEL_DIV);
+  settings.replace("{icon}", "time");
+  settings.replace("{name}", "Uptime");
+  settings.replace("{id}", "uptime");
+
+  settings += FPSTR(HTTP_ROOT_PANEL_DIV);
+  settings.replace("{icon}", "flash");
+  settings.replace("{name}", "Voltage");
+  settings.replace("{id}", "vcc");
+
+  settings += FPSTR(HTTP_ROOT_PANEL_DIV);
+  settings.replace("{icon}", "flash");
+  settings.replace("{name}", "Free Memory");
+  settings.replace("{id}", "freeMemory");
+
+  settings += FPSTR(HTTP_ROOT_PANEL_END);
 /////////////////////////////////////////////////////////////////////////////////////////////////Settings//
 
   String page = head + body + js + sensors + settings + FPSTR(HTTP_BODY_END);
@@ -716,7 +681,10 @@ void handleConsole()
   body.replace("<body>", "<body onload='l()'>");
   body.replace("{module_id}", String(JConf.module_id));
 
-  String page = head + body + FPSTR(JS_CONSOLE) + FPSTR(HTTP_CONSOLE) + FPSTR(HTTP_BODY_END);
+  String name = FPSTR(HTTP_PANEL_NAME_12);
+  name.replace("{panel_name}", "Console");
+
+  String page = head + body + FPSTR(JS_CONSOLE) + name + FPSTR(HTTP_CONSOLE) + FPSTR(HTTP_PANEL_END) + FPSTR(HTTP_BODY_END);
 
   showPage(page);
 }
@@ -1816,6 +1784,17 @@ void handleXML(){
       XML+=String(F("</pzemEnergy>"));
     }
   #endif
+
+  if (atoi(JConf.ds18x20_enable) == 1){
+    for (size_t i = 0; i < findDsSensors; i++)
+    {
+      XML+=String(F("<ds")) + String(i) +  String(F(">"));
+      XML+=dsData[i].dsTemp;
+      XML+=String(F(" C"));
+      XML+=String(F("</ds")) + String(i) +  String(F(">"));
+    }
+  }
+
 
   XML+=String(F("<uptime>"));
   XML+=uptimeString;

@@ -103,6 +103,12 @@ Adafruit_MQTT_Publish pubTopicVersion = Adafruit_MQTT_Publish(&mqtt, JConf.publi
 Adafruit_MQTT_Publish pubTopicIp = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopicMac = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 
+Adafruit_MQTT_Publish pubTopic_ds1 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopic_ds2 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopic_ds3 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopic_ds4 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopic_ds5 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
 
 Adafruit_MQTT_Subscribe subTopicMotionSensorTimer = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 Adafruit_MQTT_Subscribe subTopicMotionSensorTimer2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
@@ -290,6 +296,7 @@ void SearchDS18x20Sensors() {
     searchDsSensorDone = true;
     currentDsSensor = 0;
     ds.reset_search();
+    MqttInit();
     return;
   } else if (!searchDsSensorDone) {
     findDsSensors ++;
@@ -377,9 +384,9 @@ void GetDS18x20SensorData(){
     addLog_P(LOG_LEVEL_ERROR, "Device is not a DS18x20 family device!");
   }
 
-  float celsius = (float) raw / 16.0;
+  //float celsius = (float) raw / 16.0;
 
-  dsData[currentDsSensor].data = celsius;
+  dsData[currentDsSensor].dsTemp = String((float) raw / 16.0);
 
   dsDataPrint();
   if (findDsSensors == currentDsSensor+1){
@@ -422,7 +429,9 @@ void dsDataPrint(){
       addr += String(dsData[currentDsSensor].address[i], HEX);
   }
 
-  snprintf_P(log, sizeof(log), PSTR("DS type:%s  addr:%s  temp:%sC"), dsType.c_str(), addr.c_str(), String(dsData[currentDsSensor].data).c_str());
+  dsData[currentDsSensor].addressString = addr;
+
+  snprintf_P(log, sizeof(log), PSTR("DS type:%s  addr:%s  temp:%sC"), dsType.c_str(), addr.c_str(), dsData[currentDsSensor].dsTemp.c_str());
   addLog(LOG_LEVEL_NONE, log);
 
   unsigned long load_time = millis() - start_time;
@@ -717,6 +726,17 @@ void MqttInit() {
   sprintf(mac_buff, "%s%s%s", JConf.publish_topic, mac, JConf.mqtt_name);
   pubTopicMac = Adafruit_MQTT_Publish(&mqtt, mac_buff);
 
+  sprintf(ds1_buff, "%s%s%s", JConf.publish_topic, dsData[0].addressString.c_str(), JConf.mqtt_name);
+  pubTopic_ds1 = Adafruit_MQTT_Publish(&mqtt, ds1_buff);
+  sprintf(ds2_buff, "%s%s%s", JConf.publish_topic, dsData[1].addressString.c_str(), JConf.mqtt_name);
+  pubTopic_ds2 = Adafruit_MQTT_Publish(&mqtt, ds2_buff);
+  sprintf(ds3_buff, "%s%s%s", JConf.publish_topic, dsData[2].addressString.c_str(), JConf.mqtt_name);
+  pubTopic_ds3 = Adafruit_MQTT_Publish(&mqtt, ds3_buff);
+  sprintf(ds4_buff, "%s%s%s", JConf.publish_topic, dsData[3].addressString.c_str(), JConf.mqtt_name);
+  pubTopic_ds4 = Adafruit_MQTT_Publish(&mqtt, ds4_buff);
+  sprintf(ds5_buff, "%s%s%s", JConf.publish_topic, dsData[4].addressString.c_str(), JConf.mqtt_name);
+  pubTopic_ds5 = Adafruit_MQTT_Publish(&mqtt, ds5_buff);
+
   //Subscribe Topics
   sprintf(motionSensorTimer_buff_sub, "%s%s%s", JConf.command_pub_topic, motionSensorTimer, JConf.mqtt_name);
   subTopicMotionSensorTimer = Adafruit_MQTT_Subscribe(&mqtt, motionSensorTimer_buff_sub);
@@ -852,6 +872,14 @@ bool MqttPubData() {
       pubTopicPzemEnergy.publish(pzemEnergyString.c_str());
     }
   #endif
+
+  if (atoi(JConf.ds18x20_enable) == 1){
+    pubTopic_ds1.publish(dsData[0].dsTemp.c_str());
+    pubTopic_ds2.publish(dsData[1].dsTemp.c_str());
+    pubTopic_ds3.publish(dsData[2].dsTemp.c_str());
+    pubTopic_ds4.publish(dsData[3].dsTemp.c_str());
+    pubTopic_ds5.publish(dsData[4].dsTemp.c_str());
+  }
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: MqttPubData load time: %d"), load_time);

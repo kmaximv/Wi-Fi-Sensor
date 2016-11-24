@@ -32,6 +32,7 @@ enum DS_SENSOR_ENUM {DS18S20, DS18B20, DS1822, UNKNOWN};
 #define TOPSZ                  60           // Max number of characters in topic string
 #define MESSZ                  128          // Max number of characters in message string
 #define LOGSZ                  128          // Max number of characters in log string
+#define MQTTSZ                 50           // Max number of characters in MQTT topic string
 
 #define USE_WEBSERVER                       // Enable web server and wifi manager
 #define MAX_LOG_LINES          30           // Max number of lines in weblog
@@ -58,7 +59,9 @@ struct TIME_T {
 
 struct DS1820_T {
   uint8_t type;
-  float data;
+  //float data;
+  String dsTemp = "none";
+  String addressString = "none";
   byte address[8];
 } dsSensor;
 
@@ -133,31 +136,38 @@ bool wifiSafeMode = false;
 char topic_buff[120];
 char value_buff[120];
 
-char lightType_buff[50];
-char lightType2_buff[50];
-char motionSensor_buff[50];
-char motionSensorTimer_buff[50];
-char motionSensorTimer2_buff[50];
-char lux_buff[50];
-char temperature_buff[50];
-char humidity_buff[50];
-char pressure_buff[50];
-char pzemVoltage_buff[50];
-char pzemCurrent_buff[50];
-char pzemPower_buff[50];
-char pzemEnergy_buff[50];
-char freeMemory_buff[50];
-char uptime_buff[50];
-char version_buff[50];
-char ip_buff[50];
-char mac_buff[50];
+char lightType_buff[MQTTSZ];
+char lightType2_buff[MQTTSZ];
+char motionSensor_buff[MQTTSZ];
+char motionSensorTimer_buff[MQTTSZ];
+char motionSensorTimer2_buff[MQTTSZ];
+char lux_buff[MQTTSZ];
+char temperature_buff[MQTTSZ];
+char humidity_buff[MQTTSZ];
+char pressure_buff[MQTTSZ];
+char pzemVoltage_buff[MQTTSZ];
+char pzemCurrent_buff[MQTTSZ];
+char pzemPower_buff[MQTTSZ];
+char pzemEnergy_buff[MQTTSZ];
+char freeMemory_buff[MQTTSZ];
+char uptime_buff[MQTTSZ];
+char version_buff[MQTTSZ];
+char ip_buff[MQTTSZ];
+char mac_buff[MQTTSZ];
 
-char motionSensorTimer_buff_sub[50];
-char motionSensorTimer2_buff_sub[50];
-char lightType_buff_sub[50];
-char lightType2_buff_sub[50];
-char uptime_buff_sub[50];
-char pzemReset_buff_sub[50];
+char ds1_buff[MQTTSZ];
+char ds2_buff[MQTTSZ];
+char ds3_buff[MQTTSZ];
+char ds4_buff[MQTTSZ];
+char ds5_buff[MQTTSZ];
+
+
+char motionSensorTimer_buff_sub[MQTTSZ];
+char motionSensorTimer2_buff_sub[MQTTSZ];
+char lightType_buff_sub[MQTTSZ];
+char lightType2_buff_sub[MQTTSZ];
+char uptime_buff_sub[MQTTSZ];
+char pzemReset_buff_sub[MQTTSZ];
 
 int cycleNow[ESP_PINS];
 int cycleEnd[ESP_PINS];
