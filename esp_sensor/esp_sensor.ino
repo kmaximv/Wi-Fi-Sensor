@@ -37,8 +37,11 @@ JsonConf JConf;
   DHT dht(atoi(JConf.dht_pin), DHTTYPE);
 #endif
 
-#include "OneWire.h"
-OneWire ds(atoi(JConf.ds18x20_pin));
+#if defined(DS18X20_ON)
+  #include "OneWire.h"
+  OneWire ds(DS18X20_PIN);
+#endif
+
 
 #if defined(BH1750_ON)
   #include "BH1750.h"
@@ -103,11 +106,13 @@ Adafruit_MQTT_Publish pubTopicVersion = Adafruit_MQTT_Publish(&mqtt, JConf.publi
 Adafruit_MQTT_Publish pubTopicIp = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopicMac = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 
+#ifdef DS18X20_ON
 Adafruit_MQTT_Publish pubTopic_ds1 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopic_ds2 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopic_ds3 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopic_ds4 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopic_ds5 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+#endif //DS18X20_ON
 
 
 Adafruit_MQTT_Subscribe subTopicMotionSensorTimer = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
@@ -283,7 +288,7 @@ void GetDhtSensorData()
 #endif
 
 
-
+#ifdef DS18X20_ON
 void SearchDS18x20Sensors() {
 
   if (searchDsSensorDone){
@@ -438,6 +443,7 @@ void dsDataPrint(){
   snprintf_P(log, sizeof(log), PSTR("Func: dsDataPrint load time: %d"), load_time);
   addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
+#endif //DS18X20_ON
 
 
 
@@ -748,6 +754,7 @@ void MqttInit() {
 
 
 
+#ifdef DS18X20_ON
 void MqttInitDS() {
 
   if (atoi(JConf.mqtt_enable) != 1) {
@@ -764,6 +771,8 @@ void MqttInitDS() {
   sprintf(ds5_buff, "%s%s%s", JConf.publish_topic, dsData[4].addressString.c_str(), JConf.mqtt_name);
   pubTopic_ds5 = Adafruit_MQTT_Publish(&mqtt, ds5_buff);
 }
+#endif //DS18X20_ON
+
 
 
 
@@ -881,13 +890,16 @@ bool MqttPubData() {
     }
   #endif
 
-  if (atoi(JConf.ds18x20_enable) == 1){
-    pubTopic_ds1.publish(dsData[0].dsTemp.c_str());
-    pubTopic_ds2.publish(dsData[1].dsTemp.c_str());
-    pubTopic_ds3.publish(dsData[2].dsTemp.c_str());
-    pubTopic_ds4.publish(dsData[3].dsTemp.c_str());
-    pubTopic_ds5.publish(dsData[4].dsTemp.c_str());
-  }
+  #ifdef DS18X20_ON
+    if (atoi(JConf.ds18x20_enable) == 1){
+      pubTopic_ds1.publish(dsData[0].dsTemp.c_str());
+      pubTopic_ds2.publish(dsData[1].dsTemp.c_str());
+      pubTopic_ds3.publish(dsData[2].dsTemp.c_str());
+      pubTopic_ds4.publish(dsData[3].dsTemp.c_str());
+      pubTopic_ds5.publish(dsData[4].dsTemp.c_str());
+    }
+  #endif //DS18X20_ON
+
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: MqttPubData load time: %d"), load_time);
@@ -1126,6 +1138,7 @@ void getData(){
     }
   #endif
 
+  #ifdef DS18X20_ON
   if (atoi(JConf.ds18x20_enable) == 1){
     if (searchDsSensorDone){
       GetDS18x20SensorData();
@@ -1133,6 +1146,7 @@ void getData(){
       SearchDS18x20Sensors();
     }
   }
+  #endif //DS18X20_ON
 
   #ifdef PZEM_ON
     if (atoi(JConf.pzem_enable) == 1){

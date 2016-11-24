@@ -7,6 +7,10 @@
 #define SHT21_ON
 #define BH1750_ON
 #define PZEM_ON
+
+#define DS18X20_ON
+#define DS18X20_PIN 2 
+
 //-----------------------------------------------------------------------------
 
 //#define DEBUG
@@ -26,7 +30,6 @@ enum WIFI_MODE_ENUM {AP, STA, AP_STA};
 enum WIFI_PHY_MODE_ENUM {B, G, N};
 enum WIFI_AUTH_ENUM {OPEN, WPA_PSK, WPA2_PSK, WPA_WPA2_PSK};
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
-enum DS_SENSOR_ENUM {DS18S20, DS18B20, DS1822, UNKNOWN};
 
 
 #define TOPSZ                  60           // Max number of characters in topic string
@@ -57,21 +60,31 @@ struct TIME_T {
 } rtcTime;
 
 
-struct DS1820_T {
-  uint8_t type;
-  //float data;
-  String dsTemp = "none";
-  String addressString = "none";
-  byte address[8];
-} dsSensor;
+#ifdef DS18X20_ON
+  struct DS1820_T {
+    uint8_t type;
+    //float data;
+    String dsTemp = "none";
+    String addressString = "none";
+    byte address[8];
+  } dsSensor;
 
-#define MAX_DS_SENSORS 5
+  #define MAX_DS_SENSORS 5
 
-DS1820_T dsData[MAX_DS_SENSORS];
-uint8_t findDsSensors = 0;
-uint8_t currentDsSensor = 0;
-bool searchDsSensorDone = false;
-bool flag_ds_sensor_read_delay = false;
+  DS1820_T dsData[MAX_DS_SENSORS];
+  uint8_t findDsSensors = 0;
+  uint8_t currentDsSensor = 0;
+  bool searchDsSensorDone = false;
+  bool flag_ds_sensor_read_delay = false;
+  enum DS_SENSOR_ENUM {DS18S20, DS18B20, DS1822, UNKNOWN};
+
+  char ds1_buff[MQTTSZ];
+  char ds2_buff[MQTTSZ];
+  char ds3_buff[MQTTSZ];
+  char ds4_buff[MQTTSZ];
+  char ds5_buff[MQTTSZ];
+#endif //DS18X20_ON
+
 
 
 const char *ver                = "1.09"              ;         
@@ -154,13 +167,6 @@ char uptime_buff[MQTTSZ];
 char version_buff[MQTTSZ];
 char ip_buff[MQTTSZ];
 char mac_buff[MQTTSZ];
-
-char ds1_buff[MQTTSZ];
-char ds2_buff[MQTTSZ];
-char ds3_buff[MQTTSZ];
-char ds4_buff[MQTTSZ];
-char ds5_buff[MQTTSZ];
-
 
 char motionSensorTimer_buff_sub[MQTTSZ];
 char motionSensorTimer2_buff_sub[MQTTSZ];

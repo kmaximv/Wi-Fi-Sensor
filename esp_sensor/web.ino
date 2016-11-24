@@ -485,14 +485,18 @@ void handleRoot()
     js += FPSTR(JS_ROOT_XML);
     js.replace("{id}", "illuminance");
   }
-  if (atoi(JConf.ds18x20_enable) == 1){
-    for (size_t i = 0; i < findDsSensors; i++)
-    {
-      String id = String(F("ds")) + String(i);
-      js += FPSTR(JS_ROOT_XML);
-      js.replace("{id}", id);
+
+  #ifdef DS18X20_ON
+    if (atoi(JConf.ds18x20_enable) == 1){
+      for (size_t i = 0; i < findDsSensors; i++)
+      {
+        String id = String(F("ds")) + String(i);
+        js += FPSTR(JS_ROOT_XML);
+        js.replace("{id}", id);
+      }
     }
-  }
+  #endif //DS18X20_ON
+
 
   #ifdef PZEM_ON
     if (atoi(JConf.pzem_enable) == 1){
@@ -546,17 +550,20 @@ void handleRoot()
     }
   #endif //BME280_ON
 
-  if (atoi(JConf.ds18x20_enable) == 1){
-    for (size_t i = 0; i < findDsSensors; i++)
-    {
-      String id = String(F("ds")) + String(i);
-      String name = String(F("ds")) + String(i) + String(F(" (")) + dsData[i].addressString + String(F(")"));
-      sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
-      sensors.replace("{icon}", "fire");
-      sensors.replace("{name}", name);
-      sensors.replace("{id}", id);
+  #ifdef DS18X20_ON
+    if (atoi(JConf.ds18x20_enable) == 1){
+      for (size_t i = 0; i < findDsSensors; i++)
+      {
+        String id = String(F("ds")) + String(i);
+        String name = String(F("ds")) + String(i) + String(F(" (")) + dsData[i].addressString + String(F(")"));
+        sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+        sensors.replace("{icon}", "fire");
+        sensors.replace("{name}", name);
+        sensors.replace("{id}", id);
+      }
     }
-  }
+  #endif //DS18X20_ON
+
 
   #ifdef PZEM_ON
     if (atoi(JConf.pzem_enable) == 1){
@@ -856,9 +863,13 @@ void handleSensorsConfig()
   if (atoi(JConf.dht_enable) == 1){
     settings.replace("id='dht_enable'", "checked='true' id='dht_enable'");
   }
-  if (atoi(JConf.ds18x20_enable) == 1){
-    settings.replace("id='ds18x20_enable'", "checked='true' id='ds18x20_enable'");
-  }
+
+  #ifdef DS18X20_ON
+    if (atoi(JConf.ds18x20_enable) == 1){
+      settings.replace("id='ds18x20_enable'", "checked='true' id='ds18x20_enable'");
+    }
+  #endif //DS18X20_ON
+
   if (atoi(JConf.bh1750_enable) == 1){
     settings.replace("id='bh1750_enable'", "checked='true' id='bh1750_enable'");
   }
@@ -1789,15 +1800,18 @@ void handleXML(){
     }
   #endif
 
-  if (atoi(JConf.ds18x20_enable) == 1){
-    for (size_t i = 0; i < findDsSensors; i++)
-    {
-      XML+=String(F("<ds")) + String(i) +  String(F(">"));
-      XML+=dsData[i].dsTemp;
-      XML+=String(F(" C"));
-      XML+=String(F("</ds")) + String(i) +  String(F(">"));
+
+  #ifdef DS18X20_ON
+    if (atoi(JConf.ds18x20_enable) == 1){
+      for (size_t i = 0; i < findDsSensors; i++)
+      {
+        XML+=String(F("<ds")) + String(i) +  String(F(">"));
+        XML+=dsData[i].dsTemp;
+        XML+=String(F(" C"));
+        XML+=String(F("</ds")) + String(i) +  String(F(">"));
+      }
     }
-  }
+  #endif //DS18X20_ON
 
 
   XML+=String(F("<uptime>"));
