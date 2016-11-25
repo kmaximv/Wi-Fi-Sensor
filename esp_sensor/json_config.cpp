@@ -47,6 +47,13 @@ bool JsonConf::saveConfig() {
   json["subscribe_delay"]               = subscribe_delay              ;                                       
   json["motion_read_delay"]             = motion_read_delay            ;                                           
   json["reboot_delay"]                  = reboot_delay                 ;                                 
+
+  json["sys_log_host"]                  = sys_log_host                 ;                                 
+  json["sys_log_port"]                  = sys_log_port                 ;                                 
+  json["sys_log_level"]                 = sys_log_level                ;                                 
+  json["serial_log_level"]              = serial_log_level             ;                                 
+  json["web_log_level"]                 = web_log_level                ;                                 
+
 /*
   json["uart_delay_analog_pin0"]        = uart_delay_analog_pin0       ;                                                     
   json["uart_delay_analog_pin1"]        = uart_delay_analog_pin1       ;                                                     
@@ -72,6 +79,7 @@ bool JsonConf::saveConfig() {
   json["bh1750_enable"]                 = bh1750_enable                ;                               
   json["motion_sensor_enable"]          = motion_sensor_enable         ;                               
   json["pzem_enable"]                   = pzem_enable                  ;                               
+  json["ds18x20_enable"]                = ds18x20_enable               ;                               
 
 
 
@@ -176,6 +184,13 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("subscribe_delay"               )) {  const char* subscribe_delay_char               = json["subscribe_delay"              ];    sprintf_P(subscribe_delay,               ("%s"), subscribe_delay_char              ); }
   if (json.containsKey("motion_read_delay"             )) {  const char* motion_read_delay_char             = json["motion_read_delay"            ];    sprintf_P(motion_read_delay,             ("%s"), motion_read_delay_char            ); }
   if (json.containsKey("reboot_delay"                  )) {  const char* reboot_delay_char                  = json["reboot_delay"                 ];    sprintf_P(reboot_delay,                  ("%s"), reboot_delay_char                 ); }
+
+  if (json.containsKey("sys_log_host"                  )) {  const char* sys_log_host_char                  = json["sys_log_host"                 ];    sprintf_P(sys_log_host,                  ("%s"), sys_log_host_char                 ); }
+  if (json.containsKey("sys_log_port"                  )) {  const char* sys_log_port_char                  = json["sys_log_port"                 ];    sprintf_P(sys_log_port,                  ("%s"), sys_log_port_char                 ); }
+  if (json.containsKey("sys_log_level"                  )) {  const char* sys_log_level_char                  = json["sys_log_level"                 ];    sprintf_P(sys_log_level,                  ("%s"), sys_log_level_char                 ); }
+  if (json.containsKey("serial_log_level"                  )) {  const char* serial_log_level_char                  = json["serial_log_level"                 ];    sprintf_P(serial_log_level,                  ("%s"), serial_log_level_char                 ); }
+  if (json.containsKey("web_log_level"                  )) {  const char* web_log_level_char                  = json["web_log_level"                 ];    sprintf_P(web_log_level,                  ("%s"), web_log_level_char                 ); }
+
 /*
   if (json.containsKey("uart_delay_analog_pin0"        )) {  const char* uart_delay_analog_pin0_char        = json["uart_delay_analog_pin0"       ];    sprintf_P(uart_delay_analog_pin0,        ("%s"), uart_delay_analog_pin0_char       ); }
   if (json.containsKey("uart_delay_analog_pin1"        )) {  const char* uart_delay_analog_pin1_char        = json["uart_delay_analog_pin1"       ];    sprintf_P(uart_delay_analog_pin1,        ("%s"), uart_delay_analog_pin1_char       ); }
@@ -201,6 +216,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("motion_sensor_enable"          )) {  const char* motion_sensor_enable_char          = json["motion_sensor_enable"         ];    sprintf_P(motion_sensor_enable,          ("%s"), motion_sensor_enable_char         ); }
   if (json.containsKey("pzem_enable"                   )) {  const char* pzem_enable_char                   = json["pzem_enable"                  ];    sprintf_P(pzem_enable,                   ("%s"), pzem_enable_char                  ); }
   if (json.containsKey("dht_enable"                    )) {  const char* dht_enable_char                    = json["dht_enable"                   ];    sprintf_P(dht_enable,                    ("%s"), dht_enable_char                   ); }
+  if (json.containsKey("ds18x20_enable"                )) {  const char* ds18x20_enable_char                = json["ds18x20_enable"               ];    sprintf_P(ds18x20_enable,                ("%s"), ds18x20_enable_char               ); }
 
   configFile.close();
   return true;
@@ -251,6 +267,12 @@ bool JsonConf::printConfig() {
   Serial.print(F("subscribe_delay              : "));   Serial.println(subscribe_delay              );
   Serial.print(F("motion_read_delay            : "));   Serial.println(motion_read_delay            );
   Serial.print(F("reboot_delay                 : "));   Serial.println(reboot_delay                 );
+
+  Serial.print(F("sys_log_host                 : "));   Serial.println(sys_log_host                 );
+  Serial.print(F("sys_log_port                 : "));   Serial.println(sys_log_port                 );
+  Serial.print(F("sys_log_level                : "));   Serial.println(sys_log_level                );
+  Serial.print(F("serial_log_level             : "));   Serial.println(serial_log_level             );
+  Serial.print(F("web_log_level                : "));   Serial.println(web_log_level                );
 /*
   Serial.print(F("uart_delay_analog_pin0       : "));   Serial.println(uart_delay_analog_pin0       );
   Serial.print(F("uart_delay_analog_pin1       : "));   Serial.println(uart_delay_analog_pin1       );
@@ -276,4 +298,5 @@ bool JsonConf::printConfig() {
   Serial.print(F("motion_sensor_enable         : "));   Serial.println(motion_sensor_enable         );
   Serial.print(F("pzem_enable                  : "));   Serial.println(pzem_enable                  );
   Serial.print(F("dht_enable                   : "));   Serial.println(dht_enable                   );
+  Serial.print(F("ds18x20_enable               : "));   Serial.println(ds18x20_enable               );
 }
