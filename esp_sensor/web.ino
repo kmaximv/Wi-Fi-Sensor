@@ -1554,7 +1554,7 @@ void handleControl(){
   if (WebServer.args() > 0 ) {
     for ( size_t i = 0; i < WebServer.args(); i++ ) {
       if (WebServer.argName(i) == "1" && WebServer.arg(i) == "1") {
-        if (cycleEnd[atoi(JConf.light_pin)] != 0){
+        if (fading[0].cycleEnd != 0){
           lightState = OFF;
         } else {
           lightState = ON;
@@ -1567,7 +1567,7 @@ void handleControl(){
       }
 
       if (WebServer.argName(i) == "2" && WebServer.arg(i) == "1") {
-        if (cycleEnd[atoi(JConf.light2_pin)] != 0){
+        if (fading[1].cycleEnd != 0){
           lightState2 = OFF;
         } else {
           lightState2 = ON;
@@ -1618,13 +1618,13 @@ void WebPinControlStatus(void) {
   String ON;              ON += FPSTR(ONP);
   String OFF;             OFF += FPSTR(OFFP);
 
-  if (cycleEnd[atoi(JConf.light_pin)] != 0){
+  if (fading[0].cycleEnd != 0){
     pinState = true;
   } else {
     pinState = false;
   }
 
-  if (cycleEnd[atoi(JConf.light2_pin)] != 0){
+  if (fading[1].cycleEnd != 0){
     pinState2 = true;
   } else {
     pinState2 = false;

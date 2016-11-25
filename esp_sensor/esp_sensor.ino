@@ -125,6 +125,17 @@ Adafruit_MQTT_Subscribe subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, JConf.co
 
 Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 
+struct FADING_T
+{
+  int pin;
+  int cycleNow;
+  int cycleEnd;
+  unsigned long timerFade;
+  int delayFade;
+}fading[2] = {
+   {atoi(JConf.light_pin),0,0,0,20},
+   {atoi(JConf.light2_pin),0,0,0,20}
+};
 
  
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         ROOT 
@@ -152,28 +163,28 @@ void LightControl() {
   String OFF = "OFF";
 
   if (lightState == ON){
-    PWMChange(atoi(JConf.light_pin), 1023);
+    PWMChange(0, 1023);
   } else if (lightState == OFF){
-    PWMChange(atoi(JConf.light_pin), 0);
+    PWMChange(0, 0);
   } else if (lightState == AUTO && motionDetect == true && luxString.toInt() < atoi(JConf.lighton_lux)){
-    PWMChange(atoi(JConf.light_pin), 1023);
+    PWMChange(0, 1023);
     lightOffTimer = millis();
-  } else if (lightState == AUTO && motionDetect == false && cycleEnd[atoi(JConf.light_pin)] != 0){
+  } else if (lightState == AUTO && motionDetect == false && fading[0].cycleEnd != 0){
     if (millis() - lightOffTimer >= atoi(JConf.lightoff_delay) * 60UL * 1000UL){
-      PWMChange(atoi(JConf.light_pin), 0);
+      PWMChange(0, 0);
     }
   }
 
   if (lightState2 == ON){
-    PWMChange(atoi(JConf.light2_pin), 1023);
+    PWMChange(1, 1023);
   } else if (lightState2 == OFF){
-    PWMChange(atoi(JConf.light2_pin), 0);
+    PWMChange(1, 0);
   } else if (lightState2 == AUTO && motionDetect == true && luxString.toInt() < atoi(JConf.light2on_lux)){
-    PWMChange(atoi(JConf.light2_pin), 1023);
+    PWMChange(1, 1023);
     lightOffTimer2 = millis();
-  } else if (lightState2 == AUTO && motionDetect == false && cycleEnd[atoi(JConf.light2_pin)] != 0){
+  } else if (lightState2 == AUTO && motionDetect == false && fading[1].cycleEnd != 0){
     if (millis() - lightOffTimer2 >= atoi(JConf.light2off_delay) * 60UL * 1000UL){
-      PWMChange(atoi(JConf.light2_pin), 0);
+      PWMChange(1, 0);
     }
   }
 
@@ -1219,6 +1230,9 @@ void setup() {
   digitalWrite(atoi(JConf.light_pin), LOW);
   digitalWrite(atoi(JConf.light2_pin), LOW);
 
+  fading[0].pin = atoi(JConf.light_pin);
+  fading[1].pin = atoi(JConf.light2_pin);
+
   scanWiFi();  // scan Access Points
 
   if (!WiFiSetup()) {
@@ -1317,31 +1331,33 @@ void setup() {
 
 void loop() {
 
-  #ifdef USE_WEBSERVER
-    WebServer.handleClient();  // handle web server
-  #endif  // USE_WEBSERVER
+  if (fading[0].cycleEnd != fading[0].cycleNow || fading[1].cycleEnd != fading[1].cycleNow) {
+    FadeSwitchLoop();
+  } else {
+    #ifdef USE_WEBSERVER
+      WebServer.handleClient();  // handle web server
+    #endif  // USE_WEBSERVER
 
-  timer.run();
+    timer.run();
 
-  if (atoi(JConf.motion_sensor_enable) == 1 && motionDetect == false){
-    MotionDetect();
-  }
-
-  if (lightState == "AUTO"){
-    LightControl();
-  }
-
-  if (WiFi.status() == WL_CONNECTED && atoi(JConf.mqtt_enable) == 1) {
-    if (mqtt.connected()){
-      mqtt.processPackets(100);
+    if (WiFi.status() == WL_CONNECTED && atoi(JConf.mqtt_enable) == 1) {
+      if (mqtt.connected()){
+        mqtt.processPackets(100);
+      }
     }
+
+    if (atoi(JConf.motion_sensor_enable) == 1 && motionDetect == false){
+      MotionDetect();
+    }
+
+    if (lightState == "AUTO"){
+      LightControl();
+    }
+
+    #ifdef UART_ON
+      Uart.serialEvent();
+    #endif
+
   }
-
-  #ifdef UART_ON
-    Uart.serialEvent();
-  #endif
-
-  FadeSwitchLoop();
-
   yield();
 }

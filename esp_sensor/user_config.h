@@ -22,7 +22,7 @@
 
 #define USE_WEBSERVER
 
-#define ESP_PINS 17
+#define FADE_PINS 2
 #define UP true 
 #define DOWN false
 
@@ -174,12 +174,6 @@ char lightType_buff_sub[MQTTSZ];
 char lightType2_buff_sub[MQTTSZ];
 char uptime_buff_sub[MQTTSZ];
 char pzemReset_buff_sub[MQTTSZ];
-
-int cycleNow[ESP_PINS];
-int cycleEnd[ESP_PINS];
-
-unsigned long timerDigitalPin[ESP_PINS];
-int delayDigitalPin = 10;
 
 
 #endif

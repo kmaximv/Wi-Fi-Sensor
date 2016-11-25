@@ -385,13 +385,13 @@ void PWMChange(int pin, int bright) {
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: PWMChange Start");
 
-  cycleEnd[pin] = bright;
+  fading[pin].cycleEnd = bright;
 
-  if ( ( atoi(JConf.light_smooth) == 0 && pin == atoi(JConf.light_pin) )   ||   ( atoi(JConf.light2_smooth) == 0 && pin == atoi(JConf.light2_pin) ) ){
-    if (cycleNow[pin] < cycleEnd[pin]){
-      cycleNow[pin] = 1022;
-    } else if (cycleNow[pin] > cycleEnd[pin]){
-      cycleNow[pin] = 1;
+  if ( ( atoi(JConf.light_smooth) == 0 && fading[pin].pin == atoi(JConf.light_pin) )   ||   ( atoi(JConf.light2_smooth) == 0 && fading[pin].pin == atoi(JConf.light2_pin) ) ){
+    if (fading[pin].cycleNow < fading[pin].cycleEnd){
+      fading[pin].cycleNow = 1022;
+    } else if (fading[pin].cycleNow > fading[pin].cycleEnd){
+      fading[pin].cycleNow = 1;
     }
   }
 
@@ -406,27 +406,38 @@ void FadeSwitchDelay(int pin){
 
   char log[LOGSZ];
 
-  if (millis() - timerDigitalPin[pin] >= delayDigitalPin && cycleNow[pin] != cycleEnd[pin]){
-    timerDigitalPin[pin] = millis();
-    if (cycleNow[pin] < cycleEnd[pin]){
-      cycleNow[pin] = constrain(cycleNow[pin] + 10, 0, 1023);
-    } else if (cycleNow[pin] > cycleEnd[pin]){
-      cycleNow[pin] = constrain(cycleNow[pin] - 10, 0, 1023);
+  if (millis() - fading[pin].timerFade >= fading[pin].delayFade && fading[pin].cycleNow != fading[pin].cycleEnd){
+    fading[pin].timerFade = millis();
+    if (fading[pin].cycleNow < fading[pin].cycleEnd){
+      fading[pin].cycleNow = constrain(fading[pin].cycleNow + 10, 0, 1023);
+    } else if (fading[pin].cycleNow > fading[pin].cycleEnd){
+      fading[pin].cycleNow = constrain(fading[pin].cycleNow - 10, 0, 1023);
     }
-    analogWrite(pin, cycleNow[pin]);
+    analogWrite(fading[pin].pin, fading[pin].cycleNow);
 
-    snprintf_P(log, sizeof(log), PSTR("FadeSwitchDelay: PWM pin: %d, PWM Value: %d"), pin, cycleNow[pin]);
+    snprintf_P(log, sizeof(log), PSTR("FadeSwitchDelay: PWM pin: %d, PWM Value: %d"), pin, fading[pin].cycleNow);
     addLog(LOG_LEVEL_DEBUG_MORE, log);
   }
 }
 
 
-
+/*
 void FadeSwitchLoop(){
-  for ( size_t i = 0; i < ESP_PINS; i++ ){
+  for ( size_t i = 0; i < FADE_PINS; i++ ){
     FadeSwitchDelay(i);
   }
 }
+*/
+
+void FadeSwitchLoop(){
+  if (fading[0].cycleEnd != fading[0].cycleNow) {
+    FadeSwitchDelay(0);
+    fading[1].timerFade = millis();
+  } else {
+    FadeSwitchDelay(1);
+  }
+}
+
 
 
 
