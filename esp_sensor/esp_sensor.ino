@@ -638,8 +638,11 @@ String GetUptimeData(){
 #ifdef NTP_ON
 void NTPSettingsUpdate(){
   if (atoi(JConf.ntp_enable) == 1) {
+    timeClient.end();
     timeClient.setUpdateServer(JConf.ntp_server);
     timeClient.setTimeOffset(atoi(JConf.my_time_zone) * 60 * 60);
+    timeClient.setUpdateInterval(60*60*1000);
+    timeClient.begin();
   }
 }
 #endif
@@ -1117,7 +1120,6 @@ void getData(){
 
   #ifdef NTP_ON
     if (atoi(JConf.ntp_enable) == 1) {
-      timeClient.update();
       ntpTimeString = timeClient.getFormattedTime();
     }
   #endif
@@ -1298,10 +1300,7 @@ void setup() {
 
   #ifdef NTP_ON
     if (atoi(JConf.ntp_enable) == 1) {
-      timeClient.setUpdateServer(JConf.ntp_server);
-      timeClient.setTimeOffset(atoi(JConf.my_time_zone) * 60 * 60);
-      timeClient.setUpdateInterval(60*60*1000);
-      timeClient.begin();
+      NTPSettingsUpdate();
     }
   #endif
 
@@ -1312,6 +1311,8 @@ void setup() {
   timer.setInterval(atoi(JConf.publish_delay) * 1000, MqttPubData);
 
   if (atoi(JConf.motion_sensor_enable) == 1){
+    lightState =  "AUTO";
+    lightState2 = "AUTO";
     timer.setInterval(atoi(JConf.motion_read_delay) * 1000, MotionDetect);
   }
 
@@ -1359,5 +1360,12 @@ void loop() {
     #endif
 
   }
+
+  #ifdef NTP_ON
+    if (atoi(JConf.ntp_enable) == 1) {
+      timeClient.update();
+    }
+  #endif
+
   yield();
 }

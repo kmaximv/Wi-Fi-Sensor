@@ -477,6 +477,8 @@ void syslog(const char *message)
   portUDP.endPacket();
 }
 
+
+
 void addLog(byte loglevel, const char *line)
 {
   //char mxtime[9];
@@ -484,14 +486,26 @@ void addLog(byte loglevel, const char *line)
 //  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d:%02d:%02d"), rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
  
 #ifdef DEBUG_ESP_PORT
-  DEBUG_ESP_PORT.printf("%s %s\n", __TIMESTAMP__, line);  
+  if (atoi(JConf.ntp_enable) == 1) {
+    DEBUG_ESP_PORT.printf("%s %s\n", ntpTimeString, line);  
+  } else{
+    DEBUG_ESP_PORT.printf("%s\n", line);  
+  }
 #endif  // DEBUG_ESP_PORT
 
-  if (loglevel <= atoi(JConf.serial_log_level)) Serial.printf("%s %s\n", __TIMESTAMP__, line);
+  if (atoi(JConf.ntp_enable) == 1) {
+    if (loglevel <= atoi(JConf.serial_log_level)) Serial.printf("%s %s\n", ntpTimeString.c_str(), line);
+  } else {
+    if (loglevel <= atoi(JConf.serial_log_level)) Serial.printf("%s\n", line);
+  }
 
 #ifdef USE_WEBSERVER
   if (loglevel <= atoi(JConf.web_log_level)) {
-    Log[logidx] = String(__TIMESTAMP__) + " " + String(line);
+    if (atoi(JConf.ntp_enable) == 1) {
+      Log[logidx] = ntpTimeString + " " + String(line);
+    } else {
+      Log[logidx] = String(line);
+    }
     logidx++;
     if (logidx > MAX_LOG_LINES -1) logidx = 0;
   }
@@ -500,6 +514,7 @@ void addLog(byte loglevel, const char *line)
     syslog(line);
   }
 }
+
 
 
 void addLog_P(byte loglevel, const char *formatP)
