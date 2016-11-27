@@ -1,10 +1,4 @@
 
-void CFG_Default() {
-
-}
-
-
-
 /*********************************************************************************************\
  * Wi-Fi
 \*********************************************************************************************/
@@ -135,14 +129,14 @@ bool wifiSTA() {
   WiFi.mode(WIFI_STA);                            //setup station mode
   WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
   delay(500);
-  
+
   wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);    //setup PHY_MODE
 
   if (!wifiTryConnect()) {
     return false;
   }
   WiFi.hostname(JConf.module_id);
-  return true; 
+  return true;
 }
 
 
@@ -221,7 +215,7 @@ void  WiFiSafeSetup()
 
 void wifiSafeModeReconnect() {
   if (wifiSafeMode == true && WiFiSetup()) {
-    wifiSafeMode = false; 
+    wifiSafeMode = false;
   }
 }
 /*********************************************************************************************\
@@ -231,7 +225,7 @@ void wifiSafeModeReconnect() {
 
 
 void GetFreeMemory () {
-  
+
   char log[LOGSZ];
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetFreeMemory Start");
@@ -271,7 +265,7 @@ void GetMacString () {
   uint8_t macData[6];
   WiFi.macAddress(macData);
   sprintf_P(value_buff, (const char *)F("%x:%x:%x:%x:%x:%x"), macData[0], macData[1], macData[2], macData[3], macData[4], macData[5]);
-  
+
   macString = String(value_buff);
 
   unsigned long load_time = millis() - start_time;
@@ -293,21 +287,16 @@ IPAddress stringToIp (String strIp) {
   int count = 0;
   for(int i=0; i <= strIp.length(); i++)
   {
-    if(strIp[i] != '.')
-    {
+    if(strIp[i] != '.') {
       temp += strIp[i];
-    }
-    else
-    {
-      if(count < 4)
-      {
+    } else {
+      if(count < 4) {
         ip[count] = atoi(temp.c_str());
         temp = "";
         count++;
       }
     }
-    if(i==strIp.length())
-    {
+    if(i==strIp.length()) {
       ip[count] = atoi(temp.c_str());
     }
   }
@@ -361,7 +350,7 @@ bool isIPValid(const char * IP) {
       return false;
     }
   }
-  
+
   if (dotcount!=3) {    //if not 3 dots then it is wrong
     return false;
   }
@@ -428,7 +417,6 @@ void FadeSwitchLoop(){
   }
 }
 */
-
 void FadeSwitchLoop(){
   if (fading[0].cycleEnd != fading[0].cycleNow) {
     FadeSwitchDelay(0);
@@ -437,7 +425,6 @@ void FadeSwitchLoop(){
     FadeSwitchDelay(1);
   }
 }
-
 
 
 
@@ -450,14 +437,14 @@ void restartESP() {
 
 
 void deleteConfigFile() {
-  pinMode(atoi(JConf.reset_pin), INPUT); 
+  pinMode(atoi(JConf.reset_pin), INPUT);
   if (digitalRead(atoi(JConf.reset_pin)) == LOW) {
     delay(3000);
     if (digitalRead(atoi(JConf.reset_pin)) == LOW) {
       addLog_P(LOG_LEVEL_INFO, "deleteConfigFile: Reset pin pressed. Delete config file!!!");
       JConf.deleteConfig();
     }
-  } 
+  }
 }
 
 
@@ -465,8 +452,8 @@ void deleteConfigFile() {
  * Syslog
 \*********************************************************************************************/
 
-void syslog(const char *message)
-{
+void syslog(const char *message) {
+
   char mess[MESSZ], str[TOPSZ+MESSZ];
 
   portUDP.beginPacket(JConf.sys_log_host, atoi(JConf.sys_log_port));
@@ -479,17 +466,13 @@ void syslog(const char *message)
 
 
 
-void addLog(byte loglevel, const char *line)
-{
-  //char mxtime[9];
-  
-//  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d:%02d:%02d"), rtcTime.Hour, rtcTime.Minute, rtcTime.Second);
- 
+void addLog(byte loglevel, const char *line) {
+
 #ifdef DEBUG_ESP_PORT
   if (atoi(JConf.ntp_enable) == 1) {
-    DEBUG_ESP_PORT.printf("%s %s\n", ntpTimeString, line);  
+    DEBUG_ESP_PORT.printf("%s %s\n", ntpTimeString, line);
   } else{
-    DEBUG_ESP_PORT.printf("%s\n", line);  
+    DEBUG_ESP_PORT.printf("%s\n", line);
   }
 #endif  // DEBUG_ESP_PORT
 
@@ -517,10 +500,10 @@ void addLog(byte loglevel, const char *line)
 
 
 
-void addLog_P(byte loglevel, const char *formatP)
-{
-  char mess[MESSZ];
+void addLog_P(byte loglevel, const char *formatP) {
   
+  char mess[MESSZ];
+
   snprintf_P(mess, sizeof(mess), formatP);
   addLog(loglevel, mess);
 }
@@ -528,4 +511,3 @@ void addLog_P(byte loglevel, const char *formatP)
 /*********************************************************************************************\
  *                                                                                    Syslog *
 \*********************************************************************************************/
-

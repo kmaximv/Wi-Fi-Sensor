@@ -31,7 +31,7 @@ JsonConf JConf;
 #if defined(DHT_ON)
   #include <DHT.h>
   // Uncomment the type of sensor in use:
-  //#define DHTTYPE           DHT11     // DHT 11 
+  //#define DHTTYPE           DHT11     // DHT 11
   #define DHTTYPE           DHT22     // DHT 22 (AM2302)
   //#define DHTTYPE           DHT21     // DHT 21 (AM2301)
   DHT dht(atoi(JConf.dht_pin), DHTTYPE);
@@ -41,7 +41,6 @@ JsonConf JConf;
   #include "OneWire.h"
   OneWire ds(DS18X20_PIN);
 #endif
-
 
 #if defined(BH1750_ON)
   #include "BH1750.h"
@@ -69,13 +68,12 @@ JsonConf JConf;
   PZEM_RESET_ENUM pzem_reset_stage = PZEM_STAGE1;
 #endif
 
-WiFiUDP portUDP;                      // UDP Syslog
-
+WiFiUDP portUDP;            // UDP Syslog
 
 ADC_MODE(ADC_VCC);
 float voltage_float;
 
-String network_html;          // Список доступных Wi-Fi точек
+String network_html;        // Список доступных Wi-Fi точек
 
 ESP8266WebServer WebServer(80);
 
@@ -117,12 +115,9 @@ Adafruit_MQTT_Publish pubTopic_ds5 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_
 
 Adafruit_MQTT_Subscribe subTopicMotionSensorTimer = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 Adafruit_MQTT_Subscribe subTopicMotionSensorTimer2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-
 Adafruit_MQTT_Subscribe subTopicLightType = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 Adafruit_MQTT_Subscribe subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-
 Adafruit_MQTT_Subscribe subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-
 Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 
 struct FADING_T
@@ -137,8 +132,7 @@ struct FADING_T
    {atoi(JConf.light2_pin),0,0,0,20}
 };
 
- 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////         ROOT 
+////////////////////////////////////////////////////////////////////////////////
 
 /*
 static char* floatToChar(float charester)
@@ -203,7 +197,7 @@ void GetLightSensorData()
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetLightSensorData Start");
 
   luxString = String(lightSensor.readLightLevel());
-    
+
   snprintf_P(log, sizeof(log), PSTR("GetLightSensorData: Lux: %s"), luxString.c_str());
   addLog(LOG_LEVEL_INFO, log);
 
@@ -217,7 +211,7 @@ void GetLightSensorData()
 
 #ifdef BME280_ON
 void GetBmeSensorData()
-{ 
+{
   char log[LOGSZ];
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetBmeSensorData Start");
@@ -229,7 +223,6 @@ void GetBmeSensorData()
   pressureString = String(bmeSensor.readFloatPressure()/133.3F);
   snprintf_P(log, sizeof(log), PSTR("GetBmeSensorData: Pressure: %s"), pressureString.c_str());
   addLog(LOG_LEVEL_INFO, log);
-
 
   humidityString = String(bmeSensor.readFloatHumidity());
   snprintf_P(log, sizeof(log), PSTR("GetBmeSensorData: Humidity: %s %"), humidityString.c_str());
@@ -386,7 +379,6 @@ void GetDS18x20SensorData(){
     addLog_P(LOG_LEVEL_ERROR, "DS Sensor: Data CRC is not valid!");
     return;
   }
-
   // Convert the data to actual temperature
   // because the result is a 16 bit signed integer, it should
   // be stored to an "int16_t" type, which is always 16 bits
@@ -409,11 +401,9 @@ void GetDS18x20SensorData(){
     addLog_P(LOG_LEVEL_ERROR, "Device is not a DS18x20 family device!");
   }
 
-  //float celsius = (float) raw / 16.0;
-
   dsData[currentDsSensor].dsTemp = String((float) raw / 16.0);
-
   dsDataPrint();
+
   if (findDsSensors == currentDsSensor+1){
     currentDsSensor = 0;
   } else {
@@ -431,21 +421,20 @@ void dsDataPrint(){
 
   String dsType = " ";
 
-    switch (dsData[currentDsSensor].address[0])
-    {
-        case 0x10:
-            dsType = "DS18S20";  // or old DS1820
-            break;
-        case 0x28:
-            dsType = "DS18B20";
-            break;
-        case 0x22:
-            dsType = "DS1822";
-            break;
-        default:
-            addLog_P(LOG_LEVEL_ERROR, "Device is not a DS18x20 family device!");
-            return;
-    }
+  switch (dsData[currentDsSensor].address[0]) {
+    case 0x10:
+      dsType = "DS18S20";  // or old DS1820
+      break;
+    case 0x28:
+      dsType = "DS18B20";
+      break;
+    case 0x22:
+      dsType = "DS1822";
+      break;
+    default:
+      addLog_P(LOG_LEVEL_ERROR, "Device is not a DS18x20 family device!");
+      return;
+  }
 
   snprintf_P(log, sizeof(log), PSTR("DS type:%s  addr:%s  temp:%sC"), dsType.c_str(), dsData[currentDsSensor].addressString.c_str(), dsData[currentDsSensor].dsTemp.c_str());
   addLog(LOG_LEVEL_INFO, log);
@@ -465,7 +454,7 @@ bool GetPzemData(float data, String *val) {
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetPzemData Start");
 
-  if (data < 0.0){
+  if (data < 0.0) {
     addLog_P(LOG_LEVEL_ERROR, "GetPzemData: Error reading data!");
     pzem.setAddress(ip_pzem);
     pzem.setReadTimeout(500);
@@ -474,7 +463,7 @@ bool GetPzemData(float data, String *val) {
     data = data * coil_ratio / 1000;
   } else if (pzem_current_read == PZEM_CURRENT) {
     data = data * coil_ratio;
-  } 
+  }
   *val = String(data);
 
   unsigned long load_time = millis() - start_time;
@@ -486,7 +475,7 @@ bool GetPzemData(float data, String *val) {
 
 
 
-void GetPzemSerialRead() { 
+void GetPzemSerialRead() {
 
   char log[LOGSZ];
   unsigned long start_time = millis();
@@ -515,7 +504,7 @@ void GetPzemSerialRead() {
       }
       break;
     case PZEM_ENERGY:
-      if (GetPzemData(pzem.energy(ip_pzem), &pzemEnergyString)){
+      if (GetPzemData(pzem.energy(ip_pzem), &pzemEnergyString)) {
         snprintf_P(log, sizeof(log), PSTR("GetPzemSerialRead: Energy: %s Wh"), pzemEnergyString.c_str());
         addLog(LOG_LEVEL_INFO, log);
       }
@@ -573,6 +562,7 @@ void PzemResetEnergy() {
 #endif
 
 
+
 void MotionDetect(){
 
   char log[LOGSZ];
@@ -603,8 +593,8 @@ String GetUptimeData(){
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: GetUptimeData Start");
 
-  //** Making Note of an expected rollover *****//   
-  if(millis()>=3000000000){ 
+  //** Making Note of an expected rollover *****//
+  if(millis()>=3000000000){
     HighMillis=1;
   }
   //** Making note of actual rollover **//
@@ -614,7 +604,6 @@ String GetUptimeData(){
   }
 
   long secsUp = millis()/1000;
-
   Second = secsUp%60;
   Minute = (secsUp/60)%60;
   Hour = (secsUp/(60*60))%24;
@@ -666,7 +655,6 @@ bool MqttConnect() {
   }
 
   addLog_P(LOG_LEVEL_INFO, "MqttConnect: Connecting to MQTT...");
-
   if ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
     snprintf_P(log, sizeof(log), PSTR("MqttConnect: Error: %s"), mqtt.connectErrorString(ret));
     addLog(LOG_LEVEL_ERROR, log);
@@ -690,7 +678,6 @@ void MqttInit() {
   if (atoi(JConf.mqtt_enable) != 1) {
     return;
   }
-
   //Publish Topics
   sprintf(lightType_buff, "%s%s%s", JConf.publish_topic, lightType, JConf.mqtt_name);
   pubTopicLightType = Adafruit_MQTT_Publish(&mqtt, lightType_buff);
@@ -789,7 +776,6 @@ void MqttInitDS() {
 
 
 
-
 bool MqttPubLightState(){
 
   if (atoi(JConf.mqtt_enable) != 1) {
@@ -849,7 +835,6 @@ bool MqttPubLightOffDelay() {
   }
 
   pubTopicMotionSensorTimer.publish(JConf.lightoff_delay);
-
   pubTopicMotionSensorTimer2.publish(JConf.light2off_delay);
 
   unsigned long load_time = millis() - start_time;
@@ -913,7 +898,6 @@ bool MqttPubData() {
       pubTopic_ds5.publish(dsData[4].dsTemp.c_str());
     }
   #endif //DS18X20_ON
-
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: MqttPubData load time: %d"), load_time);
@@ -1110,12 +1094,6 @@ void TestSystemPrint()
 
 
 
-
-
-
-
-
-
 void getData(){
 
   #ifdef NTP_ON
@@ -1176,8 +1154,6 @@ void getData(){
     if (millis() - Uart.timerAnalogPin[i] >= 60000){
       Uart.valueAnalogPin[i] = 0;
       Uart.SetAnalogReadCycle(i, 10, "s");
-    } else {
-
     }
   }
   #endif
@@ -1191,8 +1167,6 @@ void setup() {
   delay(100);
   Serial.println();
 
-
-
   if (!SPIFFS.begin()) {
     addLog_P(LOG_LEVEL_NONE, "setup: Failed to mount file system");
     return;
@@ -1201,13 +1175,7 @@ void setup() {
       deleteConfigFile();
     #endif
   }
-/*
-  if (!JConf.saveConfig()) {
-    Serial.println("Failed to save config");
-  } else {
-    Serial.println("Config saved");
-  }
-*/
+
   if (!JConf.loadConfig()) {
     addLog_P(LOG_LEVEL_NONE, "setup: Failed to load config");
   } else {
@@ -1252,7 +1220,6 @@ void setup() {
     dht.begin();
   #endif
 
-
   #ifdef BME280_ON
   if (atoi(JConf.bme280_enable) == 1) {
     bmeSensor.settings.commInterface = I2C_MODE;
@@ -1281,7 +1248,6 @@ void setup() {
     myHTU21D.begin(4, 5);  //SDA=4, SCL=5
   #endif
 
-
   if (atoi(JConf.mqtt_enable) == 1) {
     if (atoi(JConf.mqtt_auth_enable) == 1){
       mqtt = Adafruit_MQTT_Client(&espClient, JConf.mqtt_server, atoi(JConf.mqtt_port), JConf.mqtt_user, JConf.mqtt_pwd);
@@ -1296,7 +1262,6 @@ void setup() {
   #ifdef USE_WEBSERVER
     WebServerInit();
   #endif // USE_WEBSERVER
-
 
   #ifdef NTP_ON
     if (atoi(JConf.ntp_enable) == 1) {
@@ -1324,8 +1289,6 @@ void setup() {
   #endif
 
   GetMacString();
-
-  CFG_Default();
 }
 
 
