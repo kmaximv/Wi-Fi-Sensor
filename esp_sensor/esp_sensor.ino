@@ -656,7 +656,7 @@ bool MqttConnect() {
 
   addLog_P(LOG_LEVEL_INFO, "MqttConnect: Connecting to MQTT...");
   if ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-    snprintf_P(log, sizeof(log), PSTR("MqttConnect: Error: %s"), mqtt.connectErrorString(ret));
+    snprintf_P(log, sizeof(log), PSTR("MqttConnect: Error: %s"), String(ret).c_str());
     addLog(LOG_LEVEL_ERROR, log);
     mqtt.disconnect();
     return false;
