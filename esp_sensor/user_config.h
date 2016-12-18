@@ -8,10 +8,17 @@
 #define BH1750_ON
 #define PZEM_ON
 
+//------------------DS18X20 Sensors---------------------------------------------
 #define DS18X20_ON
-#define DS18X20_PIN 2 
+#define DS18X20_PIN 2
+//------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------
+//------------------MH-Z19 Sensor-----------------------------------------------
+#define MHZ19_ON
+#define RESPONSE_SIZE 9   // Размер пакета
+#define READ_TIMEOUT 300  // Время ожидания ответа от датчика
+//------------------------------------------------------------------------------
+
 
 //#define DEBUG
 //#define DEBUG_JSON_CONFIG
@@ -20,10 +27,11 @@
 //#define REBOOT_ON
 #define NTP_ON
 
+
 #define USE_WEBSERVER
 
 #define FADE_PINS 2
-#define UP true 
+#define UP true
 #define DOWN false
 
 enum WIFI_MODE_ENUM {AP, STA, AP_STA};
@@ -87,28 +95,29 @@ struct TIME_T {
 
 
 
-const char *ver                = "1.09"              ;         
+const char *ver                = "1.12"              ;
 
-const char *lux                = "Lux"               ;        
-const char *lightType          = "LightType"         ;              
-const char *lightType2         = "LightType2"        ;               
-const char *temperature        = "Temp"              ;         
-const char *humidity           = "Humidity"          ;             
-const char *pressure           = "Pressure"          ;             
-const char *altitude           = "Altitude"          ;             
-const char *motionSensor       = "MotionSensor"      ;                 
-const char *motionSensorTimer  = "MotionSensorTimer" ;                      
-const char *motionSensorTimer2 = "MotionSensorTimer2";                       
-const char *version            = "Version"           ;            
-const char *freeMemory         = "FreeMemory"        ;               
-const char *ip                 = "IP"                ;       
-const char *mac                = "MAC"               ;        
-const char *uptime             = "Uptime"            ;           
-const char *pzemVoltage        = "pzemVoltage"       ;           
-const char *pzemCurrent        = "pzemCurrent"       ;           
-const char *pzemPower          = "pzemPower"         ;           
-const char *pzemEnergy         = "pzemEnergy"        ;           
-const char *pzemReset          = "pzemReset"         ;           
+const char *lux                = "Lux"               ;
+const char *lightType          = "LightType"         ;
+const char *lightType2         = "LightType2"        ;
+const char *temperature        = "Temp"              ;
+const char *humidity           = "Humidity"          ;
+const char *pressure           = "Pressure"          ;
+const char *altitude           = "Altitude"          ;
+const char *motionSensor       = "MotionSensor"      ;
+const char *motionSensorTimer  = "MotionSensorTimer" ;
+const char *motionSensorTimer2 = "MotionSensorTimer2";
+const char *version            = "Version"           ;
+const char *freeMemory         = "FreeMemory"        ;
+const char *ip                 = "IP"                ;
+const char *mac                = "MAC"               ;
+const char *uptime             = "Uptime"            ;
+const char *pzemVoltage        = "pzemVoltage"       ;
+const char *pzemCurrent        = "pzemCurrent"       ;
+const char *pzemPower          = "pzemPower"         ;
+const char *pzemEnergy         = "pzemEnergy"        ;
+const char *pzemReset          = "pzemReset"         ;
+const char *mhz19ppm           = "mhz19ppm"          ;
 
 const char sec[] PROGMEM = "sec";
 
@@ -127,6 +136,7 @@ String pzemVoltageString = "none";
 String pzemCurrentString = "none";
 String pzemPowerString =   "none";
 String pzemEnergyString =  "none";
+String mhz19PpmString =    "none";
 
 long Day=0;
 int Hour =0;
@@ -162,6 +172,7 @@ char pzemVoltage_buff[MQTTSZ];
 char pzemCurrent_buff[MQTTSZ];
 char pzemPower_buff[MQTTSZ];
 char pzemEnergy_buff[MQTTSZ];
+char mhz19ppm_buff[MQTTSZ];
 char freeMemory_buff[MQTTSZ];
 char uptime_buff[MQTTSZ];
 char version_buff[MQTTSZ];

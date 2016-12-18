@@ -83,6 +83,7 @@ class JsonConf
     char bh1750_enable                [2]  = "0"                  ;
     char motion_sensor_enable         [2]  = "0"                  ;
     char pzem_enable                  [2]  = "0"                  ;
+    char mhz19_enable                 [2]  = "0"                  ;
     char ds18x20_enable               [2]  = "0"                  ;
 
 

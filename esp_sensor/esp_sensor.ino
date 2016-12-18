@@ -98,6 +98,8 @@ Adafruit_MQTT_Publish pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, JConf.p
 Adafruit_MQTT_Publish pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 
+Adafruit_MQTT_Publish pubTopicMhz19ppm = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
 Adafruit_MQTT_Publish pubTopicFreeMemory = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopicUptime = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopicVersion = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
@@ -563,6 +565,47 @@ void PzemResetEnergy() {
 
 
 
+#ifdef MHZ19_ON
+int GetMHZ19() {
+  char log[LOGSZ];
+
+  // command to ask for data
+  byte cmd[RESPONSE_SIZE] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
+  char data[RESPONSE_SIZE];
+
+  Serial.write(cmd, RESPONSE_SIZE); //request PPM CO2
+
+  unsigned long startTime = millis();
+  uint8_t len = 0;
+  while((len < RESPONSE_SIZE) && (millis() - startTime < READ_TIMEOUT)) {
+    if(Serial.available() > 0) {
+      Serial.readBytes(data, RESPONSE_SIZE);
+    }
+  }
+
+  if (data[0] != 0xFF) {
+    addLog_P(LOG_LEVEL_ERROR, "Wrong starting byte from co2 sensor!");
+    return -1;
+  }
+
+  if (data[1] != 0x86) {
+    addLog_P(LOG_LEVEL_ERROR, "Wrong command from co2 sensor!");
+    return -1;
+  }
+
+  int responseHigh = (int) data[2];
+  int responseLow = (int) data[3];
+  int ppm = (256 * responseHigh) + responseLow;
+  mhz19PpmString = String(ppm);
+
+  snprintf_P(log, sizeof(log), PSTR("GetMHZ19: CO2: %d PPM"), ppm);
+  addLog(LOG_LEVEL_INFO, log);
+  return ppm;
+}
+#endif // MHZ19_ON
+
+
+
 void MotionDetect(){
 
   char log[LOGSZ];
@@ -717,6 +760,9 @@ void MqttInit() {
 
   sprintf(pzemEnergy_buff, "%s%s%s", JConf.publish_topic, pzemEnergy, JConf.mqtt_name);
   pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, pzemEnergy_buff);
+
+  sprintf(mhz19ppm_buff, "%s%s%s", JConf.publish_topic, mhz19ppm, JConf.mqtt_name);
+  pubTopicMhz19ppm = Adafruit_MQTT_Publish(&mqtt, mhz19ppm_buff);
 
   sprintf(freeMemory_buff, "%s%s%s", JConf.publish_topic, freeMemory, JConf.mqtt_name);
   pubTopicFreeMemory = Adafruit_MQTT_Publish(&mqtt, freeMemory_buff);
@@ -886,6 +932,12 @@ bool MqttPubData() {
       pubTopicPzemCurrent.publish(pzemCurrentString.c_str());
       pubTopicPzemPower.publish(pzemPowerString.c_str());
       pubTopicPzemEnergy.publish(pzemEnergyString.c_str());
+    }
+  #endif
+
+  #ifdef MHZ19_ON
+    if (atoi(JConf.mhz19_enable) == 1){
+      pubTopicMhz19ppm.publish(mhz19PpmString.c_str());
     }
   #endif
 
@@ -1145,6 +1197,12 @@ void getData(){
     }
   #endif
 
+  #ifdef MHZ19_ON
+    if (atoi(JConf.mhz19_enable) == 1){
+      GetMHZ19();
+    }
+  #endif
+
   GetUptimeData();
   GetFreeMemory();
   TestSystemPrint();
@@ -1182,7 +1240,7 @@ void setup() {
     addLog_P(LOG_LEVEL_NONE, "setup: Config loaded");
   }
 
-  if (atoi(JConf.pzem_enable)==1){
+  if (atoi(JConf.pzem_enable)==1 || atoi(JConf.mhz19_enable)==1){
     JConf.serial_log_level[0] = '0'; // Отключаем serial log
     JConf.serial_log_level[1] = '\0';
     Serial.end();

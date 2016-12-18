@@ -27,10 +27,10 @@ const char div2P[] PROGMEM =
 const char panelHeaderNameP[] PROGMEM     =  "<div class='col-sm-6 col-md-5 col-lg-4'><div class='page-header'><h2>";
 const char panelHeaderEndP[] PROGMEM    =  "</h2></div>";
 
-const char inputBodyStartP[] PROGMEM    =  
+const char inputBodyStartP[] PROGMEM    =
 "<form action='save' method='POST'><div class='panel panel-default'><div class='panel-body'>";
 
-const char inputBodyNameP[] PROGMEM     =  
+const char inputBodyNameP[] PROGMEM     =
 "<div class='form-group'><div class='input-group'><span class='input-group-addon' id='basic-addon1'>";
 
 const char inputBodyPOSTP[] PROGMEM     =  "</span><input type='text' name='";
@@ -43,7 +43,7 @@ const char inputBodyUnitEndP[] PROGMEM    =  "</span>";
 
 const char inputBodyCloseDivP[] PROGMEM    =  "</div></div>";
 
-const char inputBodyEndP[] PROGMEM      = 
+const char inputBodyEndP[] PROGMEM      =
 "</div><div class='panel-footer clearfix'><div class='pull-right'>\
 <button type='submit' class='btn btn-default' name='save_conf' value='1'>Save</button></div></div></div></form>";
 
@@ -58,11 +58,11 @@ const char OFFP[] PROGMEM  = "OFF";
 
 
 /*********************************************************************************************\
- * 
+ *
  * Template
- * 
+ *
 \*********************************************************************************************/
-const char HTTP_HEAD[] PROGMEM = 
+const char HTTP_HEAD[] PROGMEM =
 "<html lang='en'>"
   "<head>"
     "<title>{module_id}</title>"
@@ -74,7 +74,7 @@ const char HTTP_HEAD[] PROGMEM =
   "</head>";
 
 
-const char HTTP_BODY[] PROGMEM = 
+const char HTTP_BODY[] PROGMEM =
   "<body>"
   "<nav class='navbar navbar-inverse'>"
     "<div class='container-fluid'>"
@@ -106,16 +106,16 @@ const char HTTP_BODY[] PROGMEM =
     "<div class='row'>";
 
 
-const char HTTP_PANEL_NAME[] PROGMEM =  
+const char HTTP_PANEL_NAME[] PROGMEM =
 "<div class='col-sm-6 col-md-5 col-lg-4'>"
   "<div class='page-header'><h3>{panel_name}</h3></div>";
 
-const char HTTP_PANEL_NAME_12[] PROGMEM =  
+const char HTTP_PANEL_NAME_12[] PROGMEM =
 "<div class='col-sm-12 col-md-9 col-lg-8'>"
   "<div class='page-header'><h3>{panel_name}</h3></div>";
 
 
-const char HTTP_PANEL_END[] PROGMEM =  
+const char HTTP_PANEL_END[] PROGMEM =
     "<div class='clearfix visible-lg'></div>"
 "</div>";
 
@@ -166,7 +166,7 @@ const char HTTP_FORM_END[] PROGMEM =
 "</form>";
 /////////////////////////////////////////////////////////////////////////Form for save config//
 
-const char HTTP_BODY_END[] PROGMEM =  
+const char HTTP_BODY_END[] PROGMEM =
         "<div class='clearfix visible-lg'>"
         "</div>"
       "</div>"
@@ -174,20 +174,20 @@ const char HTTP_BODY_END[] PROGMEM =
   "</body>"
 "</html>";
 /*********************************************************************************************\
- * 
+ *
  *                                                                                    Template
- * 
+ *
 \*********************************************************************************************/
 
 
 
 /*********************************************************************************************\
- * 
+ *
  * For Web Page <Root>
- * 
+ *
 \*********************************************************************************************/
 
-const char JS_ROOT_START[] PROGMEM = 
+const char JS_ROOT_START[] PROGMEM =
 "<SCRIPT>"
 "var xmlHttp=createXmlHttpObject();"
 "function createXmlHttpObject(){"
@@ -210,12 +210,12 @@ const char JS_ROOT_START[] PROGMEM =
  "if(xmlHttp.readyState==4 && xmlHttp.status==200){"
    "xmlResponse=xmlHttp.responseXML;";
 
-const char JS_ROOT_XML[] PROGMEM = 
+const char JS_ROOT_XML[] PROGMEM =
 "xmldoc = xmlResponse.getElementsByTagName('{id}');"
 "message = xmldoc[0].firstChild.nodeValue;"
 "document.getElementById('{id}Id').innerHTML=message;";
 
-const char JS_ROOT_END[] PROGMEM = 
+const char JS_ROOT_END[] PROGMEM =
  "}"
 "}"
 "</SCRIPT>";
@@ -229,17 +229,17 @@ const char HTTP_ROOT_PANEL_DIV[] PROGMEM =
 const char HTTP_ROOT_PANEL_END[] PROGMEM =
 "</div>";
 /*********************************************************************************************\
- * 
+ *
  *                                                                         For Web Page <Root>
- * 
+ *
 \*********************************************************************************************/
 
 
 
 /*********************************************************************************************\
- * 
+ *
  * For Web Page <Log Config>
- * 
+ *
 \*********************************************************************************************/
 const char HTTP_FORM_LOG[] PROGMEM =
 "<div class='col-sm-6 col-md-5 col-lg-4'>"
@@ -264,7 +264,7 @@ const char HTTP_FORM_LOG[] PROGMEM =
                     "</div>"
                 "</div>"
                 "<div class='form-group'>"
-                    "<div class='input-group'>"                      
+                    "<div class='input-group'>"
                         "<span class='input-group-addon' id='basic-addon1'>Web log level</span>"
                         "<select id='lw' name='lw' class='form-control' aria-describedby='basic-addon1'>"
                         "<option{b0value='0'>0 None</option>"
@@ -272,13 +272,13 @@ const char HTTP_FORM_LOG[] PROGMEM =
                         "<option{b2value='2'>2 Info</option>"
                         "<option{b3value='3'>3 Debug</option>"
                         "<option{b4value='4'>4 More debug</option>"
-                        "</select>" 
+                        "</select>"
                     "</div>"
                 "</div>"
                 "<hr>"
                 "<h4>Syslog Settings</h4>"
                 "<div class='form-group'>"
-                    "<div class='input-group'>"                      
+                    "<div class='input-group'>"
                         "<span class='input-group-addon' id='basic-addon1'>Syslog level</span>"
                         "<select id='ll' name='ll' class='form-control' aria-describedby='basic-addon1'>"
                         "<option{c0value='0'>0 None</option>"
@@ -286,8 +286,8 @@ const char HTTP_FORM_LOG[] PROGMEM =
                         "<option{c2value='2'>2 Info</option>"
                         "<option{c3value='3'>3 Debug</option>"
                         "<option{c4value='4'>4 More debug</option>"
-                        "</select>" 
-                    "</div>"                  
+                        "</select>"
+                    "</div>"
                 "</div>"
                 "<div class='form-group'>"
                     "<div class='input-group'>"
@@ -310,17 +310,17 @@ const char HTTP_FORM_LOG[] PROGMEM =
     "<div class='clearfix visible-lg'></div>"
 "</div>";
 /*********************************************************************************************\
- * 
+ *
  *                                                                   For Web Page <Log Config>
- * 
+ *
 \*********************************************************************************************/
 
 
 
 /*********************************************************************************************\
- * 
+ *
  * For Web Page <Console>
- * 
+ *
 \*********************************************************************************************/
 const char HTTP_CONSOLE[] PROGMEM =
     "<textarea class='form-control' rows='30' readonly id='t1' name='t1' cols='50' wrap='off'></textarea>"
@@ -364,13 +364,13 @@ const char JS_CONSOLE[] PROGMEM =
   "}"
   "</script>";
 /*********************************************************************************************\
- * 
+ *
  *                                                                      For Web Page <Console>
- * 
+ *
 \*********************************************************************************************/
 
 
-const char JS_PIN_CONTROL[] PROGMEM = 
+const char JS_PIN_CONTROL[] PROGMEM =
   "<div id='content'></div>"
   "<div id='pin1'></div>"
   "<script>"
@@ -404,7 +404,7 @@ const char HTTP_REBOOT[] PROGMEM =
   "</div>"
 "</div>";
 
-const char HTTP_UPDATE[] PROGMEM  = 
+const char HTTP_UPDATE[] PROGMEM  =
 "<div class='col-sm-6 col-md-5 col-lg-4'>"
   "<div class='page-header'>"
     "<h2>Update Frimware</h2>"
@@ -416,7 +416,7 @@ const char HTTP_UPDATE[] PROGMEM  =
   "</form>"
 "</div>";
 
-const char HTTP_SENSORS[] PROGMEM  = 
+const char HTTP_SENSORS[] PROGMEM  =
 "<div class='col-sm-6 col-md-5 col-lg-4'>"
     "<div class='page-header'>"
         "<h3>Sensors Configuration</h3>"
@@ -432,6 +432,7 @@ const char HTTP_SENSORS[] PROGMEM  =
                 "<div class='checkbox'><label><input type='checkbox' value='1' id='bh1750_enable' name='bh1750_enable'>BH1750</label></div>"
                 "<div class='checkbox'><label><input type='checkbox' value='1' id='motion_sensor_enable' name='motion_sensor_enable'>Motion Sensor</label></div>"
                 "<div class='checkbox'><label><input type='checkbox' value='1' id='pzem_enable' name='pzem_enable'>Energy Monitor</label></div>"
+                "<div class='checkbox'><label><input type='checkbox' value='1' id='mhz19_enable' name='mhz19_enable'>MH-Z19</label></div>"
             "</div>"
             "<div class='panel-footer clearfix'>"
                 "<div class='pull-right'><button type='submit' class='btn btn-default'>Save</button></div>"
@@ -511,6 +512,13 @@ void handleRoot()
     }
   #endif //PZEM_ON
 
+  #ifdef MHZ19_ON
+    if (atoi(JConf.mhz19_enable) == 1){
+    js += FPSTR(JS_ROOT_XML);
+    js.replace("{id}", "mhz19ppm");
+    }
+  #endif //MHZ19_ON
+
   if (atoi(JConf.ntp_enable) == 1) {
     js += FPSTR(JS_ROOT_XML);
     js.replace("{id}", "ntpTime");
@@ -589,6 +597,15 @@ void handleRoot()
     }
   #endif //PZEM_ON
 
+  #ifdef MHZ19_ON
+    if (atoi(JConf.mhz19_enable) == 1){
+      sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
+      sensors.replace("{icon}", "grain");
+      sensors.replace("{name}", "CO2");
+      sensors.replace("{id}", "mhz19ppm");
+    }
+  #endif //MHZ19_ON
+
   if (atoi(JConf.bh1750_enable) == 1){
     sensors += FPSTR(HTTP_ROOT_PANEL_DIV);
     sensors.replace("{icon}", "asterisk");
@@ -646,7 +663,7 @@ void handleLogConfig()
 
   String head = FPSTR(HTTP_HEAD);
   head.replace("{module_id}", String(JConf.module_id));
-  
+
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
@@ -732,7 +749,7 @@ void handleReboot()
   String head = FPSTR(HTTP_HEAD);
   head.replace("{module_id}", String(JConf.module_id));
   head.replace("</title>", "</title><META HTTP-EQUIV='Refresh' CONTENT='20; URL=/'>");
-  
+
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
@@ -756,7 +773,7 @@ void handleUpdate()
 
   String head = FPSTR(HTTP_HEAD);
   head.replace("{module_id}", String(JConf.module_id));
-  
+
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
@@ -780,7 +797,7 @@ void handleUploadSketch()
   String head = FPSTR(HTTP_HEAD);
   head.replace("{module_id}", String(JConf.module_id));
   head.replace("</title>", "</title><META HTTP-EQUIV='Refresh' CONTENT='20; URL=/'>");
-  
+
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
@@ -847,7 +864,7 @@ void handleSensorsConfig()
 
   String head = FPSTR(HTTP_HEAD);
   head.replace("{module_id}", String(JConf.module_id));
-  
+
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
@@ -879,6 +896,9 @@ void handleSensorsConfig()
   if (atoi(JConf.pzem_enable) == 1){
     settings.replace("id='pzem_enable'", "checked='true' id='pzem_enable'");
   }
+  if (atoi(JConf.mhz19_enable) == 1){
+    settings.replace("id='mhz19_enable'", "checked='true' id='mhz19_enable'");
+  }
 
   String page = head + body + settings + FPSTR(HTTP_BODY_END);
 
@@ -899,7 +919,7 @@ void handleMqttConfig()
 
   String head = FPSTR(HTTP_HEAD);
   head.replace("{module_id}", String(JConf.module_id));
-  
+
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
@@ -999,7 +1019,7 @@ void handleNtpConfig()
 
   String head = FPSTR(HTTP_HEAD);
   head.replace("{module_id}", String(JConf.module_id));
-  
+
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
@@ -1009,7 +1029,7 @@ void handleNtpConfig()
 
   String form = FPSTR(HTTP_FORM_START);
   form += "<input id='w' name='w' value='4' hidden>";
-  
+
   form += FPSTR(HTTP_FORM_CHECKBOX);
   form.replace("{id}", "ntp_enable");
   form.replace("{name}", "NTP Enable");
@@ -1050,7 +1070,7 @@ void handlePinControl()
 
   String head = FPSTR(HTTP_HEAD);
   head.replace("{module_id}", String(JConf.module_id));
-  
+
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
@@ -1073,7 +1093,7 @@ void handleEspConfig()
 
   String head = FPSTR(HTTP_HEAD);
   head.replace("{module_id}", String(JConf.module_id));
-  
+
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
@@ -1275,6 +1295,11 @@ void handleSave()
       } else {
         strlcpy(JConf.pzem_enable, "0", sizeof(JConf.pzem_enable));
       }
+      if (strstr(WebServer.arg("mhz19_enable").c_str(),"1")) {
+        strlcpy(JConf.mhz19_enable, "1", sizeof(JConf.mhz19_enable));
+      } else {
+        strlcpy(JConf.mhz19_enable, "0", sizeof(JConf.mhz19_enable));
+      }
 
       snprintf_P(log, sizeof(log), PSTR("HTTP: Sensors bme280_enable %s, sht21_enable %s, dht_enable %s, bh1750_enable %s, motion_sensor_enable %s, pzem_enable %s"),
         JConf.bme280_enable, JConf.sht21_enable, JConf.dht_enable, JConf.bh1750_enable, JConf.motion_sensor_enable, JConf.pzem_enable);
@@ -1363,7 +1388,7 @@ void WebWiFiConf(void) {
 
   String head = FPSTR(HTTP_HEAD);
   head.replace("{module_id}", String(JConf.module_id));
-  
+
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
@@ -1684,7 +1709,7 @@ void WebPinControlStatus(void) {
   data+=String(F("'><h4>"));
   if (pinState) { data+=ON; } else { data+=OFF; }
   data+=String(F("</h4></td><td class='"));
-  data+=mode;    
+  data+=mode;
   data+=String(F("'><h4>"));
   data+=lightState;
   data+=String(F("</h4></td>"));
@@ -1719,7 +1744,7 @@ void WebPinControlStatus(void) {
   data+=String(F("'><h4>"));
   if (pinState2) { data+=ON; } else { data+=OFF; }
   data+=String(F("</h4></td><td class='"));
-  data+=mode2;    
+  data+=mode2;
   data+=String(F("'><h4>"));
   data+=lightState2;
   data+=String(F("</h4></td>"));
@@ -1758,7 +1783,7 @@ void handleXML(){
 
   String XML;
   XML=String(F("<?xml version='1.0'?>"));
-  XML+=String(F("<Donnees>")); 
+  XML+=String(F("<Donnees>"));
   XML+=String(F("<temperature>"));
   XML+=temperatureString;
   XML+=String(F(" °C"));
@@ -1800,6 +1825,14 @@ void handleXML(){
     }
   #endif
 
+  #ifdef MHZ19_ON
+    if (atoi(JConf.mhz19_enable) == 1){
+      XML+=String(F("<mhz19ppm>"));
+      XML+=mhz19PpmString;
+      XML+=String(F(" PPM"));
+      XML+=String(F("</mhz19ppm>"));
+    }
+  #endif
 
   #ifdef DS18X20_ON
     if (atoi(JConf.ds18x20_enable) == 1){
@@ -1840,7 +1873,7 @@ void handleXML(){
   }
   #endif
 
-  XML+=String(F("</Donnees>")); 
+  XML+=String(F("</Donnees>"));
 
   WebServer.send(200,"text/xml",XML);
 

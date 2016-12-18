@@ -10,76 +10,77 @@ bool JsonConf::saveConfig() {
   JsonObject& json = jsonBuffer.createObject();
 
 
-  json["module_id"]                     = module_id                    ;                           
-  json["wifi_mode"]                     = wifi_mode                    ;                           
-  json["wifi_phy_mode"]                 = wifi_phy_mode                ;                           
-  json["wifi_channel"]                  = wifi_channel                 ;                           
-  json["wifi_auth"]                     = wifi_auth                    ;                           
-  json["sta_ssid"]                      = sta_ssid                     ;                         
-  json["sta_pwd"]                       = sta_pwd                      ;                       
-  json["ap_pwd"]                        = ap_pwd                       ;                       
-  json["static_ip"]                     = static_ip                    ;                           
-  json["static_gateway"]                = static_gateway               ;                                     
-  json["static_subnet"]                 = static_subnet                ;                                   
-  json["ntp_server"]                    = ntp_server                   ;                             
-  json["my_time_zone"]                  = my_time_zone                 ;                           
-  json["mqtt_server"]                   = mqtt_server                  ;                               
-  json["mqtt_port"]                     = mqtt_port                    ;                           
-  json["mqtt_user"]                     = mqtt_user                    ;                           
-  json["mqtt_pwd"]                      = mqtt_pwd                     ;                         
-  json["mqtt_name"]                     = mqtt_name                    ;                           
-  json["publish_topic"]                 = publish_topic                ;                                   
-  json["subscribe_topic"]               = subscribe_topic              ;                                       
-  json["command_pub_topic"]             = command_pub_topic            ;                                           
-  json["light_pin"]                     = light_pin                    ;                           
-  json["lightoff_delay"]                = lightoff_delay               ;                                     
-  json["lighton_lux"]                   = lighton_lux                  ;                                     
-  json["light_smooth"]                  = light_smooth                 ;                           
-  json["light2_pin"]                    = light2_pin                   ;                             
-  json["light2off_delay"]               = light2off_delay              ;                                       
-  json["light2on_lux"]                  = light2on_lux                 ;                                       
-  json["light2_smooth"]                 = light2_smooth                ;                           
-  json["reset_pin"]                     = reset_pin                    ;                             
-  json["motion_pin"]                    = motion_pin                   ;                             
-  json["dht_pin"]                       = dht_pin                      ; 
-  json["get_data_delay"]                = get_data_delay               ;                                     
-  json["publish_delay"]                 = publish_delay                ;                                   
-  json["subscribe_delay"]               = subscribe_delay              ;                                       
-  json["motion_read_delay"]             = motion_read_delay            ;                                           
-  json["reboot_delay"]                  = reboot_delay                 ;                                 
+  json["module_id"]                     = module_id                    ;
+  json["wifi_mode"]                     = wifi_mode                    ;
+  json["wifi_phy_mode"]                 = wifi_phy_mode                ;
+  json["wifi_channel"]                  = wifi_channel                 ;
+  json["wifi_auth"]                     = wifi_auth                    ;
+  json["sta_ssid"]                      = sta_ssid                     ;
+  json["sta_pwd"]                       = sta_pwd                      ;
+  json["ap_pwd"]                        = ap_pwd                       ;
+  json["static_ip"]                     = static_ip                    ;
+  json["static_gateway"]                = static_gateway               ;
+  json["static_subnet"]                 = static_subnet                ;
+  json["ntp_server"]                    = ntp_server                   ;
+  json["my_time_zone"]                  = my_time_zone                 ;
+  json["mqtt_server"]                   = mqtt_server                  ;
+  json["mqtt_port"]                     = mqtt_port                    ;
+  json["mqtt_user"]                     = mqtt_user                    ;
+  json["mqtt_pwd"]                      = mqtt_pwd                     ;
+  json["mqtt_name"]                     = mqtt_name                    ;
+  json["publish_topic"]                 = publish_topic                ;
+  json["subscribe_topic"]               = subscribe_topic              ;
+  json["command_pub_topic"]             = command_pub_topic            ;
+  json["light_pin"]                     = light_pin                    ;
+  json["lightoff_delay"]                = lightoff_delay               ;
+  json["lighton_lux"]                   = lighton_lux                  ;
+  json["light_smooth"]                  = light_smooth                 ;
+  json["light2_pin"]                    = light2_pin                   ;
+  json["light2off_delay"]               = light2off_delay              ;
+  json["light2on_lux"]                  = light2on_lux                 ;
+  json["light2_smooth"]                 = light2_smooth                ;
+  json["reset_pin"]                     = reset_pin                    ;
+  json["motion_pin"]                    = motion_pin                   ;
+  json["dht_pin"]                       = dht_pin                      ;
+  json["get_data_delay"]                = get_data_delay               ;
+  json["publish_delay"]                 = publish_delay                ;
+  json["subscribe_delay"]               = subscribe_delay              ;
+  json["motion_read_delay"]             = motion_read_delay            ;
+  json["reboot_delay"]                  = reboot_delay                 ;
 
-  json["sys_log_host"]                  = sys_log_host                 ;                                 
-  json["sys_log_port"]                  = sys_log_port                 ;                                 
-  json["sys_log_level"]                 = sys_log_level                ;                                 
-  json["serial_log_level"]              = serial_log_level             ;                                 
-  json["web_log_level"]                 = web_log_level                ;                                 
+  json["sys_log_host"]                  = sys_log_host                 ;
+  json["sys_log_port"]                  = sys_log_port                 ;
+  json["sys_log_level"]                 = sys_log_level                ;
+  json["serial_log_level"]              = serial_log_level             ;
+  json["web_log_level"]                 = web_log_level                ;
 
 /*
-  json["uart_delay_analog_pin0"]        = uart_delay_analog_pin0       ;                                                     
-  json["uart_delay_analog_pin1"]        = uart_delay_analog_pin1       ;                                                     
-  json["uart_delay_analog_pin2"]        = uart_delay_analog_pin2       ;                                                     
-  json["uart_delay_analog_pin3"]        = uart_delay_analog_pin3       ;                                                     
-  json["uart_delay_analog_pin4"]        = uart_delay_analog_pin4       ;                                                     
-  json["uart_delay_analog_pin5"]        = uart_delay_analog_pin5       ;                                                     
-  json["green_light_on"]                = green_light_on               ;                                     
-  json["green_light_off"]               = green_light_off              ;                                       
-  json["green_light_pin"]               = green_light_pin              ;                                       
-  json["green_humidity_threshold_up"]   = green_humidity_threshold_up  ;                                                               
-  json["green_humidity_threshold_down"] = green_humidity_threshold_down;                                                                   
-  json["green_humidity_sensor_pin"]     = green_humidity_sensor_pin    ;                                                           
-  json["green_pump_pin"]                = green_pump_pin               ;                                     
+  json["uart_delay_analog_pin0"]        = uart_delay_analog_pin0       ;
+  json["uart_delay_analog_pin1"]        = uart_delay_analog_pin1       ;
+  json["uart_delay_analog_pin2"]        = uart_delay_analog_pin2       ;
+  json["uart_delay_analog_pin3"]        = uart_delay_analog_pin3       ;
+  json["uart_delay_analog_pin4"]        = uart_delay_analog_pin4       ;
+  json["uart_delay_analog_pin5"]        = uart_delay_analog_pin5       ;
+  json["green_light_on"]                = green_light_on               ;
+  json["green_light_off"]               = green_light_off              ;
+  json["green_light_pin"]               = green_light_pin              ;
+  json["green_humidity_threshold_up"]   = green_humidity_threshold_up  ;
+  json["green_humidity_threshold_down"] = green_humidity_threshold_down;
+  json["green_humidity_sensor_pin"]     = green_humidity_sensor_pin    ;
+  json["green_pump_pin"]                = green_pump_pin               ;
 */
-  json["static_ip_enable"]              = static_ip_enable             ;                                     
-  json["ntp_enable"]                    = ntp_enable                   ;                               
-  json["mqtt_enable"]                   = mqtt_enable                  ;                               
-  json["mqtt_auth_enable"]              = mqtt_auth_enable             ;                               
-  json["dht_enable"]                    = dht_enable                   ;                               
-  json["bme280_enable"]                 = bme280_enable                ;                               
-  json["sht21_enable"]                  = sht21_enable                 ;                               
-  json["bh1750_enable"]                 = bh1750_enable                ;                               
-  json["motion_sensor_enable"]          = motion_sensor_enable         ;                               
-  json["pzem_enable"]                   = pzem_enable                  ;                               
-  json["ds18x20_enable"]                = ds18x20_enable               ;                               
+  json["static_ip_enable"]              = static_ip_enable             ;
+  json["ntp_enable"]                    = ntp_enable                   ;
+  json["mqtt_enable"]                   = mqtt_enable                  ;
+  json["mqtt_auth_enable"]              = mqtt_auth_enable             ;
+  json["dht_enable"]                    = dht_enable                   ;
+  json["bme280_enable"]                 = bme280_enable                ;
+  json["sht21_enable"]                  = sht21_enable                 ;
+  json["bh1750_enable"]                 = bh1750_enable                ;
+  json["motion_sensor_enable"]          = motion_sensor_enable         ;
+  json["pzem_enable"]                   = pzem_enable                  ;
+  json["mhz19_enable"]                  = mhz19_enable                 ;
+  json["ds18x20_enable"]                = ds18x20_enable               ;
 
 
 
@@ -215,6 +216,7 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("bh1750_enable"                 )) {  const char* bh1750_enable_char                 = json["bh1750_enable"                ];    sprintf_P(bh1750_enable,                 ("%s"), bh1750_enable_char                ); }
   if (json.containsKey("motion_sensor_enable"          )) {  const char* motion_sensor_enable_char          = json["motion_sensor_enable"         ];    sprintf_P(motion_sensor_enable,          ("%s"), motion_sensor_enable_char         ); }
   if (json.containsKey("pzem_enable"                   )) {  const char* pzem_enable_char                   = json["pzem_enable"                  ];    sprintf_P(pzem_enable,                   ("%s"), pzem_enable_char                  ); }
+  if (json.containsKey("mhz19_enable"                  )) {  const char* mhz19_enable_char                  = json["mhz19_enable"                 ];    sprintf_P(mhz19_enable,                  ("%s"), mhz19_enable_char                 ); }
   if (json.containsKey("dht_enable"                    )) {  const char* dht_enable_char                    = json["dht_enable"                   ];    sprintf_P(dht_enable,                    ("%s"), dht_enable_char                   ); }
   if (json.containsKey("ds18x20_enable"                )) {  const char* ds18x20_enable_char                = json["ds18x20_enable"               ];    sprintf_P(ds18x20_enable,                ("%s"), ds18x20_enable_char               ); }
 
@@ -297,6 +299,7 @@ bool JsonConf::printConfig() {
   Serial.print(F("bh1750_enable                : "));   Serial.println(bh1750_enable                );
   Serial.print(F("motion_sensor_enable         : "));   Serial.println(motion_sensor_enable         );
   Serial.print(F("pzem_enable                  : "));   Serial.println(pzem_enable                  );
+  Serial.print(F("mhz19_enable                 : "));   Serial.println(mhz19_enable                 );
   Serial.print(F("dht_enable                   : "));   Serial.println(dht_enable                   );
   Serial.print(F("ds18x20_enable               : "));   Serial.println(ds18x20_enable               );
 }
