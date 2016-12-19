@@ -27,6 +27,7 @@
 //#define REBOOT_ON
 #define NTP_ON
 
+//#define LCD_ON   //Дисплей с I2C
 
 #define USE_WEBSERVER
 

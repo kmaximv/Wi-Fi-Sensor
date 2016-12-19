@@ -57,6 +57,11 @@ JsonConf JConf;
   HTU21D myHTU21D;
 #endif
 
+#if defined(LCD_ON)
+  #include <LiquidCrystal_I2C.h>
+  LiquidCrystal_I2C lcd(0x27,16,2);  // Устанавливаем дисплей
+#endif
+
 #if defined(PZEM_ON)
   #include "PZEM004T.h"
   PZEM004T pzem(&Serial);
@@ -1207,6 +1212,13 @@ void getData(){
   GetFreeMemory();
   TestSystemPrint();
 
+  #ifdef LCD_ON
+    //scanI2C();
+    lcd.clear();
+    lcd.setCursor(1, 1);
+    lcd.print("Test");
+  #endif
+
   #ifdef UART_ON
   for (int i = 0; i < ANALOG_PINS; i++){
     if (millis() - Uart.timerAnalogPin[i] >= 60000){
@@ -1216,6 +1228,37 @@ void getData(){
   }
   #endif
 }
+
+
+
+#ifdef LCD_ON
+void scanI2C() {
+  char log[LOGSZ];
+  byte error, address;
+  int nDevices;
+  nDevices = 0;
+
+  for(address = 1; address < 127; address++ ) {
+    // The i2c_scanner uses the return value of
+    // the Write.endTransmisstion to see if
+    // a device did acknowledge to the address.
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+
+    if (error == 0) {
+      snprintf_P(log, sizeof(log), PSTR("I2C device found at address 0x%x !"), address);
+      addLog(LOG_LEVEL_INFO, log);
+      nDevices++;
+    } else if (error==4) {
+      snprintf_P(log, sizeof(log), PSTR("Unknown error at address 0x%x !"), address);
+      addLog(LOG_LEVEL_ERROR, log);
+    }
+  }
+  if (nDevices == 0) {
+    addLog_P(LOG_LEVEL_ERROR, "No I2C devices found");
+  }
+}
+#endif //LCD_ON
 
 
 
@@ -1305,6 +1348,13 @@ void setup() {
   #ifdef SHT21_ON
     myHTU21D.begin(4, 5);  //SDA=4, SCL=5
   #endif
+
+  #ifdef LCD_ON
+    lcd.init();
+    lcd.backlight();
+    lcd.setCursor(0, 1);
+    lcd.print("Test");
+  #endif //LCD_ON
 
   if (atoi(JConf.mqtt_enable) == 1) {
     if (atoi(JConf.mqtt_auth_enable) == 1){
