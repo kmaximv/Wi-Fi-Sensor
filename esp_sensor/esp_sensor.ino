@@ -153,6 +153,69 @@ bool MqttConnect();
 
 
 
+#ifdef ENCODER_ON
+void encoderInterrupts() {
+  attachInterrupt(digitalPinToInterrupt(atoi(JConf.encoder_pin_a)), encoderReadPinA, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(atoi(JConf.encoder_pin_b)), encoderReadPinB, CHANGE);
+}
+
+void encoderSetup() {
+  pinMode(atoi(JConf.encoder_pin_a), INPUT_PULLUP);
+  pinMode(atoi(JConf.encoder_pin_b), INPUT_PULLUP);
+  encoderInterrupts();
+  encoderResetTimer = timer.setInterval(encoderResetInterval, encoderReset);
+}
+
+void encoderReset() {
+  if (!encoderFlagA && !encoderFlagB) return;
+  encoderDirection = 0;
+  encoderFlagA = false;
+  encoderFlagB = false;
+  timer.restartTimer(encoderResetTimer);
+  encoderInterrupts();
+  addLog_P(LOG_LEVEL_DEBUG, "encoderReset()");
+}
+
+void encoderAction(bool reverse=false) {
+  if (reverse == true) {
+    addLog_P(LOG_LEVEL_ERROR, "Encoder <= Reverse direction");
+  } else {
+    addLog_P(LOG_LEVEL_ERROR, "Encoder => Forward direction");
+  }
+  encoderReset();
+}
+
+void encoderReadPinA() {
+  if (encoderFlagA == false) {
+    if (digitalRead(atoi(JConf.encoder_pin_b)) == LOW) return;
+    addLog_P(LOG_LEVEL_ERROR, "Flag A");
+    encoderFlagA = true;
+    detachInterrupt(atoi(JConf.encoder_pin_a));
+    if (encoderDirection == 0) {
+      encoderDirection = 1;
+    } else if (encoderDirection == 2) {
+      encoderAction(true); //Reverse direction
+    }
+  }
+}
+
+void encoderReadPinB() {
+  if (encoderFlagB == false) {
+    if (digitalRead(atoi(JConf.encoder_pin_a)) == LOW) return;
+    addLog_P(LOG_LEVEL_ERROR, "Flag B");
+    encoderFlagB = true;
+    detachInterrupt(atoi(JConf.encoder_pin_b));
+    if (encoderDirection == 0) {
+      encoderDirection = 2;
+    } else if (encoderDirection == 1) {
+      encoderAction();
+    }
+  }
+}
+#endif //ENCODER_ON
+
+
+
 void LightControl() {
 
   char log[LOGSZ];
@@ -1355,6 +1418,10 @@ void setup() {
     lcd.setCursor(0, 1);
     lcd.print("Test");
   #endif //LCD_ON
+
+  #ifdef ENCODER_ON
+    encoderSetup();
+  #endif //ENCODER_ON
 
   if (atoi(JConf.mqtt_enable) == 1) {
     if (atoi(JConf.mqtt_auth_enable) == 1){

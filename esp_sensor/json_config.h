@@ -47,6 +47,8 @@ class JsonConf
     char reset_pin                    [3]  = "2"                  ;
     char motion_pin                   [3]  = "14"                 ;
     char dht_pin                      [3]  = "2"                  ;
+    char encoder_pin_a                [3]  = "4"                  ;
+    char encoder_pin_b                [3]  = "5"                  ;
     char get_data_delay               [32] = "10"                 ;
     char publish_delay                [32] = "10"                 ;
     char subscribe_delay              [32] = "60"                 ;

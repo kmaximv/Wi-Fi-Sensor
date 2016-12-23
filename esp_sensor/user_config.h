@@ -94,7 +94,17 @@ struct TIME_T {
   char ds5_buff[MQTTSZ];
 #endif //DS18X20_ON
 
+//------------------Encoder-----------------------------------------------------
+//#define ENCODER_ON                              // Включить поддержку энкодера
 
+#ifdef ENCODER_ON
+  uint8_t encoderDirection = 0;                 // Направление поворота энкодера
+  bool encoderFlagA = false;
+  bool encoderFlagB = false;
+  int encoderResetTimer = 0;
+  int encoderResetInterval = 2000;                     // Интервал сброса флагов
+#endif //ENCODER_ON
+//------------------------------------------------------------------------------
 
 const char *ver                = "1.12"              ;
 
