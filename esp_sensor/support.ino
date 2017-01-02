@@ -139,12 +139,36 @@ bool wifiTryConnect(){
     i++;
   }
   if (WiFi.status() != WL_CONNECTED) {
+    addLog_P(LOG_LEVEL_ERROR, "Func: wifiTryConnect Failed");
     return false;
   }
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: wifiTryConnect load time: %d"), load_time);
   addLog(LOG_LEVEL_DEBUG_MORE, log);
   return true;
+}
+
+
+
+void wifiIP() {
+  //DHCP or Static IP ?
+  if (atoi(JConf.static_ip_enable) == 1) {
+    IPAddress staticIP = stringToIp(JConf.static_ip);
+    IPAddress staticGateway = stringToIp(JConf.static_gateway);
+    IPAddress staticSubnet = stringToIp(JConf.static_subnet);
+    //apply according active wifi mode
+    if (wifi_get_opmode()==WIFI_STA || wifi_get_opmode()==WIFI_AP_STA) {
+      WiFi.config(staticIP, staticGateway, staticSubnet);
+    }
+  }
+  //Get IP
+  IPAddress espIP;
+  if (wifi_get_opmode()==WIFI_STA || wifi_get_opmode()==WIFI_AP_STA) {
+      espIP=WiFi.localIP();
+  } else {
+      espIP=WiFi.softAPIP();
+  }
+  ipString = GetIpString(espIP);
 }
 
 
@@ -156,6 +180,7 @@ void wifiAP() {
 
   WiFi.mode(WIFI_AP);   //setup Soft AP
   wifiAPSettings();
+  wifiIP();
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: wifiAP load time: %d"), load_time);
@@ -176,9 +201,11 @@ bool wifiSTA() {
   wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);    //setup PHY_MODE
 
   if (!wifiTryConnect()) {
+    addLog_P(LOG_LEVEL_ERROR, "Func: wifiSTA Failed");
     return false;
   }
   WiFi.hostname(JConf.module_id);
+  wifiIP();
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: wifiSTA load time: %d"), load_time);
@@ -197,9 +224,11 @@ bool wifiAP_STA() {
   WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
 
   if (!wifiTryConnect()) {
+    addLog_P(LOG_LEVEL_ERROR, "Func: wifiAP_STA Failed");
     return false;
   }
   wifiAPSettings();
+  wifiIP();
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: wifiAP_STA load time: %d"), load_time);
@@ -214,7 +243,7 @@ void wifiReconnect() {
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: wifiReconnect Start");
 
-  if (WiFi.status() != WL_CONNECTED && strcmp(JConf.wifi_mode, AP) && wifiSafeMode == false) {
+  if (WiFi.status() != WL_CONNECTED && String(JConf.wifi_mode) != String(AP) && wifiSafeMode == false) {
     addLog_P(LOG_LEVEL_INFO, "Wifi: Reconnecting...");
     WiFiSetup();
   }
@@ -235,29 +264,14 @@ bool WiFiSetup() {
   WiFi.disconnect();
   if ( String(JConf.wifi_mode) == String(AP) ) { //JConf.wifi_mode == AP
     wifiAP();
-  } else if ( String(JConf.wifi_mode) == String(STA) && !wifiSTA()) {
-    return false;
-  } else if ( String(JConf.wifi_mode) == String(AP_STA) && !wifiAP_STA()) {
-    return false;
-  }
-  //DHCP or Static IP ?
-  if (atoi(JConf.static_ip_enable) == 1) {
-    IPAddress staticIP = stringToIp(JConf.static_ip);
-    IPAddress staticGateway = stringToIp(JConf.static_gateway);
-    IPAddress staticSubnet = stringToIp(JConf.static_subnet);
-    //apply according active wifi mode
-    if (wifi_get_opmode()==WIFI_STA || wifi_get_opmode()==WIFI_AP_STA) {
-      WiFi.config(staticIP, staticGateway, staticSubnet);
-    }
-  }
-  //Get IP
-  IPAddress espIP;
-  if (wifi_get_opmode()==WIFI_STA || wifi_get_opmode()==WIFI_AP_STA) {
-      espIP=WiFi.localIP();
+  } else if ( String(JConf.wifi_mode) == String(STA) ) {
+    return wifiSTA();
+  } else if ( String(JConf.wifi_mode) == String(AP_STA) ) {
+    return wifiAP_STA();
   } else {
-      espIP=WiFi.softAPIP();
+    addLog_P(LOG_LEVEL_ERROR, "Func: WiFiSetup Failed");
+    return false;
   }
-  ipString = GetIpString(espIP);
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: WiFiSetup load time: %d"), load_time);

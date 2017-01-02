@@ -1368,8 +1368,6 @@ void setup() {
   fading[0].pin = atoi(JConf.light_pin);
   fading[1].pin = atoi(JConf.light2_pin);
 
-  scanWiFi();  // scan Access Points
-
   if (!WiFiSetup()) {
     WiFiSafeSetup();
   }
