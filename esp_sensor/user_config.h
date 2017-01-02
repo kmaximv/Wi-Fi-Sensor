@@ -35,9 +35,21 @@
 #define UP true
 #define DOWN false
 
-enum WIFI_MODE_ENUM {AP, STA, AP_STA};
-enum WIFI_PHY_MODE_ENUM {B, G, N};
-enum WIFI_AUTH_ENUM {OPEN, WPA_PSK, WPA2_PSK, WPA_WPA2_PSK};
+
+const char *AP = "AP";
+const char *STA = "STA";
+const char *AP_STA = "AP_STA";
+
+const char *B = "11B";
+const char *G = "11G";
+const char *N = "11N";
+
+const char *OPEN = "OPEN";
+const char *WPA_PSK = "WPA_PSK";
+const char *WPA2_PSK = "WPA2_PSK";
+const char *WPA_WPA2_PSK = "WPA_WPA2_PSK";
+
+
 enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 
 

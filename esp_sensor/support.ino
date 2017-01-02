@@ -2,9 +2,30 @@
 /*********************************************************************************************\
  * Wi-Fi
 \*********************************************************************************************/
+int WIFI_getRSSIasQuality(int RSSI) {
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WIFI_getRSSIasQuality Start");
+
+  int quality = 0;
+
+  if (RSSI <= -100) {
+    quality = 0;
+  } else if (RSSI >= -50) {
+    quality = 100;
+  } else {
+    quality = 2 * (RSSI + 100);
+  }
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WIFI_getRSSIasQuality load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+  return quality;
+}
+
+
 
 void scanWiFi(void) {
-
   char log[LOGSZ];
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: scanWiFi Start");
@@ -21,23 +42,22 @@ void scanWiFi(void) {
       // Print SSID and RSSI for each network found
       Serial.print(i + 1);  Serial.print(F(": "));  Serial.print(WiFi.SSID(i));  Serial.print(F(" ("));  Serial.print(WiFi.RSSI(i));  Serial.print(F(")"));
       Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? F(" ") : F("*"));
-      delay(10);
+      //delay(10);
     }
   }
 
-  network_html = String(F("<blockquote>"));
+  network_html = "";
   for (size_t i = 0; i < founds; ++i)
   {
     // Print SSID and RSSI for each network found
-    network_html += String(F("<p><kbd>"));
+    network_html += String(F("<tr><td><a href='#p' onclick='c(this)'>"));
     network_html += WiFi.SSID(i);
-    network_html += String(F(" ("));
-    network_html += WiFi.RSSI(i);
-    network_html += String(F(")"));
-    network_html += (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? F(" ") : F("*");
-    network_html += String(F("</kbd></p>"));
+    network_html += String(F("</a></td><td>"));
+    network_html += WIFI_getRSSIasQuality(WiFi.RSSI(i));
+    network_html += String(F("%</td><td>"));
+    network_html += (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? F(" ") : String(F("<span class='glyphicon glyphicon-lock'></span>"));
+    network_html += String(F("</td></tr>"));
   }
-  network_html += String(F("</blockquote>"));
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: scanWiFi load time: %d"), load_time);
@@ -47,38 +67,38 @@ void scanWiFi(void) {
 
 
 void wifiAPSettings(){
-  if (atoi(JConf.wifi_auth) == OPEN){
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: wifiAPSettings Start");
+
+  if ( !strcmp(JConf.wifi_auth, OPEN) ){
     WiFi.softAP(JConf.module_id);
   } else {
     WiFi.softAP(JConf.module_id, JConf.ap_pwd);
   }
-
   //setup PHY_MODE
-  if (atoi(JConf.wifi_phy_mode) == B){
+  if ( !strcmp(JConf.wifi_phy_mode, B) ){  //JConf.wifi_phy_mode == B
     wifi_set_phy_mode((phy_mode_t)PHY_MODE_11B);    //PHY_MODE_11B,PHY_MODE_11G,PHY_MODE_11N
-  } else if (atoi(JConf.wifi_phy_mode) == G){
+  } else if ( !strcmp(JConf.wifi_phy_mode, G) ){
     wifi_set_phy_mode((phy_mode_t)PHY_MODE_11G);
   } else {
     wifi_set_phy_mode((phy_mode_t)PHY_MODE_11N);
   }
-
   //get current config
   struct softap_config apconfig;
   wifi_softap_get_config(&apconfig);
   //set the chanel
   apconfig.channel=atoi(JConf.wifi_channel);
-
   //set Authentification type                      //AUTH_OPEN,AUTH_WPA_PSK,AUTH_WPA2_PSK,AUTH_WPA_WPA2_PSK
-  if (atoi(JConf.wifi_auth) == OPEN){
+  if ( !strcmp(JConf.wifi_auth, OPEN) ){
     apconfig.authmode=(AUTH_MODE)AUTH_OPEN;
-  } else if (atoi(JConf.wifi_auth) == WPA_PSK){
+  } else if ( !strcmp(JConf.wifi_auth, WPA_PSK) ){
     apconfig.authmode=(AUTH_MODE)AUTH_WPA_PSK;
-  } else if (atoi(JConf.wifi_auth) == WPA2_PSK){
+  } else if ( !strcmp(JConf.wifi_auth, WPA2_PSK) ){
     apconfig.authmode=(AUTH_MODE)AUTH_WPA2_PSK;
   } else {
     apconfig.authmode=(AUTH_MODE)AUTH_WPA_WPA2_PSK;
   }
-
   //set the visibility of SSID
   apconfig.ssid_hidden=0;
   //no need to add these settings to configuration just use default ones
@@ -89,11 +109,19 @@ void wifiAPSettings(){
       addLog_P(LOG_LEVEL_ERROR, "Wifi: Error Wifi AP_STA!");
       delay(1000);
   }
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: wifiAPSettings load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 bool wifiTryConnect(){
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: wifiTryConnect Start");
+
   byte i=0;
   while (WiFi.status() != WL_CONNECTED && i<40) {  //try to connect
     switch(WiFi.status()) {
@@ -113,19 +141,34 @@ bool wifiTryConnect(){
   if (WiFi.status() != WL_CONNECTED) {
     return false;
   }
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: wifiTryConnect load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
   return true;
 }
 
 
 
 void wifiAP() {
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: wifiAP Start");
+
   WiFi.mode(WIFI_AP);   //setup Soft AP
   wifiAPSettings();
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: wifiAP load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 bool wifiSTA() {
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: wifiSTA Start");
+
   WiFi.mode(WIFI_STA);                            //setup station mode
   WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
   delay(500);
@@ -136,12 +179,20 @@ bool wifiSTA() {
     return false;
   }
   WiFi.hostname(JConf.module_id);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: wifiSTA load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
   return true;
 }
 
 
 
 bool wifiAP_STA() {
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: wifiAP_STA Start");
+
   WiFi.mode(WIFI_AP_STA);
   WiFi.begin(JConf.sta_ssid, JConf.sta_pwd);
 
@@ -149,33 +200,46 @@ bool wifiAP_STA() {
     return false;
   }
   wifiAPSettings();
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: wifiAP_STA load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
   return true;
 }
 
 
 
 void wifiReconnect() {
-  if (WiFi.status() != WL_CONNECTED && atoi(JConf.wifi_mode) != AP && wifiSafeMode == false) {
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: wifiReconnect Start");
+
+  if (WiFi.status() != WL_CONNECTED && strcmp(JConf.wifi_mode, AP) && wifiSafeMode == false) {
     addLog_P(LOG_LEVEL_INFO, "Wifi: Reconnecting...");
     WiFiSetup();
   }
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: wifiReconnect load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
-bool WiFiSetup()
-{
+bool WiFiSetup() {
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WiFiSetup Start");
+
   wifi_set_sleep_type ((sleep_type_t)NONE_SLEEP_T);   // NONE_SLEEP_T,LIGHT_SLEEP_T,MODEM_SLEEP_T
   WiFi.disconnect();
-
-  if (atoi(JConf.wifi_mode) == AP) {
+  if ( String(JConf.wifi_mode) == String(AP) ) { //JConf.wifi_mode == AP
     wifiAP();
-  } else if (atoi(JConf.wifi_mode) == STA && !wifiSTA()) {
+  } else if ( String(JConf.wifi_mode) == String(STA) && !wifiSTA()) {
     return false;
-  } else if (atoi(JConf.wifi_mode) == AP_STA && !wifiAP_STA()) {
+  } else if ( String(JConf.wifi_mode) == String(AP_STA) && !wifiAP_STA()) {
     return false;
   }
-
   //DHCP or Static IP ?
   if (atoi(JConf.static_ip_enable) == 1) {
     IPAddress staticIP = stringToIp(JConf.static_ip);
@@ -195,13 +259,19 @@ bool WiFiSetup()
   }
   ipString = GetIpString(espIP);
 
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WiFiSetup load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
   return true;
 }
 
 
 
-void  WiFiSafeSetup()
-{
+void  WiFiSafeSetup() {
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WiFiSafeSetup Start");
+
   WiFi.disconnect();
   //setup Soft AP
   WiFi.mode(WIFI_AP);
@@ -209,14 +279,26 @@ void  WiFiSafeSetup()
   delay(500);
   addLog_P(LOG_LEVEL_INFO, "Wifi: Safe mode started");
   wifiSafeMode = true;
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: WiFiSafeSetup load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 
 
 
 void wifiSafeModeReconnect() {
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: wifiSafeModeReconnect Start");
+
   if (wifiSafeMode == true && WiFiSetup()) {
     wifiSafeMode = false;
   }
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: wifiSafeModeReconnect load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
 }
 /*********************************************************************************************\
  *                                                                                      Wi-fi*
@@ -501,7 +583,7 @@ void addLog(byte loglevel, const char *line) {
 
 
 void addLog_P(byte loglevel, const char *formatP) {
-  
+
   char mess[MESSZ];
 
   snprintf_P(mess, sizeof(mess), formatP);

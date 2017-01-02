@@ -1326,7 +1326,6 @@ void scanI2C() {
 
 
 void setup() {
-
   Serial.begin(115200);
   delay(100);
   Serial.println();
@@ -1339,6 +1338,8 @@ void setup() {
       deleteConfigFile();
     #endif
   }
+
+  //JConf.deleteConfig();
 
   if (!JConf.loadConfig()) {
     addLog_P(LOG_LEVEL_NONE, "setup: Failed to load config");
@@ -1475,7 +1476,7 @@ void loop() {
   } else {
     #ifdef USE_WEBSERVER
       WebServer.handleClient();  // handle web server
-    #endif  // USE_WEBSERVER
+    #endif // USE_WEBSERVER
 
     timer.run();
 
