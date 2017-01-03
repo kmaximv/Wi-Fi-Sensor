@@ -44,9 +44,10 @@ const char HTTP_HEAD[] PROGMEM =
     "<title id='header'>{module_id}</title>"
     "<meta charset='utf-8'>"
     "<meta name='viewport' content='width=device-width, initial-scale=1'>"
-    "<link rel='stylesheet' href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'>"
-    "<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>"
-    "<script src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>"
+    "<link rel='shortcut icon' href='favicon.ico'>"
+    "<link rel='stylesheet' href='/bootstrap.min.css'>"
+    "<script src='/jquery.min.js'></script>"
+    "<script src='/bootstrap.min.js'></script>"
   "</head>";
 
 const char HTTP_BODY[] PROGMEM =
@@ -67,9 +68,10 @@ const char HTTP_BODY[] PROGMEM =
               "<li><a href='/sensorsconf'>Sensors</a></li>"
               "<li><a href='/espconf'>ESP</a></li>"
               "<li><a href='/mqttconf'>MQTT</a></li>"
-              "<li><a href='/ntpconf'>NTP time</a></li>"
+              "<li><a href='/ntpconf'>NTP Time</a></li>"
               "<li><a href='/log'>Logging</a></li>"
-              "<li><a href='/update'>Update frimware</a></li>"
+              "<li><a href='/update'>Update Frimware</a></li>"
+              "<li><a href='/edit'>FS Editor</a></li>"
               "<li><a href='/reboot'>Reboot ESP</a></li>"
             "</ul>"
           "</li>"
@@ -711,14 +713,158 @@ void showPage(String &page)
 
 
 
+String getContentType(String filename) {
+  if (WebServer.hasArg("download")) return "application/octet-stream";
+  else if (filename.endsWith(".htm")) return "text/html";
+  else if (filename.endsWith(".html")) return "text/html";
+  else if (filename.endsWith(".json")) return "application/json";
+  else if (filename.endsWith(".css")) return "text/css";
+  else if (filename.endsWith(".js")) return "application/javascript";
+  else if (filename.endsWith(".png")) return "image/png";
+  else if (filename.endsWith(".gif")) return "image/gif";
+  else if (filename.endsWith(".jpg")) return "image/jpeg";
+  else if (filename.endsWith(".ico")) return "image/x-icon";
+  else if (filename.endsWith(".xml")) return "text/xml";
+  else if (filename.endsWith(".pdf")) return "application/x-pdf";
+  else if (filename.endsWith(".zip")) return "application/x-zip";
+  else if (filename.endsWith(".gz")) return "application/x-gzip";
+  return "text/plain";
+}
+
+
+
+bool handleFileRead(String path, bool cache = false) {
+  if (path.endsWith("/")) path += "index.htm";
+  String contentType = getContentType(path);
+  String pathWithGz = path + ".gz";
+  if (SPIFFS.exists(pathWithGz) || SPIFFS.exists(path)) {
+    if (SPIFFS.exists(pathWithGz))
+      path += ".gz";
+    File file = SPIFFS.open(path, "r");
+    if (cache) {
+      WebServer.sendHeader("Cache-Control", "max-age=2629000");
+      WebServer.sendHeader("Pragma", "private");
+      WebServer.sendHeader("Expires", "2629000");
+    }
+    size_t sent = WebServer.streamFile(file, contentType);
+    file.close();
+    return true;
+  }
+  WebServer.send(404, "text/plain", "FileNotFound");
+  return false;
+}
+
+
+
+File fsUploadFile;
+
+void handleFileUpload() {
+  if (WebServer.uri() != "/edit") return;
+  HTTPUpload& upload = WebServer.upload();
+  if (upload.status == UPLOAD_FILE_START) {
+    String filename = upload.filename;
+    if (!filename.startsWith("/")) filename = "/" + filename;
+    fsUploadFile = SPIFFS.open(filename, "w");
+    filename = String();
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    //DBG_OUTPUT_PORT.print("handleFileUpload Data: "); DBG_OUTPUT_PORT.println(upload.currentSize);
+    if (fsUploadFile)
+      fsUploadFile.write(upload.buf, upload.currentSize);
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (fsUploadFile)
+      fsUploadFile.close();
+  }
+}
+
+
+
+void handleFileDelete() {
+  if (WebServer.args() == 0) return WebServer.send(500, "text/plain", "BAD ARGS");
+  String path = WebServer.arg(0);
+  if (path == "/")
+    return WebServer.send(500, "text/plain", "BAD PATH");
+  if (!SPIFFS.exists(path))
+    return WebServer.send(404, "text/plain", "FileNotFound");
+  SPIFFS.remove(path);
+  WebServer.send(200, "text/plain", "");
+  path = String();
+}
+
+
+
+void handleFileCreate() {
+  if (WebServer.args() == 0)
+    return WebServer.send(500, "text/plain", "BAD ARGS");
+  String path = WebServer.arg(0);
+  if (path == "/")
+    return WebServer.send(500, "text/plain", "BAD PATH");
+  if (SPIFFS.exists(path))
+    return WebServer.send(500, "text/plain", "FILE EXISTS");
+  File file = SPIFFS.open(path, "w");
+  if (file)
+    file.close();
+  else
+    return WebServer.send(500, "text/plain", "CREATE FAILED");
+  WebServer.send(200, "text/plain", "");
+  path = String();
+}
+
+
+
+void handleFileList() {
+  if (!WebServer.hasArg("dir")) {
+    WebServer.send(500, "text/plain", "BAD ARGS");
+    return;
+  }
+  String path = WebServer.arg("dir");
+  Dir dir = SPIFFS.openDir(path);
+  path = String();
+  String output = "[";
+  while (dir.next()) {
+    File entry = dir.openFile("r");
+    if (output != "[") output += ',';
+    bool isDir = false;
+    output += "{\"type\":\"";
+    output += (isDir) ? "dir" : "file";
+    output += "\",\"name\":\"";
+    output += String(entry.name()).substring(1);
+    output += "\"}";
+    entry.close();
+  }
+  output += "]";
+  WebServer.send(200, "text/json", output);
+}
+
+
+
+String httpHead() {
+  String head = FPSTR(HTTP_HEAD);
+  String bootstrapCss = "/bootstrap.min.css";
+  String bootstrapJs = "/bootstrap.min.js";
+  String jqueryJs = "/jquery.min.js";
+
+  String bootstrapCssInet = "http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css";
+  String bootstrapJsInet = "http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js";
+  String jqueryJsInet = "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js";
+
+  if ( !SPIFFS.exists(bootstrapCss + ".gz") ) {
+    head.replace(bootstrapCss, bootstrapCssInet);
+    head.replace(bootstrapJs, bootstrapJsInet);
+    head.replace(jqueryJs, jqueryJsInet);
+  }
+  head.replace("{module_id}", String(JConf.module_id));
+  return head;
+}
+
+
+
 void handleRoot()
 {
   char log[LOGSZ];
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleRoot Start");
 
-  String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
+  String head = httpHead();
 
   String body = FPSTR(HTTP_BODY);
   body.replace("<body>", "<body onload='process()'>");
@@ -921,7 +1067,6 @@ void handleLogConfig()
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleLogConfig Start");
 
   String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
 
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
@@ -961,7 +1106,6 @@ void handleConsole()
   }
 
   String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
 
   String body = FPSTR(HTTP_BODY);
   body.replace("<li><a href='/cm'>", "<li class='active'><a href='/cm'>");
@@ -1006,7 +1150,6 @@ void handleReboot()
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleReboot Start");
 
   String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
   head.replace("</title>", "</title><META HTTP-EQUIV='Refresh' CONTENT='20; URL=/'>");
 
   String body = FPSTR(HTTP_BODY);
@@ -1054,7 +1197,6 @@ void handleUploadSketch()
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleUploadSketch Start");
 
   String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
   head.replace("</title>", "</title><META HTTP-EQUIV='Refresh' CONTENT='20; URL=/'>");
 
   String body = FPSTR(HTTP_BODY);
@@ -1122,7 +1264,6 @@ void handleSensorsConfig()
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleSensorsConfig Start");
 
   String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
 
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
@@ -1177,7 +1318,6 @@ void handleMqttConfig()
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleMqttConfig Start");
 
   String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
 
   String js = FPSTR(JS_MQTT_SETTINGS);
   js.replace("{{mqtt_enable}}",      String(JConf.mqtt_enable));
@@ -1272,7 +1412,6 @@ void handleNtpConfig()
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleNtpConfig Start");
 
   String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
 
   String js = FPSTR(JS_NTP_SETTINGS);
   js.replace("{{ntp_enable}}",  String(JConf.ntp_enable));
@@ -1323,7 +1462,6 @@ void handlePinControl()
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handlePinControl Start");
 
   String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
 
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
@@ -1346,7 +1484,6 @@ void handleEspConfig()
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleEspConfig Start");
 
   String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
 
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
@@ -1474,7 +1611,6 @@ void handleWifiConfig()
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleWifiConfig Start");
 
   String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
 
   String js = FPSTR(JS_WIFI_SETTINGS);
   js.replace("{{module_id}}",         String(JConf.module_id));
@@ -2046,6 +2182,7 @@ void WebServerInit() {
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: WebServerInit Start");
   // Prepare webserver pages
+  bool cache = true;
   WebServer.on("/", handleRoot);
   WebServer.on("/reboot", handleReboot);
   WebServer.on("/update", handleUpdate);
@@ -2067,6 +2204,48 @@ void WebServerInit() {
   WebServer.on("/ax", handleAjax);
 
   WebServer.on("/xml",handleXML);
+
+  WebServer.on("/bootstrap.min.css", HTTP_GET, [cache]() {
+    handleFileRead("/bootstrap.min.css", cache);  //cache - Чтобы страница кешировалась
+  });
+  WebServer.on("/jquery.min.js", HTTP_GET, [cache]() {
+    handleFileRead("/jquery.min.js", cache);  //cache - Чтобы страница кешировалась
+  });
+  WebServer.on("/bootstrap.min.js", HTTP_GET, [cache]() {
+    handleFileRead("/bootstrap.min.js", cache);  //cache - Чтобы страница кешировалась
+  });
+  WebServer.on("/glyphicons.ttf", HTTP_GET, [cache]() {
+    handleFileRead("/glyphicons.ttf", cache);  //cache - Чтобы страница кешировалась
+  });
+  WebServer.on("/glyphicons.woff", HTTP_GET, [cache]() {
+    handleFileRead("/glyphicons.woff", cache);  //cache - Чтобы страница кешировалась
+  });
+  WebServer.on("/glyphicons.woff2", HTTP_GET, [cache]() {
+    handleFileRead("/glyphicons.woff2", cache);  //cache - Чтобы страница кешировалась
+  });
+  WebServer.on("/edit", HTTP_GET, []() {
+    WebServer.sendHeader("Cache-Control", "max-age=2629000");
+    WebServer.sendHeader("Pragma", "private");
+    WebServer.sendHeader("Expires", "2629000");
+    WebServer.sendHeader("Content-Encoding", "gzip");
+    WebServer.send_P(200, "text/html", edit_htm_gz, edit_htm_gz_len);
+  });
+
+  WebServer.on("/list", HTTP_GET, handleFileList);
+
+  WebServer.on("/edit", HTTP_PUT, handleFileCreate);
+
+  WebServer.on("/edit", HTTP_DELETE, handleFileDelete);
+
+  WebServer.on("/edit", HTTP_POST, []() {
+    WebServer.send(200, "text/plain", "");
+  }, handleFileUpload);
+
+  WebServer.onNotFound([]() {
+    if (!handleFileRead(WebServer.uri()))
+      WebServer.send(404, "text/plain", "FileNotFound");
+  });
+
 
 /*
   WebServer.on("/upload", HTTP_GET, handle_upload);
