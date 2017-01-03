@@ -1066,7 +1066,7 @@ void handleLogConfig()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleLogConfig Start");
 
-  String head = FPSTR(HTTP_HEAD);
+  String head = httpHead();
 
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
@@ -1105,7 +1105,7 @@ void handleConsole()
     //do_cmnd(svalue);
   }
 
-  String head = FPSTR(HTTP_HEAD);
+  String head = httpHead();
 
   String body = FPSTR(HTTP_BODY);
   body.replace("<li><a href='/cm'>", "<li class='active'><a href='/cm'>");
@@ -1149,7 +1149,7 @@ void handleReboot()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleReboot Start");
 
-  String head = FPSTR(HTTP_HEAD);
+  String head = httpHead();
   head.replace("</title>", "</title><META HTTP-EQUIV='Refresh' CONTENT='20; URL=/'>");
 
   String body = FPSTR(HTTP_BODY);
@@ -1173,8 +1173,7 @@ void handleUpdate()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleUpdate Start");
 
-  String head = FPSTR(HTTP_HEAD);
-  head.replace("{module_id}", String(JConf.module_id));
+  String head = httpHead();
 
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
@@ -1196,7 +1195,7 @@ void handleUploadSketch()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleUploadSketch Start");
 
-  String head = FPSTR(HTTP_HEAD);
+  String head = httpHead();
   head.replace("</title>", "</title><META HTTP-EQUIV='Refresh' CONTENT='20; URL=/'>");
 
   String body = FPSTR(HTTP_BODY);
@@ -1263,7 +1262,7 @@ void handleSensorsConfig()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleSensorsConfig Start");
 
-  String head = FPSTR(HTTP_HEAD);
+  String head = httpHead();
 
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
@@ -1317,7 +1316,7 @@ void handleMqttConfig()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleMqttConfig Start");
 
-  String head = FPSTR(HTTP_HEAD);
+  String head = httpHead();
 
   String js = FPSTR(JS_MQTT_SETTINGS);
   js.replace("{{mqtt_enable}}",      String(JConf.mqtt_enable));
@@ -1411,7 +1410,7 @@ void handleNtpConfig()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleNtpConfig Start");
 
-  String head = FPSTR(HTTP_HEAD);
+  String head = httpHead();
 
   String js = FPSTR(JS_NTP_SETTINGS);
   js.replace("{{ntp_enable}}",  String(JConf.ntp_enable));
@@ -1461,7 +1460,7 @@ void handlePinControl()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handlePinControl Start");
 
-  String head = FPSTR(HTTP_HEAD);
+  String head = httpHead();
 
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
@@ -1483,7 +1482,7 @@ void handleEspConfig()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleEspConfig Start");
 
-  String head = FPSTR(HTTP_HEAD);
+  String head = httpHead();
 
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
@@ -1610,7 +1609,7 @@ void handleWifiConfig()
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: handleWifiConfig Start");
 
-  String head = FPSTR(HTTP_HEAD);
+  String head = httpHead();
 
   String js = FPSTR(JS_WIFI_SETTINGS);
   js.replace("{{module_id}}",         String(JConf.module_id));
