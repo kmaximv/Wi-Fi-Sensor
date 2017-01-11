@@ -30,7 +30,7 @@ void scanWiFi(void) {
   unsigned long start_time = millis();
   addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: scanWiFi Start");
 
-  int founds = WiFi.scanNetworks();
+  unsigned int founds = WiFi.scanNetworks();
 
   if (founds == 0) {
     addLog_P(LOG_LEVEL_ERROR, "scanWiFi: No networks found");
@@ -381,7 +381,7 @@ IPAddress stringToIp (String strIp) {
   IPAddress ip;
 
   int count = 0;
-  for(int i=0; i <= strIp.length(); i++)
+  for(size_t i=0; i <= strIp.length(); i++)
   {
     if(strIp[i] != '.') {
       temp += strIp[i];
@@ -426,7 +426,7 @@ bool isIPValid(const char * IP) {
     return false;
   }
   //only letter and digit
-  for (int i=0; i < strlen(IP); i++) {
+  for (size_t i=0; i < strlen(IP); i++) {
     c = IP[i];
     if (isdigit(c)) {
       //only 3 digit at once

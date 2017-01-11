@@ -746,7 +746,7 @@ bool handleFileRead(String path, bool cache = false) {
       WebServer.sendHeader("Pragma", "private");
       WebServer.sendHeader("Expires", "2629000");
     }
-    size_t sent = WebServer.streamFile(file, contentType);
+    WebServer.streamFile(file, contentType);
     file.close();
     return true;
   }
@@ -1660,7 +1660,7 @@ void handleWifiScan()
 void handleSave()
 {
   char log[LOGSZ];
-  byte what = 0, restart;
+  byte what = 0;
 
   addLog_P(LOG_LEVEL_DEBUG, PSTR("HTTP: Parameter save"));
 
@@ -1869,7 +1869,7 @@ void handleControl(){
   String last_light_state2 = lightState2;
 
   if (WebServer.args() > 0 ) {
-    for ( size_t i = 0; i < WebServer.args(); i++ ) {
+    for ( int i = 0; i < WebServer.args(); i++ ) {
       if (WebServer.argName(i) == "1" && WebServer.arg(i) == "1") {
         if (fading[0].cycleEnd != 0){
           lightState = OFF;
@@ -1966,13 +1966,13 @@ void WebPinControlStatus(void) {
   }
 
   unsigned long timeOff = 0;
-  if (millis() - lightOffTimer < atoi(JConf.lightoff_delay) * 60 * 1000){
+  if (millis() - lightOffTimer < atoi(JConf.lightoff_delay) * 60 * 1000UL){
     timeOff = atoi(JConf.lightoff_delay) * 60 * 1000 - (millis() - lightOffTimer);
     timeOff = timeOff/1000;
   }
 
   unsigned long timeOff2 = 0;
-  if (millis() - lightOffTimer2 < atoi(JConf.light2off_delay) * 60 * 1000){
+  if (millis() - lightOffTimer2 < atoi(JConf.light2off_delay) * 60 * 1000UL){
     timeOff2 = atoi(JConf.light2off_delay) * 60 * 1000 - (millis() - lightOffTimer2);
     timeOff2 = timeOff2/1000;
   }

@@ -133,7 +133,7 @@ struct FADING_T
   int cycleNow;
   int cycleEnd;
   unsigned long timerFade;
-  int delayFade;
+  unsigned int delayFade;
 }fading[2] = {
    {atoi(JConf.light_pin),0,0,0,20},
    {atoi(JConf.light2_pin),0,0,0,20}
@@ -420,7 +420,6 @@ void SearchDS18x20Sensors() {
 void GetDS18x20SensorData(){
   byte i;
   byte data[12];
-  byte address[8];
 
   if (!flag_ds_sensor_read_delay){
     if (findDsSensors == 0){
