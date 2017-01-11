@@ -25,7 +25,17 @@
 
 //#define RESET_BUTTON_ON   //Функционал сброса конфига по кнопке при загрузке модуля
 //#define REBOOT_ON
+
+//------------------NTP Client--------------------------------------------------
 #define NTP_ON
+
+#ifdef NTP_ON
+  #define NTP_ERROR_TIME 30000 // Если за это время не смогли обновить время, засыпаем
+  #define NTP_TIME_SLEEP 600000 // Время сна
+  int ntpTimer = 0;
+  unsigned long ntpLastUpdateTime = 0;
+#endif //NTP_ON
+//------------------------------------------------------------------------------
 
 //#define LCD_ON   //Дисплей с I2C
 

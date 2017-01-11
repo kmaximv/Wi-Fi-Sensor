@@ -738,6 +738,7 @@ String GetUptimeData(){
 #ifdef NTP_ON
 void NTPSettingsUpdate(){
   if (atoi(JConf.ntp_enable) == 1) {
+    ntpLastUpdateTime = millis();
     timeClient.end();
     timeClient.setUpdateServer(JConf.ntp_server);
     timeClient.setTimeOffset(atoi(JConf.my_time_zone) * 60 * 60);
@@ -1440,6 +1441,7 @@ void setup() {
   #ifdef NTP_ON
     if (atoi(JConf.ntp_enable) == 1) {
       NTPSettingsUpdate();
+      ntpTimer = timer.setInterval(NTP_TIME_SLEEP, NTPSettingsUpdate);
     }
   #endif
 
@@ -1499,8 +1501,9 @@ void loop() {
   }
 
   #ifdef NTP_ON
-    if (atoi(JConf.ntp_enable) == 1) {
-      timeClient.update();
+    if ( atoi(JConf.ntp_enable) == 1 && millis() - ntpLastUpdateTime < NTP_ERROR_TIME ) {
+      if (timeClient.update()) ntpLastUpdateTime = millis();
+      timer.restartTimer(ntpTimer);
     }
   #endif
 
