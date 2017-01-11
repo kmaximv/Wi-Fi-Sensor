@@ -9,6 +9,7 @@ extern "C" {
 #include "Adafruit_MQTT_Client.h"
 #include "json_config.h"
 #include "ArduinoJson.h"
+#include "Wire.h"
 
 #include "user_config.h"
 
