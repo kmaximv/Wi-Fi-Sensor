@@ -1,0 +1,136 @@
+<div class='row'>
+    <div class='col-sm-5 col-md-4 col-lg-3'>
+        <h3>Wi-Fi Configuration</h3>
+        <form action='/save' method='POST'>
+            <div class='panel panel-default'>
+                <div class='panel-body'>
+                    <input id='w' name='w' value='6' hidden>
+                    <div class='form-group'>
+                        <div class='input-group'>
+                            <span class='input-group-addon'>Module ID</span>
+                            <input type='text' name='module_id' id='module_id' class='form-control'>
+                        </div>
+                    </div>
+                    <div class='form-group'>
+                        <div class='input-group'>
+                            <span class='input-group-addon'>Wi-Fi type</span>
+                            <select class='form-control' name='wifi_mode' id='wifi_mode'>
+                                <option value='AP'>Access Point</option>
+                                <option value='STA'>Client</option>
+                                <option value='AP_STA'>AP + Client</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id='ap' style='display: none;'>
+                        <h4>AP settings</h4>
+                        <div class='form-group'>
+                            <div class='input-group'>
+                                <span class='input-group-addon'>Mode</span>
+                                <select class='form-control' name='wifi_phy_mode' id='wifi_phy_mode'>
+                                    <option value='11B'>11b</option>
+                                    <option value='11G'>11g</option>
+                                    <option value='11N'>11n</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class='form-group'>
+                            <div class='input-group'>
+                                <span class='input-group-addon'>Channel</span>
+                                <select class='form-control' name='wifi_channel' id='wifi_channel'>
+                                    <option value='1'>1</option>
+                                    <option value='2'>2</option>
+                                    <option value='3'>3</option>
+                                    <option value='4'>4</option>
+                                    <option value='5'>5</option>
+                                    <option value='6'>6</option>
+                                    <option value='7'>7</option>
+                                    <option value='8'>8</option>
+                                    <option value='9'>9</option>
+                                    <option value='10'>10</option>
+                                    <option value='11'>11</option>
+                                    <option value='12'>12</option>
+                                    <option value='13'>13</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class='form-group'>
+                            <div class='input-group'>
+                                <span class='input-group-addon'>Auth</span>
+                                <select class='form-control' name='wifi_auth' id='wifi_auth'>
+                                    <option value='OPEN'>OPEN</option>
+                                    <option value='WPA_PSK'>WPA_PSK</option>
+                                    <option value='WPA2_PSK'>WPA2_PSK</option>
+                                    <option value='WPA_WPA2_PSK'>WPA_WPA2_PSK</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class='form-group' id=ap_auth_div>
+                            <div class='input-group'>
+                                <span class='input-group-addon'>AP Password</span>
+                                <input type='password' name='ap_pwd' class='form-control' placeholder='********'>
+                            </div>
+                        </div>
+                    </div>
+                    <div id='sta' style='display: none;'>
+                        <h4>Client settings</h4>
+                        <div class='form-group'>
+                            <div class='input-group'>
+                                <span class='input-group-addon'>SSID</span>
+                                <input type='text' name='sta_ssid' id='sta_ssid' class='form-control'>
+                            </div>
+                        </div>
+                        <div class='form-group'>
+                            <div class='input-group'>
+                                <span class='input-group-addon'>Password</span>
+                                <input type='password' name='sta_pwd' id='sta_pwd' class='form-control' placeholder='********'>
+                            </div>
+                        </div>
+                    </div>
+                    <div class='checkbox' id='static_checkbox_div' style='display: none;'>
+                        <label><input type='checkbox' name='static_ip_enable' id='static_ip_enable'>Static IP</label>
+                    </div>
+                    <div id='static' style='display: none;'>
+                        <div class='form-group'>
+                            <div class='input-group'>
+                                <span class='input-group-addon'>Static IP</span>
+                                <input type='text' name='static_ip' id='static_ip' class='form-control'>
+                            </div>
+                        </div>
+                        <div class='form-group'>
+                            <div class='input-group'>
+                                <span class='input-group-addon'>Static Gateway</span>
+                                <input type='text' name='static_gateway' id='static_gateway' class='form-control'>
+                            </div>
+                        </div>
+                        <div class='form-group'>
+                            <div class='input-group'>
+                                <span class='input-group-addon'>Static Subnet</span>
+                                <input type='text' name='static_subnet' id='static_subnet' class='form-control'>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class='panel-footer clearfix'>
+                    <div class='pull-right'><button type='submit' class='btn btn-primary' name='save_conf' value='1'>Save</button></div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class='col-sm-5 col-md-4 col-lg-3'>
+        <h3>Scan AP</h3>
+        <div class='panel panel-default'>
+            <div class='panel-body'>
+                <table class='table table-striped'>
+                    <tbody id='scan'>
+                    </tbody>
+                </table>
+                <div class='clearfix visible-lg'></div>
+            </div>
+            <div class='panel-footer clearfix'>
+              <div class='pull-right'>
+                <a href='#update' class='btn btn-primary' id='rescan'>Rescan</a>
+              </div>
+            </div>
+        </div>
+    </div>
+</div>;
