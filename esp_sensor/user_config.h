@@ -1,6 +1,9 @@
 #ifndef USER_CONFIG_H
 #define USER_CONFIG_H
 
+#include "json_config.h"
+JsonConf JConf;
+
 // --------------- Supported Sensors (Uncomment for Enable) -------------------
 #define DHT_ON
 #define BME280_ON
@@ -10,7 +13,7 @@
 
 //------------------DS18X20 Sensors---------------------------------------------
 #define DS18X20_ON
-#define DS18X20_PIN 2
+#define DS18X20_PIN 14
 //------------------------------------------------------------------------------
 
 //------------------MH-Z19 Sensor-----------------------------------------------
@@ -90,6 +93,42 @@ struct TIME_T {
   unsigned long Valid;
 } rtcTime;
 
+WiFiClient espClient;
+
+
+Adafruit_MQTT_Client mqtt = Adafruit_MQTT_Client(&espClient, JConf.mqtt_server, atoi(JConf.mqtt_port), JConf.mqtt_user, JConf.mqtt_pwd);
+
+Adafruit_MQTT_Publish pubTopicLightType = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicLightType2 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicMotionSensor = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicMotionSensorTimer = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicMotionSensorTimer2 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+Adafruit_MQTT_Publish pubTopicLux = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicTemperature = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicHumidity = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicPressure = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+Adafruit_MQTT_Publish pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+Adafruit_MQTT_Publish pubTopicMhz19ppm = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+Adafruit_MQTT_Publish pubTopicFreeMemory = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicUptime = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicVersion = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicIp = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+Adafruit_MQTT_Publish pubTopicMac = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+Adafruit_MQTT_Subscribe subTopicMotionSensorTimer = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+Adafruit_MQTT_Subscribe subTopicMotionSensorTimer2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+Adafruit_MQTT_Subscribe subTopicLightType = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+Adafruit_MQTT_Subscribe subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+Adafruit_MQTT_Subscribe subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+
 
 #ifdef DS18X20_ON
   struct DS1820_T {
@@ -98,6 +137,8 @@ struct TIME_T {
     String dsTemp = "none";
     String addressString = "none";
     byte address[8];
+    Adafruit_MQTT_Publish pubTopic = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+    char ds_buff[MQTTSZ];
   } dsSensor;
 
   #define MAX_DS_SENSORS 5
@@ -108,12 +149,6 @@ struct TIME_T {
   bool searchDsSensorDone = false;
   bool flag_ds_sensor_read_delay = false;
   enum DS_SENSOR_ENUM {DS18S20, DS18B20, DS1822, UNKNOWN};
-
-  char ds1_buff[MQTTSZ];
-  char ds2_buff[MQTTSZ];
-  char ds3_buff[MQTTSZ];
-  char ds4_buff[MQTTSZ];
-  char ds5_buff[MQTTSZ];
 #endif //DS18X20_ON
 
 //------------------Encoder-----------------------------------------------------

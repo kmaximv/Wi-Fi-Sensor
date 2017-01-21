@@ -27,8 +27,6 @@ SimpleTimer timer;
   Espuart Uart;
 #endif
 
-JsonConf JConf;
-
 #if defined(DHT_ON)
   #include <DHT.h>
   // Uncomment the type of sensor in use:
@@ -82,51 +80,6 @@ float voltage_float;
 String network_html;        // Список доступных Wi-Fi точек
 
 ESP8266WebServer WebServer(80);
-
-WiFiClient espClient;
-
-
-Adafruit_MQTT_Client mqtt = Adafruit_MQTT_Client(&espClient, JConf.mqtt_server, atoi(JConf.mqtt_port), JConf.mqtt_user, JConf.mqtt_pwd);
-
-Adafruit_MQTT_Publish pubTopicLightType = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicLightType2 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicMotionSensor = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicMotionSensorTimer = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicMotionSensorTimer2 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-
-Adafruit_MQTT_Publish pubTopicLux = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicTemperature = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicHumidity = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicPressure = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-
-Adafruit_MQTT_Publish pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-
-Adafruit_MQTT_Publish pubTopicMhz19ppm = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-
-Adafruit_MQTT_Publish pubTopicFreeMemory = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicUptime = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicVersion = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicIp = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicMac = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-
-#ifdef DS18X20_ON
-Adafruit_MQTT_Publish pubTopic_ds1 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopic_ds2 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopic_ds3 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopic_ds4 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopic_ds5 = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-#endif //DS18X20_ON
-
-
-Adafruit_MQTT_Subscribe subTopicMotionSensorTimer = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-Adafruit_MQTT_Subscribe subTopicMotionSensorTimer2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-Adafruit_MQTT_Subscribe subTopicLightType = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-Adafruit_MQTT_Subscribe subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-Adafruit_MQTT_Subscribe subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 
 struct FADING_T
 {
@@ -447,6 +400,8 @@ void GetDS18x20SensorData(){
 
   if (OneWire::crc8(data, 8) != data[8]) {
     addLog_P(LOG_LEVEL_ERROR, "DS Sensor: Data CRC is not valid!");
+    dsData[currentDsSensor].dsTemp = "none";
+    nextDsSensor();
     return;
   }
   // Convert the data to actual temperature
@@ -473,7 +428,12 @@ void GetDS18x20SensorData(){
 
   dsData[currentDsSensor].dsTemp = String((float) raw / 16.0);
   dsDataPrint();
+  nextDsSensor();
+}
 
+
+
+void nextDsSensor(){
   if (findDsSensors == currentDsSensor+1){
     currentDsSensor = 0;
   } else {
@@ -876,16 +836,12 @@ void MqttInitDS() {
   if (atoi(JConf.mqtt_enable) != 1) {
     return;
   }
-  sprintf(ds1_buff, "%s%s%s", JConf.publish_topic, dsData[0].addressString.c_str(), JConf.mqtt_name);
-  pubTopic_ds1 = Adafruit_MQTT_Publish(&mqtt, ds1_buff);
-  sprintf(ds2_buff, "%s%s%s", JConf.publish_topic, dsData[1].addressString.c_str(), JConf.mqtt_name);
-  pubTopic_ds2 = Adafruit_MQTT_Publish(&mqtt, ds2_buff);
-  sprintf(ds3_buff, "%s%s%s", JConf.publish_topic, dsData[2].addressString.c_str(), JConf.mqtt_name);
-  pubTopic_ds3 = Adafruit_MQTT_Publish(&mqtt, ds3_buff);
-  sprintf(ds4_buff, "%s%s%s", JConf.publish_topic, dsData[3].addressString.c_str(), JConf.mqtt_name);
-  pubTopic_ds4 = Adafruit_MQTT_Publish(&mqtt, ds4_buff);
-  sprintf(ds5_buff, "%s%s%s", JConf.publish_topic, dsData[4].addressString.c_str(), JConf.mqtt_name);
-  pubTopic_ds5 = Adafruit_MQTT_Publish(&mqtt, ds5_buff);
+
+  for (size_t i = 0; i < findDsSensors; i++) {
+    if (i == MAX_DS_SENSORS) break;
+    sprintf(dsData[i].ds_buff, "%s%s%s", JConf.publish_topic, dsData[i].addressString.c_str(), JConf.mqtt_name);
+    dsData[i].pubTopic = Adafruit_MQTT_Publish(&mqtt, dsData[i].ds_buff);
+  }
 }
 #endif //DS18X20_ON
 
@@ -1012,11 +968,10 @@ bool MqttPubData() {
 
   #ifdef DS18X20_ON
     if (atoi(JConf.ds18x20_enable) == 1){
-      pubTopic_ds1.publish(dsData[0].dsTemp.c_str());
-      pubTopic_ds2.publish(dsData[1].dsTemp.c_str());
-      pubTopic_ds3.publish(dsData[2].dsTemp.c_str());
-      pubTopic_ds4.publish(dsData[3].dsTemp.c_str());
-      pubTopic_ds5.publish(dsData[4].dsTemp.c_str());
+      for (size_t i = 0; i < findDsSensors; i++) {
+        if (i == MAX_DS_SENSORS) break;
+        dsData[i].pubTopic.publish(dsData[i].dsTemp.c_str());
+      }
     }
   #endif //DS18X20_ON
 
