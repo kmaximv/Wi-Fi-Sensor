@@ -372,13 +372,18 @@ void SearchDS18x20Sensors() {
 
 
 void GetDS18x20SensorData(){
+
+  if (findDsSensors == 0){
+    addLog_P(LOG_LEVEL_ERROR, "DS Sensors Not Found!");
+    searchDsSensorDone = false;
+    currentDsSensor = 0;
+    return;
+  }
+
   byte i;
   byte data[12];
 
   if (!flag_ds_sensor_read_delay){
-    if (findDsSensors == 0){
-      addLog_P(LOG_LEVEL_ERROR, "DS Sensors Not Found!");
-    }
     flag_ds_sensor_read_delay = true;
     ds.reset();
     ds.select(dsData[currentDsSensor].address);
@@ -778,17 +783,19 @@ void MqttInit() {
   sprintf(pressure_buff, "%s%s%s", JConf.publish_topic, pressure, JConf.mqtt_name);
   pubTopicPressure = Adafruit_MQTT_Publish(&mqtt, pressure_buff);
 
-  sprintf(pzemVoltage_buff, "%s%s%s", JConf.publish_topic, pzemVoltage, JConf.mqtt_name);
-  pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, pzemVoltage_buff);
+  #ifdef PZEM_ON
+    sprintf(pzemVoltage_buff, "%s%s%s", JConf.publish_topic, pzemVoltage, JConf.mqtt_name);
+    pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, pzemVoltage_buff);
 
-  sprintf(pzemCurrent_buff, "%s%s%s", JConf.publish_topic, pzemCurrent, JConf.mqtt_name);
-  pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, pzemCurrent_buff);
+    sprintf(pzemCurrent_buff, "%s%s%s", JConf.publish_topic, pzemCurrent, JConf.mqtt_name);
+    pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, pzemCurrent_buff);
 
-  sprintf(pzemPower_buff, "%s%s%s", JConf.publish_topic, pzemPower, JConf.mqtt_name);
-  pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, pzemPower_buff);
+    sprintf(pzemPower_buff, "%s%s%s", JConf.publish_topic, pzemPower, JConf.mqtt_name);
+    pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, pzemPower_buff);
 
-  sprintf(pzemEnergy_buff, "%s%s%s", JConf.publish_topic, pzemEnergy, JConf.mqtt_name);
-  pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, pzemEnergy_buff);
+    sprintf(pzemEnergy_buff, "%s%s%s", JConf.publish_topic, pzemEnergy, JConf.mqtt_name);
+    pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, pzemEnergy_buff);
+  #endif //PZEM_ON
 
   sprintf(mhz19ppm_buff, "%s%s%s", JConf.publish_topic, mhz19ppm, JConf.mqtt_name);
   pubTopicMhz19ppm = Adafruit_MQTT_Publish(&mqtt, mhz19ppm_buff);
@@ -824,8 +831,10 @@ void MqttInit() {
   sprintf(uptime_buff_sub, "%s%s%s", JConf.command_pub_topic, uptime, JConf.mqtt_name);
   subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, uptime_buff_sub);
 
-  sprintf(pzemReset_buff_sub, "%s%s%s", JConf.command_pub_topic, pzemReset, JConf.mqtt_name);
-  subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, pzemReset_buff_sub);
+  #ifdef PZEM_ON
+    sprintf(pzemReset_buff_sub, "%s%s%s", JConf.command_pub_topic, pzemReset, JConf.mqtt_name);
+    subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, pzemReset_buff_sub);
+  #endif //PZEM_ON
 }
 
 

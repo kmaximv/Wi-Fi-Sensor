@@ -13,11 +13,16 @@ JsonConf JConf;
 
 //------------------DS18X20 Sensors---------------------------------------------
 #define DS18X20_ON
-#define DS18X20_PIN 14
+
+#ifdef DS18X20_ON
+  #define DS18X20_PIN 14
+  #define MAX_DS_SENSORS 2
+#endif //DS18X20_ON
 //------------------------------------------------------------------------------
 
 //------------------MH-Z19 Sensor-----------------------------------------------
 #define MHZ19_ON
+
 #define RESPONSE_SIZE 9   // Размер пакета
 #define READ_TIMEOUT 300  // Время ожидания ответа от датчика
 //------------------------------------------------------------------------------
@@ -40,6 +45,18 @@ JsonConf JConf;
 #endif //NTP_ON
 //------------------------------------------------------------------------------
 
+//------------------Encoder-----------------------------------------------------
+//#define ENCODER_ON                              // Включить поддержку энкодера
+
+#ifdef ENCODER_ON
+  uint8_t encoderDirection = 0;                 // Направление поворота энкодера
+  bool encoderFlagA = false;
+  bool encoderFlagB = false;
+  int encoderResetTimer = 0;
+  int encoderResetInterval = 2000;                     // Интервал сброса флагов
+#endif //ENCODER_ON
+//------------------------------------------------------------------------------
+
 //#define LCD_ON   //Дисплей с I2C
 
 #define USE_WEBSERVER
@@ -47,23 +64,6 @@ JsonConf JConf;
 #define FADE_PINS 2
 #define UP true
 #define DOWN false
-
-
-const char *AP = "AP";
-const char *STA = "STA";
-const char *AP_STA = "AP_STA";
-
-const char *B = "11B";
-const char *G = "11G";
-const char *N = "11N";
-
-const char *OPEN = "OPEN";
-const char *WPA_PSK = "WPA_PSK";
-const char *WPA2_PSK = "WPA2_PSK";
-const char *WPA_WPA2_PSK = "WPA_WPA2_PSK";
-
-
-enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 
 
 #define TOPSZ                  60           // Max number of characters in topic string
@@ -109,10 +109,14 @@ Adafruit_MQTT_Publish pubTopicTemperature = Adafruit_MQTT_Publish(&mqtt, JConf.p
 Adafruit_MQTT_Publish pubTopicHumidity = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 Adafruit_MQTT_Publish pubTopicPressure = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 
-Adafruit_MQTT_Publish pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
-Adafruit_MQTT_Publish pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+#ifdef PZEM_ON
+  Adafruit_MQTT_Publish pubTopicPzemVoltage = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+  Adafruit_MQTT_Publish pubTopicPzemCurrent = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+  Adafruit_MQTT_Publish pubTopicPzemPower = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+  Adafruit_MQTT_Publish pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+  Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
+#endif //PZEM_ON
 
 Adafruit_MQTT_Publish pubTopicMhz19ppm = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
 
@@ -127,7 +131,6 @@ Adafruit_MQTT_Subscribe subTopicMotionSensorTimer2 = Adafruit_MQTT_Subscribe(&mq
 Adafruit_MQTT_Subscribe subTopicLightType = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 Adafruit_MQTT_Subscribe subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 Adafruit_MQTT_Subscribe subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
-Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 
 
 #ifdef DS18X20_ON
@@ -141,8 +144,6 @@ Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf
     char ds_buff[MQTTSZ];
   } dsSensor;
 
-  #define MAX_DS_SENSORS 5
-
   DS1820_T dsData[MAX_DS_SENSORS];
   uint8_t findDsSensors = 0;
   uint8_t currentDsSensor = 0;
@@ -151,17 +152,6 @@ Adafruit_MQTT_Subscribe subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, JConf
   enum DS_SENSOR_ENUM {DS18S20, DS18B20, DS1822, UNKNOWN};
 #endif //DS18X20_ON
 
-//------------------Encoder-----------------------------------------------------
-//#define ENCODER_ON                              // Включить поддержку энкодера
-
-#ifdef ENCODER_ON
-  uint8_t encoderDirection = 0;                 // Направление поворота энкодера
-  bool encoderFlagA = false;
-  bool encoderFlagB = false;
-  int encoderResetTimer = 0;
-  int encoderResetInterval = 2000;                     // Интервал сброса флагов
-#endif //ENCODER_ON
-//------------------------------------------------------------------------------
 
 const char *ver                = "1.12"              ;
 
@@ -236,10 +226,12 @@ char lux_buff[MQTTSZ];
 char temperature_buff[MQTTSZ];
 char humidity_buff[MQTTSZ];
 char pressure_buff[MQTTSZ];
-char pzemVoltage_buff[MQTTSZ];
-char pzemCurrent_buff[MQTTSZ];
-char pzemPower_buff[MQTTSZ];
-char pzemEnergy_buff[MQTTSZ];
+#ifdef PZEM_ON
+  char pzemVoltage_buff[MQTTSZ];
+  char pzemCurrent_buff[MQTTSZ];
+  char pzemPower_buff[MQTTSZ];
+  char pzemEnergy_buff[MQTTSZ];
+#endif //PZEM_ON
 char mhz19ppm_buff[MQTTSZ];
 char freeMemory_buff[MQTTSZ];
 char uptime_buff[MQTTSZ];
@@ -252,7 +244,25 @@ char motionSensorTimer2_buff_sub[MQTTSZ];
 char lightType_buff_sub[MQTTSZ];
 char lightType2_buff_sub[MQTTSZ];
 char uptime_buff_sub[MQTTSZ];
-char pzemReset_buff_sub[MQTTSZ];
+#ifdef PZEM_ON
+  char pzemReset_buff_sub[MQTTSZ];
+#endif //PZEM_ON
+
+
+const char *AP = "AP";
+const char *STA = "STA";
+const char *AP_STA = "AP_STA";
+
+const char *B = "11B";
+const char *G = "11G";
+const char *N = "11N";
+
+const char *OPEN = "OPEN";
+const char *WPA_PSK = "WPA_PSK";
+const char *WPA2_PSK = "WPA2_PSK";
+const char *WPA_WPA2_PSK = "WPA_WPA2_PSK";
+
+enum log_t   {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 
 
 #endif
