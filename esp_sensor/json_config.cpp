@@ -112,8 +112,8 @@ bool JsonConf::loadConfig() {
   if (!configFile) {
 #ifdef DEBUG_JSON_CONFIG
     Serial.println(F("Failed to open config file"));
-    saveConfig();
 #endif
+    saveConfig();
     return false;
   }
 

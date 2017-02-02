@@ -6,6 +6,7 @@
 #include "FS.h"
 
 const String ConfigFileName = "/conf.json";
+#define DEBUG_JSON_CONFIG
 
 class JsonConf
 {

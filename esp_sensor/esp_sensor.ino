@@ -650,10 +650,13 @@ void MotionDetect(){
     motionDetect = true;
     LightControl();
     if (atoi(JConf.mqtt_enable) == 1 && mqtt.connected()) {
-      pubTopicMotionSensor.publish("ON");
+      pubTopicMotionSensor.publish("1");
     }
-  } else {
+  } else if (motionDetect){
     motionDetect = false;
+    if (atoi(JConf.mqtt_enable) == 1 && mqtt.connected()) {
+      pubTopicMotionSensor.publish("0");
+    }
   }
 
   unsigned long load_time = millis() - start_time;
