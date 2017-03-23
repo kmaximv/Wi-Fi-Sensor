@@ -360,7 +360,7 @@ void GetMacString () {
 
   uint8_t macData[6];
   WiFi.macAddress(macData);
-  sprintf_P(value_buff, (const char *)F("%x:%x:%x:%x:%x:%x"), macData[0], macData[1], macData[2], macData[3], macData[4], macData[5]);
+  sprintf_P(value_buff, (const char *)F("%02X:%02X:%02X:%02X:%02X:%02X"), macData[0], macData[1], macData[2], macData[3], macData[4], macData[5]);
 
   macString = String(value_buff);
 

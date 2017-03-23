@@ -1489,7 +1489,7 @@ void handleWifiConfig()
   String body = FPSTR(HTTP_BODY);
   body.replace("{module_id}", String(JConf.module_id));
 
-  String body_end = PSTR("</body></html>");
+  String body_end = "</body></html>";
 
   String page = head + js + body + body_end;
 

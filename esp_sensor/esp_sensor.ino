@@ -58,7 +58,8 @@ SimpleTimer timer;
 
 #if defined(LCD_ON)
   #include <LiquidCrystal_I2C.h>
-  LiquidCrystal_I2C lcd(0x27,16,2);  // Устанавливаем дисплей
+  //LiquidCrystal_I2C lcd(0x27,16,2);  // Устанавливаем дисплей
+  LiquidCrystal_I2C lcd(0x3f,16,2);  // Устанавливаем дисплей
 #endif
 
 #if defined(PZEM_ON)
@@ -104,6 +105,46 @@ static char* floatToChar(float charester)
 */
 
 bool MqttConnect();
+
+
+#ifdef BOILER_ON
+void boilerControl() {
+  char log[LOGSZ];
+
+  snprintf_P(log, sizeof(log), PSTR("boilerControl: %s C"), boilerGetTemp.dataStr.c_str());
+  addLog(LOG_LEVEL_INFO, log);
+
+  if (atof(boilerGetTemp.dataStr.c_str()) > atof(JConf.boiler_set_temperature)) {
+    lightState = "ON";
+    addLog_P(LOG_LEVEL_INFO, "boilerControl: Enabled");
+  } else {
+    lightState = "OFF";
+    addLog_P(LOG_LEVEL_INFO, "boilerControl: Disabled");
+  }
+  LightControl();
+  if (atoi(JConf.mqtt_enable) == 1) {
+    MqttPubLightState();
+  }
+}
+
+
+void CallbackBoilerGetTemp(char *data, uint16_t len) {
+  char log[LOGSZ];
+  unsigned long start_time = millis();
+  addLog_P(LOG_LEVEL_DEBUG_MORE, "Func: CallbackBoilerGetTemp Start");
+
+  boilerGetTemp.dataStr = String(data);
+  boilerGetTemp.updated = millis();
+  boilerPubGetTemp.dataStr = String(data);
+  boilerPubGetTemp.updated = millis();
+  snprintf_P(log, sizeof(log), PSTR("boilerGetTemp: %s C"), boilerGetTemp.dataStr.c_str());
+  addLog(LOG_LEVEL_INFO, log);
+
+  unsigned long load_time = millis() - start_time;
+  snprintf_P(log, sizeof(log), PSTR("Func: CallbackBoilerGetTemp load time: %d"), load_time);
+  addLog(LOG_LEVEL_DEBUG_MORE, log);
+}
+#endif //BOILER_ON
 
 
 
@@ -800,6 +841,14 @@ void MqttInit() {
     pubTopicPzemEnergy = Adafruit_MQTT_Publish(&mqtt, pzemEnergy_buff);
   #endif //PZEM_ON
 
+  #ifdef BOILER_ON
+    sprintf(boilerPubGetTemp.mqttBuff, "%s%s%s", JConf.publish_topic, getTemp, JConf.mqtt_name);
+    pubTopicBoilerGetTemp = Adafruit_MQTT_Publish(&mqtt, boilerPubGetTemp.mqttBuff);
+
+    sprintf(boilerSetTemp.mqttBuff, "%s%s%s", JConf.publish_topic, setTemp, JConf.mqtt_name);
+    pubTopicBoilerSetTemp = Adafruit_MQTT_Publish(&mqtt, boilerSetTemp.mqttBuff);
+  #endif //BOILER_ON
+
   sprintf(mhz19ppm_buff, "%s%s%s", JConf.publish_topic, mhz19ppm, JConf.mqtt_name);
   pubTopicMhz19ppm = Adafruit_MQTT_Publish(&mqtt, mhz19ppm_buff);
 
@@ -838,6 +887,11 @@ void MqttInit() {
     sprintf(pzemReset_buff_sub, "%s%s%s", JConf.command_pub_topic, pzemReset, JConf.mqtt_name);
     subTopicPzemReset = Adafruit_MQTT_Subscribe(&mqtt, pzemReset_buff_sub);
   #endif //PZEM_ON
+
+  #ifdef BOILER_ON
+    sprintf(boilerGetTemp.mqttBuff, "%s%s", JConf.publish_topic, JConf.boiler_get_temperature);
+    subTopicBoilerGetTemp = Adafruit_MQTT_Subscribe(&mqtt, boilerGetTemp.mqttBuff);
+  #endif //BOILER_ON
 }
 
 
@@ -969,6 +1023,13 @@ bool MqttPubData() {
       pubTopicPzemCurrent.publish(pzemCurrentString.c_str());
       pubTopicPzemPower.publish(pzemPowerString.c_str());
       pubTopicPzemEnergy.publish(pzemEnergyString.c_str());
+    }
+  #endif
+
+  #ifdef BOILER_ON
+    if (atoi(JConf.boiler_enable) == 1){
+      pubTopicBoilerGetTemp.publish(boilerPubGetTemp.dataStr.c_str());
+      pubTopicBoilerSetTemp.publish(JConf.boiler_set_temperature);
     }
   #endif
 
@@ -1134,6 +1195,13 @@ void MqttSubscribe(){
   mqtt.subscribe(&subTopicLightType2);
   mqtt.subscribe(&subTopicUptime);
 
+  #ifdef BOILER_ON
+    if (atoi(JConf.boiler_enable) == 1){
+      subTopicBoilerGetTemp.setCallback(CallbackBoilerGetTemp);
+      mqtt.subscribe(&subTopicBoilerGetTemp);
+    }
+  #endif
+
   #ifdef PZEM_ON
     if (atoi(JConf.pzem_enable) == 1){
       subTopicPzemReset.setCallback(CallbackPzemReset);
@@ -1239,6 +1307,12 @@ void getData(){
     }
   #endif
 
+  #ifdef BOILER_ON
+    if (atoi(JConf.boiler_enable) == 1){
+      boilerControl();
+    }
+  #endif
+
   GetUptimeData();
   GetFreeMemory();
   TestSystemPrint();
@@ -1246,7 +1320,9 @@ void getData(){
   #ifdef LCD_ON
     //scanI2C();
     lcd.clear();
-    lcd.setCursor(1, 1);
+    lcd.setCursor(0, 4);
+    lcd.print("Test");
+    lcd.setCursor(1, 0);
     lcd.print("Test");
   #endif
 

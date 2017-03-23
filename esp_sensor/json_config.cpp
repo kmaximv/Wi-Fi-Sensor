@@ -54,6 +54,8 @@ bool JsonConf::saveConfig() {
   json["serial_log_level"]              = serial_log_level             ;
   json["web_log_level"]                 = web_log_level                ;
 
+  json["boiler_get_temperature"]        = boiler_get_temperature       ;
+  json["boiler_set_temperature"]        = boiler_set_temperature       ;
 /*
   json["uart_delay_analog_pin0"]        = uart_delay_analog_pin0       ;
   json["uart_delay_analog_pin1"]        = uart_delay_analog_pin1       ;
@@ -192,6 +194,8 @@ bool JsonConf::loadConfig() {
   if (json.containsKey("serial_log_level"                  )) {  const char* serial_log_level_char                  = json["serial_log_level"                 ];    sprintf_P(serial_log_level,                  ("%s"), serial_log_level_char                 ); }
   if (json.containsKey("web_log_level"                  )) {  const char* web_log_level_char                  = json["web_log_level"                 ];    sprintf_P(web_log_level,                  ("%s"), web_log_level_char                 ); }
 
+  if (json.containsKey("boiler_get_temperature"        )) {  const char* boiler_get_temperature_char        = json["boiler_get_temperature"       ];    sprintf_P(boiler_get_temperature,        ("%s"), boiler_get_temperature_char       ); }
+  if (json.containsKey("boiler_set_temperature"        )) {  const char* boiler_set_temperature_char        = json["boiler_set_temperature"       ];    sprintf_P(boiler_set_temperature,        ("%s"), boiler_set_temperature_char       ); }
 /*
   if (json.containsKey("uart_delay_analog_pin0"        )) {  const char* uart_delay_analog_pin0_char        = json["uart_delay_analog_pin0"       ];    sprintf_P(uart_delay_analog_pin0,        ("%s"), uart_delay_analog_pin0_char       ); }
   if (json.containsKey("uart_delay_analog_pin1"        )) {  const char* uart_delay_analog_pin1_char        = json["uart_delay_analog_pin1"       ];    sprintf_P(uart_delay_analog_pin1,        ("%s"), uart_delay_analog_pin1_char       ); }
@@ -230,7 +234,7 @@ void JsonConf::deleteConfig() {
 }
 
 
-bool JsonConf::printConfig() {
+void JsonConf::printConfig() {
 
   Serial.print(F("module_id                    : "));   Serial.println(module_id                    );
   Serial.print(F("wifi_mode                    : "));   Serial.println(wifi_mode                    );
@@ -275,6 +279,9 @@ bool JsonConf::printConfig() {
   Serial.print(F("sys_log_level                : "));   Serial.println(sys_log_level                );
   Serial.print(F("serial_log_level             : "));   Serial.println(serial_log_level             );
   Serial.print(F("web_log_level                : "));   Serial.println(web_log_level                );
+
+  Serial.print(F("boiler_get_temperature       : "));   Serial.println(boiler_get_temperature       );
+  Serial.print(F("boiler_set_temperature       : "));   Serial.println(boiler_set_temperature       );
 /*
   Serial.print(F("uart_delay_analog_pin0       : "));   Serial.println(uart_delay_analog_pin0       );
   Serial.print(F("uart_delay_analog_pin1       : "));   Serial.println(uart_delay_analog_pin1       );

@@ -6,7 +6,7 @@
 #include "FS.h"
 
 const String ConfigFileName = "/conf.json";
-#define DEBUG_JSON_CONFIG
+//#define DEBUG_JSON_CONFIG
 
 class JsonConf
 {
@@ -14,7 +14,7 @@ class JsonConf
     bool saveConfig();
     bool loadConfig();
     void deleteConfig();
-    bool printConfig();
+    void printConfig();
 
     char module_id                    [32] = "ESP8266"            ;
     char wifi_mode                    [7]  = "STA"                ;
@@ -62,6 +62,9 @@ class JsonConf
     char serial_log_level             [2]  = "0"                  ;
     char web_log_level                [2]  = "0"                  ;
 
+    char boiler_get_temperature       [32] = "Temp_BedM"          ; //За какой температурой будет следить котел (подписываемся на mqtt топик)
+    char boiler_set_temperature       [6]  = "25"                 ; //Температура, которую будем поддерживать в комнате
+
     char uart_delay_analog_pin0       [32] = "none"               ;
     char uart_delay_analog_pin1       [32] = "none"               ;
     char uart_delay_analog_pin2       [32] = "none"               ;
@@ -88,6 +91,7 @@ class JsonConf
     char pzem_enable                  [2]  = "0"                  ;
     char mhz19_enable                 [2]  = "0"                  ;
     char ds18x20_enable               [2]  = "0"                  ;
+    char boiler_enable                [2]  = "0"                  ;
 
 
   private:

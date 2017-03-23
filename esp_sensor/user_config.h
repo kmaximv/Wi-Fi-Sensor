@@ -31,7 +31,13 @@ JsonConf JConf;
 //#define DEBUG
 
 //#define RESET_BUTTON_ON   //Функционал сброса конфига по кнопке при загрузке модуля
+
 //#define REBOOT_ON
+
+//#define LCD_ON   //Дисплей с I2C
+
+//#define BOILER_ON   //Котел отопления
+
 
 //------------------NTP Client--------------------------------------------------
 #define NTP_ON
@@ -55,8 +61,6 @@ JsonConf JConf;
   int encoderResetInterval = 2000;                     // Интервал сброса флагов
 #endif //ENCODER_ON
 //------------------------------------------------------------------------------
-
-//#define LCD_ON   //Дисплей с I2C
 
 #define USE_WEBSERVER
 
@@ -131,6 +135,26 @@ Adafruit_MQTT_Subscribe subTopicLightType = Adafruit_MQTT_Subscribe(&mqtt, JConf
 Adafruit_MQTT_Subscribe subTopicLightType2 = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 Adafruit_MQTT_Subscribe subTopicUptime = Adafruit_MQTT_Subscribe(&mqtt, JConf.command_pub_topic);
 
+#ifdef BOILER_ON
+  Adafruit_MQTT_Publish pubTopicBoilerGetTemp = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+  Adafruit_MQTT_Publish pubTopicBoilerSetTemp = Adafruit_MQTT_Publish(&mqtt, JConf.publish_topic);
+
+  Adafruit_MQTT_Subscribe subTopicBoilerGetTemp = Adafruit_MQTT_Subscribe(&mqtt, JConf.publish_topic);
+#endif //BOILER_ON
+
+
+#ifdef BOILER_ON
+  struct BOILER_T {
+    String dataStr = "none";
+    char mqttBuff[MQTTSZ];
+    unsigned long updated = 0;
+  };
+
+  BOILER_T boilerGetTemp;
+  BOILER_T boilerPubGetTemp;
+  BOILER_T boilerSetTemp;
+#endif //BOILER_ON
+
 
 #ifdef DS18X20_ON
   struct DS1820_T {
@@ -175,6 +199,8 @@ const char *pzemPower          = "pzemPower"         ;
 const char *pzemEnergy         = "pzemEnergy"        ;
 const char *pzemReset          = "pzemReset"         ;
 const char *mhz19ppm           = "mhz19ppm"          ;
+const char *getTemp            = "getTemp"           ;
+const char *setTemp            = "setTemp"           ;
 
 const char sec[] PROGMEM = "sec";
 
