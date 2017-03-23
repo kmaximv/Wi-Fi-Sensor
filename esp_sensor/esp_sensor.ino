@@ -1533,7 +1533,7 @@ void loop() {
       MotionDetect();
     }
 
-    if (lightState == "AUTO"){
+    if (lightState == "AUTO" || lightState2 == "AUTO"){
       LightControl();
     }
 
