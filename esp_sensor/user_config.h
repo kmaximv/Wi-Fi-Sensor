@@ -9,7 +9,15 @@ JsonConf JConf;
 #define BME280_ON
 #define SHT21_ON
 #define BH1750_ON
+
+//------------------PZEM Sensor-------------------------------------------------
 #define PZEM_ON
+
+#ifdef PZEM_ON
+  bool pzemAlive = false;
+  float coil_ratio = 1.84; // Если используем разные катушки, подбираем коэффициент
+#endif //PZEM_ON
+//------------------------------------------------------------------------------
 
 //------------------DS18X20 Sensors---------------------------------------------
 #define DS18X20_ON

@@ -66,7 +66,6 @@ SimpleTimer timer;
   #include "PZEM004T.h"
   PZEM004T pzem(&Serial);
   IPAddress ip_pzem(192,168,1,1);
-  float coil_ratio = 1.84; // Если используем разные катушки, подбираем коэффициент
   enum PZEM_ENUM {PZEM_VOLTAGE, PZEM_CURRENT, PZEM_POWER, PZEM_ENERGY};
   PZEM_ENUM pzem_current_read = PZEM_VOLTAGE;
   enum PZEM_RESET_ENUM {PZEM_STAGE1, PZEM_STAGE2, PZEM_STAGE3, PZEM_STAGE4};
@@ -534,6 +533,8 @@ bool GetPzemData(float data, String *val) {
     addLog_P(LOG_LEVEL_ERROR, "GetPzemData: Error reading data!");
     pzem.setAddress(ip_pzem);
     pzem.setReadTimeout(500);
+    pzemAlive = false;
+    *val = "none";
     return false;
   } else if (pzem_current_read == PZEM_POWER || pzem_current_read == PZEM_ENERGY) {
     data = data * coil_ratio / 1000;
@@ -1018,12 +1019,13 @@ bool MqttPubData() {
   pubTopicMac.publish(macString.c_str());
 
   #ifdef PZEM_ON
-    if (atoi(JConf.pzem_enable) == 1){
+    if (atoi(JConf.pzem_enable) == 1 && pzemAlive){
       pubTopicPzemVoltage.publish(pzemVoltageString.c_str());
       pubTopicPzemCurrent.publish(pzemCurrentString.c_str());
       pubTopicPzemPower.publish(pzemPowerString.c_str());
       pubTopicPzemEnergy.publish(pzemEnergyString.c_str());
     }
+    pzemAlive = true;
   #endif
 
   #ifdef BOILER_ON
