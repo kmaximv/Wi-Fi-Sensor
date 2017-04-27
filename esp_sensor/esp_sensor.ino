@@ -563,22 +563,22 @@ void GetPzemSerialRead() {
       if (GetPzemData(pzem.voltage(ip_pzem), &pzemVoltageString)) {
         snprintf_P(log, sizeof(log), PSTR("GetPzemSerialRead: Voltage: %s V"), pzemVoltageString.c_str());
         addLog(LOG_LEVEL_INFO, log);
-        pzem_current_read = PZEM_CURRENT;
       }
+      pzem_current_read = PZEM_CURRENT;
       break;
     case PZEM_CURRENT:
       if (GetPzemData(pzem.current(ip_pzem), &pzemCurrentString)) {
         snprintf_P(log, sizeof(log), PSTR("GetPzemSerialRead: Current: %s A"), pzemCurrentString.c_str());
         addLog(LOG_LEVEL_INFO, log);
-        pzem_current_read = PZEM_POWER;
       }
+      pzem_current_read = PZEM_POWER;
       break;
     case PZEM_POWER:
       if (GetPzemData(pzem.power(ip_pzem), &pzemPowerString)) {
         snprintf_P(log, sizeof(log), PSTR("GetPzemSerialRead: Power: %s W"), pzemPowerString.c_str());
         addLog(LOG_LEVEL_INFO, log);
-        pzem_current_read = PZEM_ENERGY;
       }
+      pzem_current_read = PZEM_ENERGY;
       break;
     case PZEM_ENERGY:
       if (GetPzemData(pzem.energy(ip_pzem), &pzemEnergyString)) {
