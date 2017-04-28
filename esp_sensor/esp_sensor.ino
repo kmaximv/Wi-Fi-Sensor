@@ -534,6 +534,7 @@ bool GetPzemData(float data, String *val) {
     pzem.setAddress(ip_pzem);
     pzem.setReadTimeout(500);
     pzemAlive = false;
+    checkCount = 0;
     *val = "none";
     return false;
   } else if (pzem_current_read == PZEM_POWER || pzem_current_read == PZEM_ENERGY) {
@@ -542,6 +543,11 @@ bool GetPzemData(float data, String *val) {
     data = data * coil_ratio;
   }
   *val = String(data);
+  checkCount ++;
+  if (checkCount >= 4) {
+    pzemAlive = true;
+    checkCount = 0;
+  }
 
   unsigned long load_time = millis() - start_time;
   snprintf_P(log, sizeof(log), PSTR("Func: GetPzemData load time: %d"), load_time);
@@ -1025,7 +1031,6 @@ bool MqttPubData() {
       pubTopicPzemPower.publish(pzemPowerString.c_str());
       pubTopicPzemEnergy.publish(pzemEnergyString.c_str());
     }
-    pzemAlive = true;
   #endif
 
   #ifdef BOILER_ON
