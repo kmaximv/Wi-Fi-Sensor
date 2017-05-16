@@ -1,6 +1,4 @@
-#include "ESP8266WiFi.h"
 #include "WiFiUdp.h"
-#include "ESP8266WebServer.h"
 extern "C" {
 #include "user_interface.h"
 }
@@ -15,6 +13,13 @@ extern "C" {
 
 #include "SimpleTimer.h"
 SimpleTimer timer;
+
+#if defined (ESP32)
+#include <WiFi.h> 
+#elif 
+#include "ESP8266WiFi.h"
+#include "ESP8266WebServer.h"
+#endif
 
 #if defined(NTP_ON)
   #include "NTPClient.h"
